@@ -13,6 +13,7 @@ import {
   MapWithPOI,
   Follower,
   Following,
+  NearbyPOI,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
@@ -109,8 +110,8 @@ export const userApi = {
     );
   },
 
-  getTopUsers: async (limit = 10): Promise<ApiResponse<any[]>> => {
-    return apiRequest<ApiResponse<any[]>>(`/users/top?limit=${limit}`);
+  getTopUsers: async (limit = 10): Promise<ApiResponse<User[]>> => {
+    return apiRequest<ApiResponse<User[]>>(`/users/top?limit=${limit}`);
   },
 
   deleteAccount: async (userId: string): Promise<ApiResponse> => {
@@ -289,7 +290,7 @@ export const poiApi = {
   },
 
   // Legacy POI API for external services
-  getNearbyPOIs: async (lat: number, lng: number): Promise<any[]> => {
+  getNearbyPOIs: async (lat: number, lng: number): Promise<NearbyPOI[]> => {
     const response = await fetch(
       `https://trueway-places.p.rapidapi.com/FindPlacesNearby?location=${lat.toFixed(
         4

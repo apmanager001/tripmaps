@@ -278,3 +278,17 @@ export interface ExternalPOI {
     };
   };
 }
+
+export interface NearbyPOI {
+  name: string;
+  address: string;
+  rating?: number;
+  types?: string[];
+  place_id?: string;
+  geometry?: {
+    location: {
+      lat: number;
+      lng: number;
+    };
+  };
+}
