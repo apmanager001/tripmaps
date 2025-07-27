@@ -226,10 +226,10 @@ export function generateMapMetadata(mapData: {
     keywords: [
       mapData.mapName,
       "travel map",
-      mapData.user_id?.username,
+      mapData.user_id?.username || "Unknown",
       "travel destinations",
       "GPS coordinates",
-    ],
+    ].filter(Boolean),
     url: `/maps/${mapData._id}`,
     type: "article",
     author: mapData.user_id?.username,
