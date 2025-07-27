@@ -19,10 +19,6 @@ import {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
 
-// Debug logging for deployment
-console.log("API_BASE_URL:", API_BASE_URL);
-console.log("NEXT_PUBLIC_BACKEND:", process.env.NEXT_PUBLIC_BACKEND);
-
 class ApiError extends Error {
   constructor(public status: number, message: string) {
     super(message);

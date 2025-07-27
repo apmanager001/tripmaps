@@ -58,12 +58,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (mapsRes.ok) {
       const mapsData = await mapsRes.json();
       if (mapsData.success && mapsData.data) {
-        const mapPages = mapsData.data.map((map: MapData) => ({
-          url: `${baseUrl}/maps/${map._id}`,
-          lastModified: new Date(map.updatedAt || map.createdAt),
-          changeFrequency: "weekly" as const,
-          priority: 0.7,
-        }));
+        const mapPages = mapsData.data.map((map: MapData) => {
+          const dateString = map.updatedAt || map.createdAt;
+          const lastModified = dateString ? new Date(dateString) : new Date();
+
+          // Validate date
+          if (isNaN(lastModified.getTime())) {
+            return {
+              url: `${baseUrl}/maps/${map._id}`,
+              lastModified: new Date(),
+              changeFrequency: "weekly" as const,
+              priority: 0.7,
+            };
+          }
+
+          return {
+            url: `${baseUrl}/maps/${map._id}`,
+            lastModified,
+            changeFrequency: "weekly" as const,
+            priority: 0.7,
+          };
+        });
         dynamicPages.push(...mapPages);
       }
     }
@@ -79,12 +94,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (usersRes.ok) {
       const usersData = await usersRes.json();
       if (usersData.success && usersData.data) {
-        const profilePages = usersData.data.map((user: UserData) => ({
-          url: `${baseUrl}/profile/${user.username}`,
-          lastModified: new Date(user.updated_at || user.createdDate),
-          changeFrequency: "weekly" as const,
-          priority: 0.6,
-        }));
+        const profilePages = usersData.data.map((user: UserData) => {
+          const dateString = user.updated_at || user.createdDate;
+          const lastModified = dateString ? new Date(dateString) : new Date();
+
+          // Validate date
+          if (isNaN(lastModified.getTime())) {
+            return {
+              url: `${baseUrl}/profile/${user.username}`,
+              lastModified: new Date(),
+              changeFrequency: "weekly" as const,
+              priority: 0.6,
+            };
+          }
+
+          return {
+            url: `${baseUrl}/profile/${user.username}`,
+            lastModified,
+            changeFrequency: "weekly" as const,
+            priority: 0.6,
+          };
+        });
         dynamicPages.push(...profilePages);
       }
     }
@@ -100,14 +130,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (poisRes.ok) {
       const poisData = await poisRes.json();
       if (poisData.success && poisData.data) {
-        const poiPages = poisData.data.map((poi: POIData) => ({
-          url: `${baseUrl}/point_of_interest/${encodeURIComponent(
-            poi.locationName
-          )}`,
-          lastModified: new Date(poi.date_visited || poi.createdAt),
-          changeFrequency: "weekly" as const,
-          priority: 0.5,
-        }));
+        const poiPages = poisData.data.map((poi: POIData) => {
+          const dateString = poi.date_visited || poi.createdAt;
+          const lastModified = dateString ? new Date(dateString) : new Date();
+
+          // Validate date
+          if (isNaN(lastModified.getTime())) {
+            return {
+              url: `${baseUrl}/point_of_interest/${encodeURIComponent(
+                poi.locationName
+              )}`,
+              lastModified: new Date(),
+              changeFrequency: "weekly" as const,
+              priority: 0.5,
+            };
+          }
+
+          return {
+            url: `${baseUrl}/point_of_interest/${encodeURIComponent(
+              poi.locationName
+            )}`,
+            lastModified,
+            changeFrequency: "weekly" as const,
+            priority: 0.5,
+          };
+        });
         dynamicPages.push(...poiPages);
       }
     }
