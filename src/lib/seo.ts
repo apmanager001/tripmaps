@@ -237,8 +237,8 @@ export function generateMapMetadata(mapData: {
     modifiedTime: mapData.updatedAt,
     tags:
       mapData.pois
-        ?.map((poi) => poi.tags)
+        ?.map((poi) => poi.tags || [])
         .flat()
-        .filter(Boolean) || [],
+        .filter((tag): tag is string => Boolean(tag)) || [],
   });
 }
