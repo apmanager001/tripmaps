@@ -344,25 +344,39 @@ export default function IndividualMaps({ id }) {
         />
       )}
 
-      <div className="flex justify-between items-center">
-        <div className="text-lg font-bold text-primary flex flex-col items-end overflow-x-hidden">
-          {mapName ? mapName.toUpperCase() : "Unnamed Map"}
-          {mapUser && (
-            <Link
-              href={`/profile/${mapUser.username}`}
-              className="badge badge-soft badge-sm text-sm hover:badge-primary transition-colors"
-            >
-              {mapUser.username}
-            </Link>
-          )}
+      {/* Mobile-friendly layout */}
+      <div className="space-y-4">
+        {/* Map title and user info - full width on mobile */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+          <div className="text-lg font-bold text-primary flex flex-col items-start sm:items-end overflow-x-hidden">
+            <span className="break-words">
+              {mapName ? mapName.toUpperCase() : "Unnamed Map"}
+            </span>
+            {mapUser && (
+              <Link
+                href={`/profile/${mapUser.username}`}
+                className="badge badge-soft badge-sm text-sm hover:badge-primary transition-colors mt-1"
+              >
+                {mapUser.username}
+              </Link>
+            )}
+          </div>
+
+          {/* Share buttons - always visible */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <SharedButtons id={id} name={mapName} />
+            <InstagramShare mapName={mapName} pois={pois} />
+          </div>
         </div>
-        <div className="flex items-center gap-4">
+
+        {/* Action buttons - responsive grid on mobile */}
+        <div className="grid grid-cols-3 sm:flex sm:items-center sm:gap-4 gap-2">
           {/* Bookmark Button */}
           {mapUser && currentUser && mapUser._id !== currentUser._id && (
             <button
               onClick={handleBookmark}
               disabled={bookmarkMutation.isPending || !isAuthenticated}
-              className={`btn btn-sm gap-2 ${
+              className={`btn btn-sm gap-1 sm:gap-2 ${
                 !isAuthenticated
                   ? "btn-disabled opacity-50"
                   : isBookmarked
@@ -382,6 +396,7 @@ export default function IndividualMaps({ id }) {
                   isBookmarked ? "fill-current text-accent" : "text-accent"
                 }`}
               />
+              <span className="hidden sm:inline">Bookmark</span>
               {bookmarkMutation.isPending && (
                 <div className="loading loading-spinner loading-xs"></div>
               )}
@@ -391,18 +406,19 @@ export default function IndividualMaps({ id }) {
           {/* Comments Button */}
           <button
             onClick={() => setIsCommentsOpen(true)}
-            className="btn btn-sm btn-ghost gap-2"
+            className="btn btn-sm btn-ghost gap-1 sm:gap-2"
             title="View comments"
           >
             <MessageCircle className="w-4 h-4" />
-            <span>{comments.length}</span>
+            <span className="hidden sm:inline">Comments</span>
+            <span className="sm:hidden">{comments.length}</span>
           </button>
 
           {/* Like Button */}
           <button
             onClick={handleLike}
             disabled={likeMutation.isPending || !isAuthenticated}
-            className={`btn btn-sm gap-2 ${
+            className={`btn btn-sm gap-1 sm:gap-2 ${
               !isAuthenticated
                 ? "btn-disabled opacity-50"
                 : isLiked
@@ -416,15 +432,12 @@ export default function IndividualMaps({ id }) {
                 isLiked ? "fill-current text-red-500" : "text-red-500"
               }`}
             />
-            <span>{likeCount}</span>
+            <span className="hidden sm:inline">Like</span>
+            <span className="sm:hidden">{likeCount}</span>
             {likeMutation.isPending && (
               <div className="loading loading-spinner loading-xs"></div>
             )}
           </button>
-
-          {/* Share Buttons */}
-          <SharedButtons id={id} name={mapName} />
-          <InstagramShare mapName={mapName} pois={pois} />
         </div>
       </div>
 

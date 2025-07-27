@@ -9,6 +9,8 @@ import {
   ArrowLeftToLine,
   ArrowRightToLine,
   LogOut,
+  Menu,
+  X,
 } from "lucide-react";
 import MyMaps from "./mymap";
 import AddMaps from "./addMap";
@@ -24,6 +26,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("My Profile");
   const [collapsed, setCollapsed] = useState(false);
   const [showLabels, setShowLabels] = useState();
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const { user, setUser, clearUser } = useAuthStore();
   const router = useRouter();
 
@@ -98,6 +101,11 @@ const Dashboard = () => {
     logoutMutation.mutate();
   };
 
+  const handleTabClick = (tabName) => {
+    setActiveTab(tabName);
+    setMobileDrawerOpen(false); // Close mobile drawer when tab is clicked
+  };
+
   const tabs = [
     { name: "My Profile", icon: <User size={20} /> },
     { name: "Add Map", icon: <MapPinned size={20} /> },
@@ -130,17 +138,82 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex w-full min-h-screen ">
-      {/* Sidebar */}
+    <div className="flex w-full min-h-screen">
+      {/* Mobile Drawer Overlay */}
+      {mobileDrawerOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setMobileDrawerOpen(false)}
+        />
+      )}
+
+      {/* Mobile Drawer Sidebar */}
+      <div
+        className={`fixed top-0 left-0 h-full w-64 bg-base-200 z-50 transform transition-transform duration-300 ease-in-out md:hidden border-r border-base-300 ${
+          mobileDrawerOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Mobile Drawer Header */}
+          <div className="flex items-center justify-between p-4 border-b border-base-300 flex-shrink-0">
+            <h2 className="text-lg font-bold text-primary">Dashboard</h2>
+            <button
+              onClick={() => setMobileDrawerOpen(false)}
+              className="btn btn-sm btn-ghost"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Mobile Drawer Content */}
+          <div className="flex-1 flex flex-col overflow-y-auto">
+            {/* Logout Button at Top */}
+            <button
+              onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+              className={`flex items-center w-full px-4 py-3 text-left hover:bg-error/10 hover:text-error transition cursor-pointer border-b border-base-300 ${
+                logoutMutation.isPending ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              <span className="mr-3">
+                {logoutMutation.isPending ? (
+                  <div className="loading loading-spinner loading-xs"></div>
+                ) : (
+                  <LogOut size={20} />
+                )}
+              </span>
+              <span className="text-error">Logout</span>
+            </button>
+
+            {/* Navigation Tabs */}
+            <div className="py-4">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.name}
+                  onClick={() => handleTabClick(tab.name)}
+                  className={`flex items-center w-full px-4 py-3 text-left hover:bg-base-300 transition cursor-pointer ${
+                    activeTab === tab.name ? "bg-base-300 font-bold" : ""
+                  }`}
+                >
+                  <span className="mr-3">{tab.icon}</span>
+                  <span>{tab.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Sidebar */}
       <div
         className={`bg-base-200 md:transition-all duration-300 ease-in-out md:overflow-hidden 
-      ${collapsed ? "w-16" : "md:w-40"} 
-      w-16 flex flex-col items-center py-4 gap-2 shadow-md`}
+        ${collapsed ? "w-16" : "md:w-40"} 
+        hidden md:flex md:flex-col md:items-center md:py-4 md:gap-2 md:shadow-md`}
       >
         {/* Collapse Toggle — only visible from md and up */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="mb-6 hover:bg-base-300 rounded p-2 transition cursor-pointer hidden md:block"
+          className="mb-6 hover:bg-base-300 rounded p-2 transition cursor-pointer"
           title="Toggle Sidebar"
         >
           {collapsed ? <ArrowRightToLine /> : <ArrowLeftToLine />}
@@ -156,9 +229,9 @@ const Dashboard = () => {
           >
             {/* Always show icons */}
             <span className="mr-2">{tab.icon}</span>
-            {/* Only show labels on md+ and when not collapsed */}
+            {/* Only show labels when not collapsed */}
             {!collapsed && showLabels && (
-              <span className="hidden md:inline">{tab.name}</span>
+              <span className="inline">{tab.name}</span>
             )}
           </button>
         ))}
@@ -182,16 +255,31 @@ const Dashboard = () => {
               <LogOut size={20} />
             )}
           </span>
-          {/* Only show labels on md+ and when not collapsed */}
+          {/* Only show labels when not collapsed */}
           {!collapsed && showLabels && (
-            <span className="hidden md:inline text-error">Logout</span>
+            <span className="inline text-error">Logout</span>
           )}
         </button>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex justify-center md:px-6 md:py-8 w-[calc(100%-16px)]">
-        {renderContent()}
+      <div className="flex-1 flex flex-col w-full">
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-base-200 border-b border-base-300 ">
+          <button
+            onClick={() => setMobileDrawerOpen(true)}
+            className="btn btn-sm btn-ghost"
+          >
+            <Menu size={20} />
+          </button>
+          <h1 className="text-lg font-bold text-primary">Dashboard</h1>
+          <div className="w-10"></div> {/* Spacer for centering */}
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 flex justify-center md:px-6 md:py-8 p-4 ">
+          <div className="w-full max-w-6xl">{renderContent()}</div>
+        </div>
       </div>
     </div>
   );

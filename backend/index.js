@@ -67,6 +67,16 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check route
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "TripMaps API is running",
+    timestamp: new Date().toISOString(),
+    version: "1.0.0",
+  });
+});
+
 // API Routes
 app.use("/", require("./router/routes"));
 

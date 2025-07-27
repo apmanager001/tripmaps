@@ -278,7 +278,7 @@ export default function Dashsection3() {
         </div>
 
         {/* Friends Panel */}
-        <div className="md:w-72 bg-base-100 md:shadow-md md:rounded-lg p-4 space-y-4 min-h-96">
+        <div className="md:w-72 bg-base-100 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96">
           <h2 className="text-lg font-semibold text-primary border-b border-base-300 pb-2">
             Friends
           </h2>
@@ -310,7 +310,7 @@ export default function Dashsection3() {
         </div>
 
         {/* Bookmarked Maps Panel */}
-        <div className="md:w-72 bg-base-100 md:shadow-md md:rounded-lg p-4 space-y-4 min-h-96">
+        <div className="md:w-72 bg-base-100 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96">
           <h2 className="text-lg font-semibold text-primary border-b border-base-300 pb-2">
             Bookmarked Maps
           </h2>
@@ -378,6 +378,7 @@ export default function Dashsection3() {
                         {editingMap.id === map._id ? (
                           <div className="flex items-center justify-center gap-2 h-full">
                             <input
+                              id={`edit-map-name-${map._id}`}
                               type="text"
                               value={editingMap.name}
                               onChange={(e) =>

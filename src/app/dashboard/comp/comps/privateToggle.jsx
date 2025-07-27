@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useId } from "react";
 import { toast } from "react-hot-toast";
 import { mapApi } from "@/lib/api";
 
 export default function PrivateToggle({ isPrivate, id, onToggle }) {
   const [isToggling, setIsToggling] = useState(false);
+  const toggleId = useId();
 
   const handleToggle = async () => {
     setIsToggling(true);
@@ -32,6 +33,7 @@ export default function PrivateToggle({ isPrivate, id, onToggle }) {
   return (
     <div className="flex items-center gap-2">
       <input
+        id={toggleId}
         type="checkbox"
         checked={isPrivate}
         onChange={handleToggle}
