@@ -14,6 +14,7 @@ import {
   Follower,
   Following,
   NearbyPOI,
+  Bookmark,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
