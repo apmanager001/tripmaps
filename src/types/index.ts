@@ -64,6 +64,18 @@ export interface Friend {
   createdAt: string;
 }
 
+export interface Follower {
+  _id: string;
+  user_id: string | User;
+  createdAt: string;
+}
+
+export interface Following {
+  _id: string;
+  user_id: string | User;
+  createdAt: string;
+}
+
 export interface Bookmark {
   _id: string;
   user_id: string | User;
@@ -71,6 +83,15 @@ export interface Bookmark {
 }
 
 export interface MapComment {
+  _id: string;
+  map_id: string | MapData;
+  user_id: string | User;
+  comment: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Comment {
   _id: string;
   map_id: string | MapData;
   user_id: string | User;
@@ -110,7 +131,7 @@ export interface EditHistory {
 }
 
 // API Response types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   message?: string;
@@ -216,6 +237,18 @@ export interface MapWithDetails {
   pois: POI[];
   comments: MapComment[];
   isBookmarked: boolean;
+}
+
+export interface MapWithPOI {
+  _id: string;
+  mapName: string;
+  user_id: {
+    _id: string;
+    username: string;
+  };
+  isPrivate: boolean;
+  createdAt: string;
+  pois: POI[];
 }
 
 export interface POIWithTags {

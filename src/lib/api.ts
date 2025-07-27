@@ -7,6 +7,12 @@ import {
   User,
   Coordinate,
   POI,
+  Pagination,
+  Comment,
+  Tag,
+  MapWithPOI,
+  Follower,
+  Following,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
@@ -97,8 +103,8 @@ export const userApi = {
     query: string,
     page = 1,
     limit = 10
-  ): Promise<ApiResponse<{ users: User[]; pagination: any }>> => {
-    return apiRequest<ApiResponse<{ users: User[]; pagination: any }>>(
+  ): Promise<ApiResponse<{ users: User[]; pagination: Pagination }>> => {
+    return apiRequest<ApiResponse<{ users: User[]; pagination: Pagination }>>(
       `/users/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
     );
   },
@@ -133,7 +139,7 @@ export const mapApi = {
     ApiResponse<{
       map: MapData;
       pois: POI[];
-      comments: any[];
+      comments: Comment[];
       isBookmarked: boolean;
     }>
   > => {
@@ -141,7 +147,7 @@ export const mapApi = {
       ApiResponse<{
         map: MapData;
         pois: POI[];
-        comments: any[];
+        comments: Comment[];
         isBookmarked: boolean;
       }>
     >(`/maps/${mapId}`);
@@ -151,8 +157,8 @@ export const mapApi = {
     userId: string,
     page = 1,
     limit = 10
-  ): Promise<ApiResponse<{ maps: MapData[]; pagination: any }>> => {
-    return apiRequest<ApiResponse<{ maps: MapData[]; pagination: any }>>(
+  ): Promise<ApiResponse<{ maps: MapData[]; pagination: Pagination }>> => {
+    return apiRequest<ApiResponse<{ maps: MapData[]; pagination: Pagination }>>(
       `/users/${userId}/maps?page=${page}&limit=${limit}`
     );
   },
@@ -183,8 +189,8 @@ export const mapApi = {
     query: string,
     page = 1,
     limit = 10
-  ): Promise<ApiResponse<{ maps: MapData[]; pagination: any }>> => {
-    return apiRequest<ApiResponse<{ maps: MapData[]; pagination: any }>>(
+  ): Promise<ApiResponse<{ maps: MapData[]; pagination: Pagination }>> => {
+    return apiRequest<ApiResponse<{ maps: MapData[]; pagination: Pagination }>>(
       `/maps/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
     );
   },
@@ -218,8 +224,8 @@ export const poiApi = {
 
   getPOI: async (
     poiId: string
-  ): Promise<ApiResponse<{ poi: POI; tags: any[] }>> => {
-    return apiRequest<ApiResponse<{ poi: POI; tags: any[] }>>(`/pois/${poiId}`);
+  ): Promise<ApiResponse<{ poi: POI; tags: Tag[] }>> => {
+    return apiRequest<ApiResponse<{ poi: POI; tags: Tag[] }>>(`/pois/${poiId}`);
   },
 
   updatePOI: async (
@@ -254,8 +260,8 @@ export const poiApi = {
     radius = 10,
     page = 1,
     limit = 20
-  ): Promise<ApiResponse<{ pois: POI[]; pagination: any }>> => {
-    return apiRequest<ApiResponse<{ pois: POI[]; pagination: any }>>(
+  ): Promise<ApiResponse<{ pois: POI[]; pagination: Pagination }>> => {
+    return apiRequest<ApiResponse<{ pois: POI[]; pagination: Pagination }>>(
       `/pois/search/location?lat=${lat}&lng=${lng}&radius=${radius}&page=${page}&limit=${limit}`
     );
   },
@@ -265,10 +271,14 @@ export const poiApi = {
     page = 1,
     limit = 20
   ): Promise<
-    ApiResponse<{ poiName: string; maps: any[]; pagination: any }>
+    ApiResponse<{ poiName: string; maps: MapWithPOI[]; pagination: Pagination }>
   > => {
     return apiRequest<
-      ApiResponse<{ poiName: string; maps: any[]; pagination: any }>
+      ApiResponse<{
+        poiName: string;
+        maps: MapWithPOI[];
+        pagination: Pagination;
+      }>
     >(`/pois/search/maps/${poiName}?page=${page}&limit=${limit}`);
   },
 
@@ -320,20 +330,24 @@ export const socialApi = {
     userId: string,
     page = 1,
     limit = 20
-  ): Promise<ApiResponse<{ followers: any[]; pagination: any }>> => {
-    return apiRequest<ApiResponse<{ followers: any[]; pagination: any }>>(
-      `/users/${userId}/followers?page=${page}&limit=${limit}`
-    );
+  ): Promise<
+    ApiResponse<{ followers: Follower[]; pagination: Pagination }>
+  > => {
+    return apiRequest<
+      ApiResponse<{ followers: Follower[]; pagination: Pagination }>
+    >(`/users/${userId}/followers?page=${page}&limit=${limit}`);
   },
 
   getFollowing: async (
     userId: string,
     page = 1,
     limit = 20
-  ): Promise<ApiResponse<{ following: any[]; pagination: any }>> => {
-    return apiRequest<ApiResponse<{ following: any[]; pagination: any }>>(
-      `/users/${userId}/following?page=${page}&limit=${limit}`
-    );
+  ): Promise<
+    ApiResponse<{ following: Following[]; pagination: Pagination }>
+  > => {
+    return apiRequest<
+      ApiResponse<{ following: Following[]; pagination: Pagination }>
+    >(`/users/${userId}/following?page=${page}&limit=${limit}`);
   },
 
   // Bookmark management
@@ -353,18 +367,20 @@ export const socialApi = {
     userId: string,
     page = 1,
     limit = 10
-  ): Promise<ApiResponse<{ bookmarks: any[]; pagination: any }>> => {
-    return apiRequest<ApiResponse<{ bookmarks: any[]; pagination: any }>>(
-      `/users/${userId}/bookmarks?page=${page}&limit=${limit}`
-    );
+  ): Promise<
+    ApiResponse<{ bookmarks: Bookmark[]; pagination: Pagination }>
+  > => {
+    return apiRequest<
+      ApiResponse<{ bookmarks: Bookmark[]; pagination: Pagination }>
+    >(`/users/${userId}/bookmarks?page=${page}&limit=${limit}`);
   },
 
   // Comment management
   addComment: async (
     mapId: string,
     comment: string
-  ): Promise<ApiResponse<any>> => {
-    return apiRequest<ApiResponse<any>>(`/maps/${mapId}/comments`, {
+  ): Promise<ApiResponse<Comment>> => {
+    return apiRequest<ApiResponse<Comment>>(`/maps/${mapId}/comments`, {
       method: "POST",
       body: JSON.stringify({ comment }),
     });
@@ -374,10 +390,10 @@ export const socialApi = {
     mapId: string,
     page = 1,
     limit = 10
-  ): Promise<ApiResponse<{ comments: any[]; pagination: any }>> => {
-    return apiRequest<ApiResponse<{ comments: any[]; pagination: any }>>(
-      `/maps/${mapId}/comments?page=${page}&limit=${limit}`
-    );
+  ): Promise<ApiResponse<{ comments: Comment[]; pagination: Pagination }>> => {
+    return apiRequest<
+      ApiResponse<{ comments: Comment[]; pagination: Pagination }>
+    >(`/maps/${mapId}/comments?page=${page}&limit=${limit}`);
   },
 
   deleteComment: async (commentId: string): Promise<ApiResponse> => {

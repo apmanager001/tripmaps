@@ -176,7 +176,7 @@ export const seoConfigs = {
 // Dynamic SEO for profile pages
 export function generateProfileMetadata(
   username: string,
-  userData?: any
+  userData?: { bio?: string; profileImage?: string }
 ): Metadata {
   const title = userData?.bio
     ? `${username}'s Travel Maps - ${userData.bio.substring(0, 50)}...`
@@ -203,7 +203,14 @@ export function generateProfileMetadata(
 }
 
 // Dynamic SEO for individual map pages
-export function generateMapMetadata(mapData: any): Metadata {
+export function generateMapMetadata(mapData: {
+  mapName: string;
+  user_id?: { username: string };
+  pois?: Array<{ tags?: string[] }>;
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+}): Metadata {
   const title = `${mapData.mapName} - Travel Map by ${
     mapData.user_id?.username || "Unknown"
   }`;
@@ -230,7 +237,7 @@ export function generateMapMetadata(mapData: any): Metadata {
     modifiedTime: mapData.updatedAt,
     tags:
       mapData.pois
-        ?.map((poi: any) => poi.tags)
+        ?.map((poi) => poi.tags)
         .flat()
         .filter(Boolean) || [],
   });

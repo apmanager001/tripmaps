@@ -100,10 +100,10 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  href="/profile"
+                  href="/about"
                   className="hover:text-primary transition-colors"
                 >
-                  Profile
+                  About
                 </Link>
               </li>
             </ul>

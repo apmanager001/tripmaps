@@ -1,5 +1,23 @@
 import { MetadataRoute } from "next";
 
+interface MapData {
+  _id: string;
+  updatedAt?: string;
+  createdAt: string;
+}
+
+interface UserData {
+  username: string;
+  updated_at?: string;
+  createdDate: string;
+}
+
+interface POIData {
+  locationName: string;
+  date_visited?: string;
+  createdAt: string;
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com";
 
@@ -26,7 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Dynamic pages - fetch from API
-  let dynamicPages: MetadataRoute.Sitemap = [];
+  const dynamicPages: MetadataRoute.Sitemap = [];
 
   try {
     // Fetch public maps for sitemap
@@ -40,7 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (mapsRes.ok) {
       const mapsData = await mapsRes.json();
       if (mapsData.success && mapsData.data) {
-        const mapPages = mapsData.data.map((map: any) => ({
+        const mapPages = mapsData.data.map((map: MapData) => ({
           url: `${baseUrl}/maps/${map._id}`,
           lastModified: new Date(map.updatedAt || map.createdAt),
           changeFrequency: "weekly" as const,
@@ -61,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (usersRes.ok) {
       const usersData = await usersRes.json();
       if (usersData.success && usersData.data) {
-        const profilePages = usersData.data.map((user: any) => ({
+        const profilePages = usersData.data.map((user: UserData) => ({
           url: `${baseUrl}/profile/${user.username}`,
           lastModified: new Date(user.updated_at || user.createdDate),
           changeFrequency: "weekly" as const,
@@ -82,7 +100,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (poisRes.ok) {
       const poisData = await poisRes.json();
       if (poisData.success && poisData.data) {
-        const poiPages = poisData.data.map((poi: any) => ({
+        const poiPages = poisData.data.map((poi: POIData) => ({
           url: `${baseUrl}/point_of_interest/${encodeURIComponent(
             poi.locationName
           )}`,

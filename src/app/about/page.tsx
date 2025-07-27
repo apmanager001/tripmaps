@@ -6,21 +6,18 @@ import {
   Heart,
   Globe,
   Shield,
-  Star,
   Compass,
-  BookOpen,
   MessageCircle,
   Bookmark,
   TrendingUp,
   Award,
 } from "lucide-react";
-import { generateMetadata, seoConfigs } from "@/lib/seo";
+import { generateMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = generateMetadata({
   title: "About TripMaps - Your Travel Companion",
   description:
     "Learn more about TripMaps - the platform that connects travelers worldwide through shared experiences and community-curated maps.",
-  keywords: "about TripMaps, travel platform, community maps, travel sharing",
 });
 
 export default function AboutPage() {
@@ -33,9 +30,9 @@ export default function AboutPage() {
             About TripMaps
           </h1>
           <p className="text-xl text-base-content/80 leading-relaxed">
-            We're building the world's most connected travel community, where
-            every journey becomes a story worth sharing and every destination
-            becomes an adventure waiting to happen.
+            We&apos;re building the world&apos;s most connected travel
+            community, where every journey becomes a story worth sharing and
+            every destination becomes an adventure waiting to happen.
           </p>
         </div>
       </section>
