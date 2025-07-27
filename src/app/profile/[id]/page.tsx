@@ -3,7 +3,7 @@ import Profile from "../comp/profile";
 import { generateProfileMetadata } from "@/lib/seo";
 
 interface ProfilePageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // Generate metadata for the profile page
