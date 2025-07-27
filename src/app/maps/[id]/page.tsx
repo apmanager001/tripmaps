@@ -3,7 +3,7 @@ import IndividualMap from "../comp/individualMap";
 import { generateMapMetadata } from "@/lib/seo";
 
 interface MapPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // Generate metadata for the map page
