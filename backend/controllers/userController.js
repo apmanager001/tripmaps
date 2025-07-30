@@ -2,6 +2,9 @@ const User = require("../model/user");
 const Map = require("../model/tripMaps");
 const Friend = require("../model/friends");
 const Bookmark = require("../model/bookmark");
+const {
+  generateProfilePresignedUrl,
+} = require("../services/profilePictureService");
 
 // Get user profile by ID or username
 const getUserProfile = async (req, res) => {
@@ -27,6 +30,25 @@ const getUserProfile = async (req, res) => {
       });
     }
 
+    // Generate presigned URLs for profile pictures if they exist
+    if (user.profilePicture?.s3Key) {
+      const presignedUrl = await generateProfilePresignedUrl(
+        user.profilePicture.s3Key
+      );
+      if (presignedUrl) {
+        user.profilePicture.s3Url = presignedUrl;
+      }
+
+      if (user.profilePicture?.thumbnailKey) {
+        const thumbnailPresignedUrl = await generateProfilePresignedUrl(
+          user.profilePicture.thumbnailKey
+        );
+        if (thumbnailPresignedUrl) {
+          user.profilePicture.thumbnailUrl = thumbnailPresignedUrl;
+        }
+      }
+    }
+
     // Get user's maps
     const maps = await Map.find({ user_id: user._id, isPrivate: false })
       .sort({ createdAt: -1 })
@@ -40,10 +62,23 @@ const getUserProfile = async (req, res) => {
       following_user_id: user._id,
     });
 
+    // Convert user to plain object to ensure all properties are included
+    const userObject = user.toObject ? user.toObject() : user;
+
+    // Manually add presigned URLs to the user object since they're not in the schema
+    if (user.profilePicture?.s3Url) {
+      userObject.profilePicture = userObject.profilePicture || {};
+      userObject.profilePicture.s3Url = user.profilePicture.s3Url;
+    }
+    if (user.profilePicture?.thumbnailUrl) {
+      userObject.profilePicture = userObject.profilePicture || {};
+      userObject.profilePicture.thumbnailUrl = user.profilePicture.thumbnailUrl;
+    }
+
     res.json({
       success: true,
       data: {
-        user,
+        user: userObject,
         maps,
         stats: {
           followers,

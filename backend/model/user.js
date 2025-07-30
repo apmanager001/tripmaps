@@ -1,5 +1,5 @@
-const mongoose = require('mongoose')
-const {Schema} = mongoose
+const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
 const userSchema = new Schema({
   email: {
@@ -25,11 +25,21 @@ const userSchema = new Schema({
     type: String,
     enum: ["member", "admin", "moderator"],
     default: "member",
-    required: true
+    required: true,
   },
   bio: {
     type: String,
-    
+  },
+  // Profile picture fields
+  profilePicture: {
+    s3Key: {
+      type: String,
+      default: null,
+    },
+    thumbnailKey: {
+      type: String,
+      default: null,
+    },
   },
   updated_at: {
     type: Date,
@@ -39,8 +49,30 @@ const userSchema = new Schema({
     type: Date,
     default: Date.now,
   },
+  // Subscription fields
+  stripeCustomerId: {
+    type: String,
+    default: null,
+  },
+  subscriptionId: {
+    type: String,
+    default: null,
+  },
+  subscriptionStatus: {
+    type: String,
+    enum: ["inactive", "active", "past_due", "canceled", "unpaid"],
+    default: "inactive",
+  },
+  currentPeriodEnd: {
+    type: Date,
+    default: null,
+  },
+  lastPaymentDate: {
+    type: Date,
+    default: null,
+  },
 });
 
-const UserModel = mongoose.model("User" , userSchema)
+const UserModel = mongoose.model("User", userSchema);
 
-module.exports = UserModel
+module.exports = UserModel;

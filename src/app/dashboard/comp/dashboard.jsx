@@ -10,10 +10,12 @@ import {
   ArrowRightToLine,
   LogOut,
   Menu,
+  LocateFixed,
   X,
 } from "lucide-react";
 import MyMaps from "./mymap";
 import AddMaps from "./addMap";
+import AddPOI from "./addPOI";
 import Search from "./search";
 import SettingsPage from "./settings";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -108,6 +110,7 @@ const Dashboard = () => {
 
   const tabs = [
     { name: "My Profile", icon: <User size={20} /> },
+    { name: "POIs", icon: <LocateFixed size={20} /> },
     { name: "Add Map", icon: <MapPinned size={20} /> },
     { name: "Search", icon: <Searched size={20} /> },
     { name: "Settings", icon: <Settings size={20} /> },
@@ -117,6 +120,8 @@ const Dashboard = () => {
     switch (activeTab) {
       case "My Profile":
         return <MyMaps />;
+      case "POIs":
+        return <AddPOI />;  
       case "Add Map":
         return <AddMaps />;
       case "Search":

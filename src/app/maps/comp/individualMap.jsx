@@ -478,7 +478,7 @@ export default function IndividualMaps({ id }) {
         className="rounded overflow-hidden border border-base-300"
         data-map-container="true"
       >
-        <Maps coordArray={coordArray} />
+                                             <Maps key="individualMap-map" mapKey="individualMap-map" coordArray={coordArray} />
       </div>
       <div className="bg-base-100 rounded-lg p-4 shadow-inner border border-base-300">
         <h2 className="text-lg font-semibold text-primary mb-4">

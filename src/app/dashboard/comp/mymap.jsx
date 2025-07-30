@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../../store/useAuthStore";
+import ProfilePictureUpload from "@/components/ProfilePictureUpload";
+import { useVerifyUser } from "@/components/utility/tanstack/verifyUser";
 import {
   MapPin,
   X,
@@ -18,7 +20,7 @@ import {
 import SharedButtons from "./maps/shareButtons";
 import Link from "next/link";
 import PrivateToggle from "./comps/privateToggle";
-import { legacyApi, mapApi, poiApi, socialApi } from "@/lib/api";
+import { legacyApi, mapApi, poiApi, socialApi, userApi } from "@/lib/api";
 import { toast } from "react-hot-toast";
 import Maps from "./maps/map";
 
@@ -26,6 +28,23 @@ export default function Dashsection3() {
   const user = useAuthStore((state) => state.user);
   const userId = user?._id;
   const queryClient = useQueryClient();
+
+  // Force refresh auth data to get updated profile picture
+  const { data: authUser, refetch: refetchAuth } = useVerifyUser();
+
+  // Get user profile data with presigned URLs (same as profile page)
+  const { data: profileData } = useQuery({
+    queryKey: ["userProfile", userId],
+    queryFn: () => userApi.getProfile(userId),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Force refresh auth data on component mount to get profile picture
+  useEffect(() => {
+    refetchAuth();
+  }, [refetchAuth]);
+
   const [editingMap, setEditingMap] = useState({ id: null, name: "" });
   const [lifetimeMapOpen, setLifetimeMapOpen] = useState(false);
   const [deleteModal, setDeleteModal] = useState({
@@ -217,7 +236,12 @@ export default function Dashsection3() {
                 </div>
               ) : lifetimeMapCoords.length > 0 ? (
                 <div className="h-full">
-                  <Maps coordArray={lifetimeMapCoords} zoom={1} />
+                  <Maps
+                    key="mymap-map"
+                    mapKey="mymap-map"
+                    coordArray={lifetimeMapCoords}
+                    zoom={1}
+                  />
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-500">
@@ -241,7 +265,13 @@ export default function Dashsection3() {
         <div className="flex-1 bg-base-200 md:shadow-sm md:rounded-lg overflow-auto">
           <div className="flex flex-col">
             <div className="flex items-center p-6 gap-4 border-b border-base-300">
-              <CircleUser size={48} className="text-primary" />
+              {/* <CircleUser size={48} className="text-primary" /> */}
+              <ProfilePictureUpload
+                currentUser={profileData?.data?.user || authUser || user}
+                onUpdate={() => {}}
+                size="md"
+                showUserInfo={false}
+              />
               <div className="flex flex-col">
                 <Link
                   href={`/profile/${user?.username}`}
@@ -278,7 +308,7 @@ export default function Dashsection3() {
         </div>
 
         {/* Friends Panel */}
-        <div className="md:w-72 bg-base-100 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96">
+        <div className="md:w-72 bg-base-200 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96">
           <h2 className="text-lg font-semibold text-primary border-b border-base-300 pb-2">
             Friends
           </h2>
@@ -310,7 +340,7 @@ export default function Dashsection3() {
         </div>
 
         {/* Bookmarked Maps Panel */}
-        <div className="md:w-72 bg-base-100 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96">
+        <div className="md:w-72 bg-base-200 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96">
           <h2 className="text-lg font-semibold text-primary border-b border-base-300 pb-2">
             Bookmarked Maps
           </h2>

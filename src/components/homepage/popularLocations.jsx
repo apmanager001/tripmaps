@@ -55,7 +55,7 @@ export default function PopularLocations() {
           <Link
             key={loc.locationName}
             href={`/point_of_interest/${encodeURIComponent(loc.locationName)}`}
-            className="badge badge-primary badge-lg hover:badge-primary-focus transition-colors cursor-pointer"
+            className="truncate badge badge-primary badge-lg hover:badge-primary-focus transition-colors cursor-pointer"
           >
             {loc.locationName}
             <span className="ml-2 badge badge-secondary badge-sm">

@@ -2,6 +2,9 @@ const User = require("../model/user.js");
 const dotenv = require("dotenv").config();
 const { hashPassword, comparePassword } = require("../helpers/auth.js");
 const jwt = require("jsonwebtoken");
+const {
+  generateProfilePresignedUrl,
+} = require("../services/profilePictureService");
 
 //register endpoint
 const registerUser = async (req, res) => {
@@ -139,13 +142,34 @@ const verifyUser = async (req, res) => {
       });
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded._id).select("username email"); // Use _id
+    const user = await User.findById(decoded._id).select(
+      "username email profilePicture"
+    ); // Use _id
 
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
+    }
+
+    // Generate presigned URLs for profile pictures if they exist
+    if (user.profilePicture?.s3Key) {
+      const presignedUrl = await generateProfilePresignedUrl(
+        user.profilePicture.s3Key
+      );
+      if (presignedUrl) {
+        user.profilePicture.s3Url = presignedUrl;
+      }
+
+      if (user.profilePicture?.thumbnailKey) {
+        const thumbnailPresignedUrl = await generateProfilePresignedUrl(
+          user.profilePicture.thumbnailKey
+        );
+        if (thumbnailPresignedUrl) {
+          user.profilePicture.thumbnailUrl = thumbnailPresignedUrl;
+        }
+      }
     }
 
     return res.status(200).json({

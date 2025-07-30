@@ -6,6 +6,10 @@ export interface User {
   emailPrivate?: boolean;
   role: "member" | "admin" | "moderator";
   bio?: string;
+  profilePicture?: {
+    s3Key?: string;
+    thumbnailKey?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }

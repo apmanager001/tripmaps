@@ -61,6 +61,9 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 app.use(cookieParser());
 
+// Special handling for Stripe webhooks (raw body)
+app.use("/stripe/webhook", express.raw({ type: "application/json" }));
+
 // Request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);

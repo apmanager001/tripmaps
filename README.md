@@ -52,6 +52,20 @@ cd ..
 
 ### 3. Environment Setup
 
+#### Google Maps API Key Setup
+
+To use the map functionality, you'll need a Google Maps API key:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the following APIs:
+   - Maps JavaScript API
+   - Places API
+4. Create credentials (API Key)
+5. Restrict the API key to your domain for security
+
+#### Environment Variables
+
 Create `.env.local` in the root directory:
 
 ```env
@@ -59,6 +73,7 @@ Create `.env.local` in the root directory:
 NEXT_PUBLIC_BACKEND=http://localhost:5000
 NEXT_PUBLIC_RAPID_KEY=your_rapidapi_key
 NEXT_PUBLIC_RAPID_HOST=trueway-places.p.rapidapi.com
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
 ```
 
 Create `.env` in the backend directory:

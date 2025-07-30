@@ -10,10 +10,12 @@ import {
   X,
   Calendar,
   Clock,
+  Crown,
+  Check,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/store/useAuthStore";
-import { userApi, authApi } from "@/lib/api";
+import { userApi, authApi, stripeApi } from "@/lib/api";
 
 export default function Settings() {
   const { user: currentUser, clearUser } = useAuthStore();
@@ -28,6 +30,9 @@ export default function Settings() {
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [createdDate, setCreatedDate] = useState("");
   const [updatedDate, setUpdatedDate] = useState("");
+  const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
+  const [currentPeriodEnd, setCurrentPeriodEnd] = useState(null);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   // Fetch user data
   const { data: userData, isLoading } = useQuery({
@@ -40,6 +45,13 @@ export default function Settings() {
   const { data: dashboardData } = useQuery({
     queryKey: ["dashboardData", currentUser?._id],
     queryFn: () => userApi.getDashboard(currentUser._id),
+    enabled: !!currentUser?._id,
+  });
+
+  // Fetch subscription status
+  const { data: subscriptionData } = useQuery({
+    queryKey: ["subscriptionStatus", currentUser?._id],
+    queryFn: () => stripeApi.getSubscriptionStatus(currentUser._id),
     enabled: !!currentUser?._id,
   });
 
@@ -104,6 +116,14 @@ export default function Settings() {
     }
   }, [userData]);
 
+  // Initialize subscription data when it loads
+  useEffect(() => {
+    if (subscriptionData?.data) {
+      setSubscriptionStatus(subscriptionData.data.subscriptionStatus);
+      setCurrentPeriodEnd(subscriptionData.data.currentPeriodEnd);
+    }
+  }, [subscriptionData]);
+
   const handleEmailUpdate = () => {
     if (!newEmail.trim()) {
       toast.error("Email cannot be empty");
@@ -128,6 +148,29 @@ export default function Settings() {
 
   const handleLogout = () => {
     logoutMutation.mutate();
+  };
+
+  const handleUpgrade = async () => {
+    if (!currentUser?._id) {
+      toast.error("User not found");
+      return;
+    }
+
+    setIsUpgrading(true);
+    try {
+      const response = await stripeApi.createCheckoutSession(currentUser._id);
+      if (response.success && response.data.url) {
+        // Redirect to Stripe checkout
+        window.location.href = response.data.url;
+      } else {
+        toast.error("Failed to create checkout session");
+      }
+    } catch (error) {
+      console.error("Upgrade error:", error);
+      toast.error(error.message || "Failed to start upgrade process");
+    } finally {
+      setIsUpgrading(false);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -366,6 +409,104 @@ export default function Settings() {
                   <div className="text-sm text-gray-600">Total Views</div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Upgrade Subscription */}
+          <div className="card bg-gradient-to-br from-primary/10 to-secondary/10 shadow-lg border border-primary/20">
+            <div className="card-body">
+              <div className="flex items-center gap-2 mb-4">
+                <Crown className="w-6 h-6 text-primary" />
+                <h2 className="card-title text-xl text-primary">
+                  {subscriptionStatus === "active"
+                    ? "Premium Active"
+                    : "Upgrade to Premium"}
+                </h2>
+              </div>
+
+              {subscriptionStatus === "active" ? (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-success mb-1">
+                      ✓ Premium Active
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {currentPeriodEnd && (
+                        <>
+                          Renews on{" "}
+                          {new Date(currentPeriodEnd).toLocaleDateString()}
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-success" />
+                      <span>No advertisements</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Check className="w-4 h-4 text-success" />
+                      <span>Premium features coming soon</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Check className="w-4 h-4 text-success" />
+                      <span>Priority support</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      // TODO: Implement cancel subscription
+                      toast.info("Cancel subscription feature coming soon");
+                    }}
+                    className="btn btn-outline btn-error w-full"
+                  >
+                    Cancel Subscription
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary mb-1">
+                      $1.99
+                    </div>
+                    <div className="text-sm text-gray-600">per month</div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-success" />
+                      <span>No advertisements</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Check className="w-4 h-4 text-success" />
+                      <span>Premium features coming soon</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Check className="w-4 h-4 text-success" />
+                      <span>Priority support</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleUpgrade}
+                    disabled={isUpgrading}
+                    className="btn btn-primary btn-lg w-full flex gap-2"
+                  >
+                    {isUpgrading ? (
+                      <div className="loading loading-spinner loading-sm"></div>
+                    ) : (
+                      <Crown className="w-5 h-5" />
+                    )}
+                    {isUpgrading ? "Processing..." : "Upgrade Now"}
+                  </button>
+
+                  <p className="text-xs text-center text-gray-500">
+                    Cancel anytime. No commitment required.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

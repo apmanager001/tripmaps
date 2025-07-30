@@ -101,6 +101,40 @@ export const userApi = {
     return apiRequest<DashboardData>(`/users/dashboard/${userId}`);
   },
 
+  // Profile picture functions
+  uploadProfilePicture: async (
+    profilePictureFile: File
+  ): Promise<ApiResponse<User>> => {
+    const formData = new FormData();
+    formData.append("profilePicture", profilePictureFile);
+
+    return fetch(`${API_BASE_URL}/users/profile-picture`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    }).then((res) => res.json());
+  },
+
+  deleteProfilePicture: async (): Promise<ApiResponse<User>> => {
+    return apiRequest<ApiResponse<User>>("/users/profile-picture", {
+      method: "DELETE",
+    });
+  },
+
+  getUserProfile: async (userId: string): Promise<ApiResponse<User>> => {
+    return apiRequest<ApiResponse<User>>(`/users/${userId}/profile`);
+  },
+
+  updateUserProfile: async (data: {
+    bio?: string;
+    emailPrivate?: boolean;
+  }): Promise<ApiResponse<User>> => {
+    return apiRequest<ApiResponse<User>>("/users/profile", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
   searchUsers: async (
     query: string,
     page = 1,
@@ -211,12 +245,15 @@ export const mapApi = {
 // ===== POI API =====
 export const poiApi = {
   createPOI: async (poiData: {
-    map_id: string;
+    map_id?: string;
     lat: number;
     lng: number;
     locationName?: string;
     date_visited?: Date;
     tags?: string[];
+    description?: string;
+    googleMapsLink?: string;
+    isPrivate?: boolean;
   }): Promise<ApiResponse<POI>> => {
     return apiRequest<ApiResponse<POI>>("/pois", {
       method: "POST",
@@ -238,6 +275,9 @@ export const poiApi = {
       locationName?: string;
       date_visited?: Date;
       tags?: string[];
+      description?: string;
+      googleMapsLink?: string;
+      isPrivate?: boolean;
     }
   ): Promise<ApiResponse<POI>> => {
     return apiRequest<ApiResponse<POI>>(`/pois/${poiId}`, {
@@ -256,6 +296,15 @@ export const poiApi = {
     return apiRequest<ApiResponse<POI[]>>(`/maps/${mapId}/pois`);
   },
 
+  getUserPOIs: async (
+    page = 1,
+    limit = 20
+  ): Promise<ApiResponse<{ pois: POI[]; pagination: Pagination }>> => {
+    return apiRequest<ApiResponse<{ pois: POI[]; pagination: Pagination }>>(
+      `/pois/user?page=${page}&limit=${limit}`
+    );
+  },
+
   searchPOIsByLocation: async (
     lat: number,
     lng: number,
@@ -265,6 +314,18 @@ export const poiApi = {
   ): Promise<ApiResponse<{ pois: POI[]; pagination: Pagination }>> => {
     return apiRequest<ApiResponse<{ pois: POI[]; pagination: Pagination }>>(
       `/pois/search/location?lat=${lat}&lng=${lng}&radius=${radius}&page=${page}&limit=${limit}`
+    );
+  },
+
+  searchPOIsByName: async (
+    query: string,
+    page = 1,
+    limit = 20
+  ): Promise<ApiResponse<{ pois: POI[]; pagination: Pagination }>> => {
+    return apiRequest<ApiResponse<{ pois: POI[]; pagination: Pagination }>>(
+      `/pois/search/name?q=${encodeURIComponent(
+        query
+      )}&page=${page}&limit=${limit}`
     );
   },
 
@@ -288,6 +349,38 @@ export const poiApi = {
     return apiRequest<ApiResponse<POI>>(`/pois/${poiId}/like`, {
       method: "POST",
     });
+  },
+
+  // Upload photo to POI
+  uploadPhoto: async (
+    poiId: string,
+    photoFile: File,
+    cropData?: any,
+    isPrimary: boolean = false,
+    dateVisited?: string
+  ): Promise<ApiResponse<any>> => {
+    const formData = new FormData();
+    formData.append("photo", photoFile);
+    if (cropData) {
+      formData.append("cropData", JSON.stringify(cropData));
+    }
+    formData.append("isPrimary", isPrimary.toString());
+    if (dateVisited) {
+      formData.append("date_visited", dateVisited);
+    }
+
+    return fetch(`${process.env.NEXT_PUBLIC_BACKEND}/pois/${poiId}/photos`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    }).then((res) => res.json());
+  },
+
+  deletePhoto: async (photoId: string): Promise<ApiResponse<any>> => {
+    return fetch(`${process.env.NEXT_PUBLIC_BACKEND}/photos/${photoId}`, {
+      method: "DELETE",
+      credentials: "include",
+    }).then((res) => res.json());
   },
 
   // Legacy POI API for external services
@@ -432,6 +525,46 @@ export const tagApi = {
     return apiRequest<ApiResponse<{ _id: string; name: string }>>("/tags", {
       method: "POST",
       body: JSON.stringify({ name }),
+    });
+  },
+};
+
+// ===== STRIPE API =====
+export const stripeApi = {
+  createCheckoutSession: async (
+    userId: string
+  ): Promise<ApiResponse<{ sessionId: string; url: string }>> => {
+    return apiRequest<ApiResponse<{ sessionId: string; url: string }>>(
+      "/stripe/create-checkout-session",
+      {
+        method: "POST",
+        body: JSON.stringify({ userId }),
+      }
+    );
+  },
+
+  getSubscriptionStatus: async (
+    userId: string
+  ): Promise<
+    ApiResponse<{
+      subscriptionStatus: string;
+      currentPeriodEnd: string | null;
+      stripeCustomerId: string | null;
+    }>
+  > => {
+    return apiRequest<
+      ApiResponse<{
+        subscriptionStatus: string;
+        currentPeriodEnd: string | null;
+        stripeCustomerId: string | null;
+      }>
+    >(`/stripe/subscription/${userId}`);
+  },
+
+  cancelSubscription: async (userId: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>("/stripe/cancel-subscription", {
+      method: "POST",
+      body: JSON.stringify({ userId }),
     });
   },
 };

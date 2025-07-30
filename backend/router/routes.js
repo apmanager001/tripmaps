@@ -36,13 +36,38 @@ const {
   updatePOI,
   deletePOI,
   getPOIsByMap,
+  getUserPOIs,
   searchPOIsByLocation,
+  searchPOIsByName,
   searchMapsByPOIName,
   togglePOILike,
   getPopularLocations,
 } = require("../controllers/poiController");
 
 const { getAllTags, createTag } = require("../controllers/tagController");
+
+const {
+  createCheckoutSession,
+  handleWebhook,
+  getSubscriptionStatus,
+  cancelSubscription,
+} = require("../controllers/stripeController");
+
+const {
+  uploadPhoto,
+  getPOIPhotos,
+  setPrimaryPhoto,
+  deletePhoto,
+  getUserPhotos,
+  updatePhoto,
+} = require("../controllers/photoController");
+
+const {
+  uploadProfilePicture,
+  deleteProfilePicture,
+  getUserProfile: getProfile,
+  updateUserProfile: updateProfile,
+} = require("../controllers/profileController");
 
 const {
   followUser,
@@ -65,6 +90,8 @@ const {
   validateLogin,
   validateMapData,
 } = require("../middleware/validation");
+const { upload } = require("../services/s3Service");
+const { upload: profileUpload } = require("../services/profilePictureService");
 
 // ===== AUTHENTICATION ROUTES =====
 router.post("/register", validateRegistration, registerUser);
@@ -80,6 +107,17 @@ router.get("/users/search", searchUsers);
 router.get("/users/top", getTopUsers);
 router.delete("/users/:id", jwtAuth, deleteUserAccount);
 
+// ===== PROFILE PICTURE ROUTES =====
+router.post(
+  "/users/profile-picture",
+  jwtAuth,
+  profileUpload.single("profilePicture"),
+  uploadProfilePicture
+);
+router.delete("/users/profile-picture", jwtAuth, deleteProfilePicture);
+router.get("/users/:userId/profile", getProfile);
+router.put("/users/profile", jwtAuth, updateProfile);
+
 // ===== MAP ROUTES =====
 router.post("/maps", jwtAuth, validateMapData, createMap);
 router.get("/maps/search", searchMaps);
@@ -93,7 +131,9 @@ router.post("/maps/:id/like", jwtAuth, toggleMapLike);
 
 // ===== POI ROUTES =====
 router.post("/pois", jwtAuth, createPOI);
+router.get("/pois/user", jwtAuth, getUserPOIs);
 router.get("/pois/search/location", searchPOIsByLocation);
+router.get("/pois/search/name", searchPOIsByName);
 router.get("/pois/search/maps/:poiName", searchMapsByPOIName);
 router.get("/pois/popular-locations", getPopularLocations);
 router.get("/pois/:id", getPOI);
@@ -126,6 +166,25 @@ router.delete("/comments/:commentId", jwtAuth, deleteComment);
 // Comment like management
 router.post("/comments/:commentId/like", jwtAuth, likeComment);
 router.delete("/comments/:commentId/like", jwtAuth, unlikeComment);
+
+// ===== STRIPE ROUTES =====
+router.post("/stripe/create-checkout-session", jwtAuth, createCheckoutSession);
+router.post("/stripe/webhook", handleWebhook);
+router.get("/stripe/subscription/:userId", jwtAuth, getSubscriptionStatus);
+router.post("/stripe/cancel-subscription", jwtAuth, cancelSubscription);
+
+// ===== PHOTO ROUTES =====
+router.post(
+  "/pois/:poiId/photos",
+  jwtAuth,
+  upload.single("photo"),
+  uploadPhoto
+);
+router.get("/pois/:poiId/photos", getPOIPhotos);
+router.patch("/photos/:photoId/primary", jwtAuth, setPrimaryPhoto);
+router.delete("/photos/:photoId", jwtAuth, deletePhoto);
+router.get("/users/:userId/photos", getUserPhotos);
+router.put("/photos/:photoId", jwtAuth, updatePhoto);
 
 // ===== LEGACY ROUTES (for backward compatibility) =====
 // These routes maintain compatibility with existing frontend code

@@ -5,37 +5,82 @@ const Tag = require("../model/tag");
 const POILike = require("../model/poiLike");
 const EditHistory = require("../model/editHistory");
 const mongoose = require("mongoose");
+const Photo = require("../model/photo");
+const AWS = require("aws-sdk");
+
+// Configure AWS SDK for Cloudflare R2
+AWS.config.update({
+  accessKeyId: process.env.R2_ACCESS_KEY_ID,
+  secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  region: "auto",
+  endpoint: "https://57504fc5bc651800ba47b85ed3c810bf.r2.cloudflarestorage.com",
+  s3ForcePathStyle: true,
+  signatureVersion: "v4",
+});
+
+const s3 = new AWS.S3();
+const BUCKET_NAME = process.env.R2_BUCKET_NAME;
+
+// Generate presigned URL for photo access
+const generatePresignedUrl = async (s3Key) => {
+  try {
+    const presignedUrl = await s3.getSignedUrlPromise("getObject", {
+      Bucket: BUCKET_NAME,
+      Key: s3Key,
+      Expires: 3600, // 1 hour
+    });
+    return presignedUrl;
+  } catch (error) {
+    console.error("Error generating presigned URL:", error);
+    return null;
+  }
+};
 
 // Create a new POI
 const createPOI = async (req, res) => {
   try {
-    const { map_id, lat, lng, locationName, date_visited, tags } = req.body;
+    const {
+      map_id,
+      lat,
+      lng,
+      locationName,
+      date_visited,
+      description,
+      googleMapsLink,
+      tags,
+      isPrivate = false,
+    } = req.body;
     const userId = req.user._id;
 
-    // Verify map exists and user owns it
-    const map = await Map.findById(map_id);
-    if (!map) {
-      return res.status(404).json({
-        success: false,
-        message: "Map not found",
-      });
-    }
+    // Verify map exists and user owns it (if map_id is provided)
+    if (map_id) {
+      const map = await Map.findById(map_id);
+      if (!map) {
+        return res.status(404).json({
+          success: false,
+          message: "Map not found",
+        });
+      }
 
-    if (map.user_id.toString() !== userId.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: "Not authorized to add POI to this map",
-      });
+      if (map.user_id.toString() !== userId.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "Not authorized to add POI to this map",
+        });
+      }
     }
 
     // Create POI
     const newPOI = new POI({
-      map_id,
+      map_id: map_id || null, // Allow POIs without maps
       user_id: userId,
       lat,
       lng,
       locationName,
       date_visited: date_visited || new Date(),
+      description,
+      googleMapsLink,
+      isPrivate,
     });
 
     const savedPOI = await newPOI.save();
@@ -131,7 +176,16 @@ const getPOI = async (req, res) => {
 const updatePOI = async (req, res) => {
   try {
     const { id } = req.params;
-    const { lat, lng, locationName, date_visited, tags } = req.body;
+    const {
+      lat,
+      lng,
+      locationName,
+      date_visited,
+      tags,
+      description,
+      googleMapsLink,
+      isPrivate,
+    } = req.body;
     const userId = req.user._id;
 
     const poi = await POI.findById(id);
@@ -155,6 +209,10 @@ const updatePOI = async (req, res) => {
     if (lng !== undefined) updateData.lng = lng;
     if (locationName !== undefined) updateData.locationName = locationName;
     if (date_visited !== undefined) updateData.date_visited = date_visited;
+    if (description !== undefined) updateData.description = description;
+    if (googleMapsLink !== undefined)
+      updateData.googleMapsLink = googleMapsLink;
+    if (isPrivate !== undefined) updateData.isPrivate = isPrivate;
 
     const updatedPOI = await POI.findByIdAndUpdate(id, updateData, {
       new: true,
@@ -229,11 +287,49 @@ const deletePOI = async (req, res) => {
       });
     }
 
+    // Find all photos associated with this POI
+    const photos = await Photo.find({ poi_id: id });
+    console.log(`Found ${photos.length} photos to delete for POI ${id}`);
+
+    // Delete photos from R2 storage
+    const { deleteImage } = require("../services/s3Service");
+
+    // Create a flat array of all delete promises
+    const photoDeletePromises = [];
+    photos.forEach((photo) => {
+      console.log(`Adding delete promise for main photo: ${photo.s3Key}`);
+      photoDeletePromises.push(deleteImage(photo.s3Key));
+      if (photo.thumbnailKey) {
+        console.log(
+          `Adding delete promise for thumbnail: ${photo.thumbnailKey}`
+        );
+        photoDeletePromises.push(deleteImage(photo.thumbnailKey));
+      } else {
+        console.log(`No thumbnail key found for photo: ${photo.s3Key}`);
+      }
+    });
+
     // Cascade delete related data
-    await Promise.all([
-      POI.findByIdAndDelete(id),
-      POITag.deleteMany({ poi_id: id }),
-    ]);
+    try {
+      await Promise.all([
+        POI.findByIdAndDelete(id),
+        POITag.deleteMany({ poi_id: id }),
+        Photo.deleteMany({ poi_id: id }), // Delete all photos from database
+        ...photoDeletePromises, // Delete photo files from R2
+      ]);
+      console.log(`Successfully deleted POI ${id} and all associated files`);
+    } catch (error) {
+      console.error(`Error during POI deletion for ${id}:`, error);
+      // Still try to delete the POI and database records even if R2 deletion fails
+      await Promise.all([
+        POI.findByIdAndDelete(id),
+        POITag.deleteMany({ poi_id: id }),
+        Photo.deleteMany({ poi_id: id }),
+      ]);
+      console.log(
+        `POI ${id} deleted from database, but some R2 files may remain`
+      );
+    }
 
     // Record edit history
     await new EditHistory({
@@ -245,7 +341,7 @@ const deletePOI = async (req, res) => {
 
     res.json({
       success: true,
-      message: "POI deleted successfully",
+      message: "POI and all associated photos deleted successfully",
     });
   } catch (error) {
     console.error("Error deleting POI:", error);
@@ -382,6 +478,78 @@ const searchPOIsByLocation = async (req, res) => {
   }
 };
 
+// Search POIs by name
+const searchPOIsByName = async (req, res) => {
+  try {
+    const { q } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    if (!q || q.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query must be at least 2 characters",
+      });
+    }
+
+    const searchRegex = new RegExp(q, "i");
+    const pois = await POI.find({
+      locationName: searchRegex,
+    })
+      .populate("user_id", "username")
+      .populate("map_id", "mapName isPrivate user_id")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    // Filter out POIs from private maps (only if they have a map_id)
+    const filteredPOIs = pois.filter((poi) => {
+      // If POI has no map_id, include it (independent POIs)
+      if (!poi.map_id) return true;
+      // If POI has a map_id, only include if the map is not private
+      return !poi.map_id.isPrivate;
+    });
+
+    // Get tags for each POI
+    const poisWithTags = await Promise.all(
+      filteredPOIs.map(async (poi) => {
+        const poiTags = await POITag.find({ poi_id: poi._id }).populate(
+          "tag_id",
+          "name"
+        );
+        return {
+          ...poi.toObject(),
+          tags: poiTags.map((pt) => pt.tag_id),
+        };
+      })
+    );
+
+    const total = await POI.countDocuments({
+      locationName: searchRegex,
+    });
+
+    res.json({
+      success: true,
+      data: {
+        pois: poisWithTags,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error searching POIs by name:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 // Like/unlike POI
 const togglePOILike = async (req, res) => {
   try {
@@ -468,8 +636,8 @@ const searchMapsByPOIName = async (req, res) => {
         select: "mapName isPrivate user_id createdAt",
         populate: {
           path: "user_id",
-          select: "username"
-        }
+          select: "username",
+        },
       })
       .populate("user_id", "username")
       .skip(skip)
@@ -561,6 +729,82 @@ const searchMapsByPOIName = async (req, res) => {
   }
 };
 
+// Get all POIs for a user
+const getUserPOIs = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const pois = await POI.find({ user_id: userId })
+      .populate("map_id", "mapName")
+      .populate("user_id", "username")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    // Get tags and photos for each POI
+    const poisWithTagsAndPhotos = await Promise.all(
+      pois.map(async (poi) => {
+        const poiTags = await POITag.find({ poi_id: poi._id }).populate(
+          "tag_id",
+          "name"
+        );
+
+        // Get photos for this POI
+        const photos = await Photo.find({ poi_id: poi._id })
+          .sort({ isPrimary: -1, createdAt: -1 }) // Primary photos first, then by creation date
+          .select(
+            "s3Key thumbnailKey isPrimary created_at date_visited user_id"
+          );
+
+        // Generate presigned URLs for photos
+        const photosWithUrls = await Promise.all(
+          photos.map(async (photo) => {
+            if (photo.s3Key) {
+              const presignedUrl = await generatePresignedUrl(photo.s3Key);
+              if (presignedUrl) {
+                return {
+                  ...photo.toObject(),
+                  s3Url: presignedUrl,
+                  thumbnailUrl: presignedUrl, // Assuming thumbnail is the same as full URL for now
+                };
+              }
+            }
+            return photo; // Return original if no presigned URL
+          })
+        );
+
+        return {
+          ...poi.toObject(),
+          tags: poiTags.map((pt) => pt.tag_id),
+          photos: photosWithUrls,
+        };
+      })
+    );
+
+    const total = await POI.countDocuments({ user_id: userId });
+
+    res.json({
+      success: true,
+      data: poisWithTagsAndPhotos,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching user POIs:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 // Get popular locations based on POI frequency
 const getPopularLocations = async (req, res) => {
   try {
@@ -575,15 +819,16 @@ const getPopularLocations = async (req, res) => {
           as: "map",
         },
       },
+      // Filter out POIs without maps and only public maps
+      {
+        $match: {
+          map: { $ne: [] }, // POIs must have a map
+          "map.isPrivate": false, // Map must be public
+        },
+      },
       // Unwind the map array
       {
         $unwind: "$map",
-      },
-      // Filter only public maps
-      {
-        $match: {
-          "map.isPrivate": false,
-        },
       },
       // Sort by likes (descending)
       {
@@ -637,7 +882,9 @@ module.exports = {
   updatePOI,
   deletePOI,
   getPOIsByMap,
+  getUserPOIs,
   searchPOIsByLocation,
+  searchPOIsByName,
   searchMapsByPOIName,
   getPopularLocations,
   togglePOILike,

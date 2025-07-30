@@ -3,50 +3,24 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/store/useAuthStore";
-import { Loader, X } from "lucide-react";
+import { Loader, X, MapPin } from "lucide-react";
 import { mapApi, tagApi, poiApi } from "@/lib/api";
 
-const POImap = async ({ queryKey }) => {
-  const [_, coord] = queryKey;
-  const lat = coord.lat.toFixed(4);
-  const lng = coord.lng.toFixed(4);
+// Removed nearby places search functionality
 
-  const res = await fetch(
-    `https://trueway-places.p.rapidapi.com/FindPlacesNearby?location=${lat},${lng}&radius=60&language=en`,
-    {
-      headers: {
-        "x-rapidapi-key": process.env.NEXT_PUBLIC_RAPID_KEY,
-        "x-rapidapi-host": process.env.NEXT_PUBLIC_RAPID_HOST,
-      },
-    }
-  );
-
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || "Failed to fetch POIs");
-  return data.results;
-};
-
-export default function NewMap({ coordArray = [], setCoordArray = () => {} }) {
+export default function NewMap({
+  coordArray = [],
+  setCoordArray = () => {},
+  mapName = "",
+}) {
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
-  const [mapName, setMapName] = useState("");
-  const [currentCoordIndex, setCurrentCoordIndex] = useState(null);
   const [selectedTags, setSelectedTags] = useState({}); // Store tags for each coordinate
   const [newTagInputs, setNewTagInputs] = useState({}); // Store new tag inputs for each coordinate
   const [showNewTagInputs, setShowNewTagInputs] = useState({}); // Store which rows show new tag input
 
   // Add validation for coordArray
   const safeCoordArray = Array.isArray(coordArray) ? coordArray : [];
-  const currentCoord = safeCoordArray[currentCoordIndex] || null;
-
-  const { data: pois = [], isLoading } = useQuery({
-    queryKey: [
-      "nearbyPOIs",
-      currentCoord ? { lat: currentCoord.lat, lng: currentCoord.lng } : null,
-    ],
-    queryFn: POImap,
-    enabled: !!currentCoord,
-  });
 
   // Fetch available tags
   const { data: availableTags = [], refetch: refetchTags } = useQuery({
@@ -57,13 +31,7 @@ export default function NewMap({ coordArray = [], setCoordArray = () => {} }) {
     },
   });
 
-  useEffect(() => {
-    if (safeCoordArray.length > 0) {
-      setCurrentCoordIndex(safeCoordArray.length - 1);
-    } else {
-      setCurrentCoordIndex(null);
-    }
-  }, [safeCoordArray]);
+  // Removed useEffect for currentCoordIndex
 
   // Add safe wrapper for setCoordArray calls
   const safeSetCoordArray = (updater) => {
@@ -74,8 +42,7 @@ export default function NewMap({ coordArray = [], setCoordArray = () => {} }) {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (!user?._id) {
       toast.error("User not authenticated");
       return;
@@ -116,11 +83,9 @@ export default function NewMap({ coordArray = [], setCoordArray = () => {} }) {
 
       toast.success("Map and POIs saved successfully!");
       safeSetCoordArray([]);
-      setMapName("");
       setSelectedTags({});
       setNewTagInputs({});
       setShowNewTagInputs({});
-      setCurrentCoordIndex(null);
 
       // Refresh dashboard data to show the new map
       queryClient.invalidateQueries(["dashboardData", user._id]);
@@ -151,31 +116,9 @@ export default function NewMap({ coordArray = [], setCoordArray = () => {} }) {
     setSelectedTags(newSelectedTags);
     setNewTagInputs(newNewTagInputs);
     setShowNewTagInputs(newShowNewTagInputs);
-
-    // Adjust currentCoordIndex after deletion
-    if (currentCoordIndex === index) {
-      if (safeCoordArray.length > 1) {
-        setCurrentCoordIndex(index > 0 ? index - 1 : 0);
-      } else {
-        setCurrentCoordIndex(null);
-      }
-    } else if (currentCoordIndex > index) {
-      setCurrentCoordIndex(currentCoordIndex - 1);
-    }
   };
 
-  const handleAddPOI = (poiName) => {
-    if (currentCoordIndex === null) return;
-
-    safeSetCoordArray((prev) => {
-      const updatedArray = [...prev];
-      updatedArray[currentCoordIndex] = {
-        ...updatedArray[currentCoordIndex],
-        locationName: poiName,
-      };
-      return updatedArray;
-    });
-  };
+  // Removed handleAddPOI function - no longer needed
 
   const handleTagChange = (coordIndex, selectedOptions) => {
     setSelectedTags((prev) => ({
@@ -217,56 +160,19 @@ export default function NewMap({ coordArray = [], setCoordArray = () => {} }) {
 
   return (
     <>
-      {/* Suggested POIs */}
-      {currentCoordIndex !== null && pois.length > 0 && (
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold mb-2">Nearby places</h2>
-          <div className="grid grid-cols-2 gap-2">
-            {pois.slice(0, 8).map((poi, index) => (
-              <div
-                key={`${poi.name}-${index}`}
-                className="flex items-center justify-between bg-base-200 p-2 rounded hover:bg-base-300 transition-colors"
-              >
-                <div className="tooltip" data-tip={poi.name}>
-                  {poi.website ? (
-                    <a
-                      href={poi.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="truncate w-40 block text-sm text-blue-600 hover:underline"
-                    >
-                      {poi.name}
-                    </a>
-                  ) : (
-                    <span className="truncate max-w-40 block text-sm text-gray-700">
-                      {poi.name}
-                    </span>
-                  )}
-                </div>
-
-                <button
-                  onClick={() => handleAddPOI(poi.name)}
-                  className="btn btn-xs btn-soft btn-info ml-3 shrink-0"
-                >
-                  + Add
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Map Table */}
       {safeCoordArray.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-4 bg-base-200 p-6 rounded-lg">
           <h2 className="text-xl font-bold">Map Builder</h2>
           <div className="overflow-x-auto">
             <table className="table table-zebra w-full">
               <thead>
                 <tr>
-                  <th>Latitude</th>
-                  <th>Longitude</th>
-                  <th>Name</th>
+                  <th>Image</th>
+                  <th>Location</th>
+                  <th>Description</th>
+                  <th>Date Visited</th>
+                  <th>Coordinates</th>
                   <th>Tags</th>
                   <th>Actions</th>
                 </tr>
@@ -275,23 +181,135 @@ export default function NewMap({ coordArray = [], setCoordArray = () => {} }) {
                 {safeCoordArray.map((coord, index) => (
                   <tr
                     key={`coord-${coord.lat}-${coord.lng}-${index}`}
-                    className={currentCoordIndex === index ? "bg-base-300" : ""}
+                    className="hover:bg-base-200"
                   >
-                    <td>{coord.lat?.toFixed(4) || "N/A"}</td>
-                    <td>{coord.lng?.toFixed(4) || "N/A"}</td>
                     <td>
-                      <input
-                        type="text"
-                        placeholder="Location name"
-                        value={coord.locationName || ""}
-                        onChange={(e) =>
-                          handleNameChange(index, e.target.value)
-                        }
-                        className="input input-sm input-bordered w-full"
-                      />
+                      <div className="flex items-center justify-center">
+                        {coord.image ? (
+                          <img
+                            src={coord.image}
+                            alt={`Location ${index + 1}`}
+                            className="w-12 h-12 object-cover rounded-lg border border-base-300"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-base-300 rounded-lg flex items-center justify-center">
+                            <MapPin size={16} className="text-neutral-500" />
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="space-y-1">
+                        <input
+                          type="text"
+                          value={coord.locationName || ""}
+                          onChange={(e) =>
+                            handleNameChange(index, e.target.value)
+                          }
+                          placeholder="Enter location name..."
+                          className="input input-bordered input-sm w-full"
+                        />
+                        {coord.isExistingPOI && (
+                          <span className="badge badge-success badge-xs">
+                            Existing POI
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="max-w-xs">
+                        <textarea
+                          id={`mapDescriptionInput-${index}`}
+                          value={coord.description || ""}
+                          onChange={(e) => {
+                            safeSetCoordArray((prev) =>
+                              prev.map((coord, i) =>
+                                i === index
+                                  ? { ...coord, description: e.target.value }
+                                  : coord
+                              )
+                            );
+                          }}
+                          placeholder="Enter description..."
+                          className="textarea textarea-bordered textarea-sm w-full h-20 resize-none"
+                          aria-label={`Description for ${
+                            coord.locationName || "location"
+                          }`}
+                        />
+                      </div>
+                    </td>
+                    <td>
+                      <div className="text-sm">
+                        {coord.date_visited ? (
+                          new Date(coord.date_visited).toLocaleDateString()
+                        ) : (
+                          <span className="text-xs text-neutral-500">
+                            Not set
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="text-sm text-neutral-600">
+                        {coord.lat && coord.lng ? (
+                          <div className="space-y-2 py-1">
+                            <div className="flex items-center gap-2">
+                              <div className="p-1 bg-green-100 rounded">
+                                <MapPin size={10} className="text-green-600" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-neutral-500 font-medium">
+                                  Latitude
+                                </span>
+                                <span className="font-mono text-xs text-neutral-700">
+                                  {coord.lat.toFixed(6)}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="p-1 bg-green-100 rounded">
+                                <MapPin size={10} className="text-green-600" />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-neutral-500 font-medium">
+                                  Longitude
+                                </span>
+                                <span className="font-mono text-xs text-neutral-700">
+                                  {coord.lng.toFixed(6)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center text-center">
+                            <div className="p-2 bg-red-50 border border-red-200 rounded-lg mb-2 w-full">
+                              <span className="text-xs text-red-600 font-medium">
+                                ⚠️ No coordinates
+                              </span>
+                              <span className="text-xs text-red-500 block mt-1">
+                                Will not be shown on map
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <div className="space-y-2">
+                        {/* Show existing POI tags if available */}
+                        {coord.tags && coord.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {coord.tags.map((tag, tagIndex) => (
+                              <span
+                                key={`existing-${index}-${tagIndex}`}
+                                className="badge badge-outline badge-xs"
+                              >
+                                {typeof tag === "object" ? tag.name : tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
                         {/* Selected Tags as Badges */}
                         <div className="flex flex-wrap gap-1">
                           {(selectedTags[index] || []).map((tagName) => (
@@ -408,12 +426,25 @@ export default function NewMap({ coordArray = [], setCoordArray = () => {} }) {
                       </div>
                     </td>
                     <td>
-                      <button
-                        onClick={() => handleDelete(index)}
-                        className="btn btn-xs btn-error btn-soft"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex gap-1">
+                        {coord.googleMapsLink && (
+                          <a
+                            href={coord.googleMapsLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-xs btn-outline"
+                            title="View on Google Maps"
+                          >
+                            🗺️
+                          </a>
+                        )}
+                        <button
+                          onClick={() => handleDelete(index)}
+                          className="btn btn-xs btn-error btn-soft"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -421,35 +452,23 @@ export default function NewMap({ coordArray = [], setCoordArray = () => {} }) {
             </table>
           </div>
 
-          {/* Save Map Form */}
-          <form onSubmit={handleSubmit} className="flex gap-2 mt-4">
-            <input
-              type="text"
-              placeholder="Map name"
-              value={mapName}
-              onChange={(e) => setMapName(e.target.value)}
-              required
-              className="input input-bordered flex-1"
-            />
-            <button type="submit" className="btn btn-primary">
+          {/* Save Map Button */}
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={handleSubmit}
+              className="btn btn-primary"
+              disabled={!mapName || !mapName.trim()}
+            >
               Save Map
             </button>
-          </form>
-        </div>
-      )}
-
-      {/* Loading Indicator */}
-      {isLoading && (
-        <div className="text-sm text-neutral-400 flex items-center gap-1 mt-4">
-          <Loader className="animate-spin w-4 h-4" /> Looking up nearby
-          places...
+          </div>
         </div>
       )}
 
       {/* Empty State */}
-      {safeCoordArray.length === 0 && !isLoading && (
+      {safeCoordArray.length === 0 && (
         <div className="text-center py-8 text-gray-500">
-          No coordinates added yet
+          No POIs added to map yet. Search and add POIs from the section above.
         </div>
       )}
     </>

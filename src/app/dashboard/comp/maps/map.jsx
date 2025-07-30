@@ -4,30 +4,63 @@ import "./styles.css";
 import { Plus, Minus, Pin } from "lucide-react";
 import { Map, Marker } from "@vis.gl/react-maplibre";
 
-const Maps = ({ coordArray = [], onMapClick, isClickable = false, zoom }) => {
+const Maps = ({
+  coordArray = [],
+  onMapClick,
+  isClickable = false,
+  zoom,
+  mapKey,
+}) => {
   const [viewState, setViewState] = useState({
     longitude: -84.5,
     latitude: 44.5,
     zoom: zoom || 1,
   });
 
+  // Reset view state when mapKey changes (component switch)
+  useEffect(() => {
+    setViewState({
+      longitude: -84.5,
+      latitude: 44.5,
+      zoom: zoom || 1,
+    });
+  }, [mapKey, zoom]);
+
   // Calculate center when coordArray changes
   useEffect(() => {
     if (coordArray.length === 0) return;
 
     const calcCenter = (coords) => {
-      const avgLat = coords.reduce((sum, p) => sum + p.lat, 0) / coords.length;
-      const avgLon = coords.reduce((sum, p) => sum + p.lng, 0) / coords.length;
+      // Filter out coordinates that are null, undefined, or have invalid lat/lng
+      const validCoords = coords.filter(
+        (p) =>
+          p &&
+          p.lat &&
+          p.lng &&
+          !isNaN(p.lat) &&
+          !isNaN(p.lng) &&
+          typeof p.lat === "number" &&
+          typeof p.lng === "number"
+      );
+
+      if (validCoords.length === 0) return null;
+
+      const avgLat =
+        validCoords.reduce((sum, p) => sum + p.lat, 0) / validCoords.length;
+      const avgLon =
+        validCoords.reduce((sum, p) => sum + p.lng, 0) / validCoords.length;
       return { lat: avgLat, lon: avgLon };
     };
 
     const center = calcCenter(coordArray);
-    setViewState((prev) => ({
-      ...prev,
-      longitude: center.lon,
-      latitude: center.lat,
-      zoom: zoom || (coordArray.length === 1 ? 10 : 5), // Use prop zoom or default logic
-    }));
+    if (center) {
+      setViewState((prev) => ({
+        ...prev,
+        longitude: center.lon,
+        latitude: center.lat,
+        zoom: zoom || (coordArray.length === 1 ? 10 : 5), // Use prop zoom or default logic
+      }));
+    }
   }, [coordArray, zoom]);
 
   const handleZoomIn = useCallback(() => {
@@ -45,15 +78,7 @@ const Maps = ({ coordArray = [], onMapClick, isClickable = false, zoom }) => {
   }, []);
 
   return (
-    <div className="h-96 w-full overflow-hidden my-10 md:my-0 relative">
-      {/* <Map
-        {...viewState}
-        onMove={(evt) => setViewState(evt.viewState)}
-        mapStyle="https://tiles.openfreemap.org/styles/bright"
-        style={{ width: "100%", height: "100%" }}
-        projection="mercator" // Explicitly set projection
-        reuseMaps={true} // Improves performance
-      > */}
+    <div className="h-96 overflow-hidden my-10 md:my-0 relative">
       <Map
         {...viewState}
         onMove={(evt) => setViewState(evt.viewState)}
@@ -73,11 +98,16 @@ const Maps = ({ coordArray = [], onMapClick, isClickable = false, zoom }) => {
         cursor={isClickable ? "crosshair" : "grab"}
       >
         {coordArray.map((point, index) => {
-          // Ensure coordinates are numbers
+          // Ensure coordinates are numbers and not null/undefined
           const lng =
             typeof point.lng === "string" ? parseFloat(point.lng) : point.lng;
           const lat =
             typeof point.lat === "string" ? parseFloat(point.lat) : point.lat;
+
+          // Skip rendering if coordinates are null, undefined, or NaN
+          if (!lng || !lat || isNaN(lng) || isNaN(lat)) {
+            return null;
+          }
 
           return (
             <Marker
@@ -94,7 +124,7 @@ const Maps = ({ coordArray = [], onMapClick, isClickable = false, zoom }) => {
                   <div className="p-3">
                     {/* Location Name */}
                     <div className="font-semibold text-sm text-gray-800 mb-2 border-b border-gray-100 pb-1">
-                      {point.name || "Unknown Location"}
+                      {point.name || point.locationName || "Unknown Location"}
                     </div>
 
                     {/* Coordinates */}

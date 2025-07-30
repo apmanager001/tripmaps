@@ -1,17 +1,24 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { CircleUser, MapPin, Users, Calendar, Eye, Heart } from "lucide-react";
+import {
+  MapPin,
+  Users,
+  Calendar,
+  Eye,
+  Heart,
+  Award,
+  Map,
+  User,
+  Globe,
+  Clock,
+} from "lucide-react";
+import ProfilePictureUpload from "@/components/ProfilePictureUpload";
+import { userApi } from "@/lib/api";
 
 async function fetchProfileData(id) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND}/profile/${id}`);
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || `HTTP error! status: ${res.status}`);
-    }
-
+    const data = await userApi.getProfile(id);
     return data;
   } catch (error) {
     console.error("Error fetching profile data:", error);
@@ -20,6 +27,8 @@ async function fetchProfileData(id) {
 }
 
 export default function Profile({ id }) {
+  const queryClient = useQueryClient();
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["profileData", id],
     queryFn: () => fetchProfileData(id),
@@ -28,11 +37,21 @@ export default function Profile({ id }) {
   });
 
   if (isLoading)
-    return <div className="p-6 text-neutral-500">Loading profile...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="loading loading-spinner loading-lg text-primary"></div>
+      </div>
+    );
   if (error)
     return (
-      <div className="p-6 text-red-500">
-        Error loading profile: {error.message}
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-pink-100">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-red-500 mb-2">
+            Error Loading Profile
+          </h2>
+          <p className="text-gray-600">{error.message}</p>
+        </div>
       </div>
     );
 
@@ -52,136 +71,228 @@ export default function Profile({ id }) {
     return "Expert Mapper";
   }
 
+  const handleProfileUpdate = (updatedUser) => {
+    queryClient.setQueryData(["profileData", id], (oldData) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        data: {
+          ...oldData.data,
+          user: updatedUser,
+        },
+      };
+    });
+  };
+
   return (
-    <main className="p-6 max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Header Section */}
-      <section className="flex items-center gap-6 bg-base-200 p-6 rounded-lg shadow">
-        <CircleUser size={64} className="text-primary" />
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-primary">{user.username}</h1>
-          {!user.emailPrivate && (
-            <p className="text-sm text-base-content mb-2">{user.email}</p>
-          )}
-          <span className="badge badge-accent badge-soft">
-            {getBadge(mapCount)}
-          </span>
-        </div>
-      </section>
+      <div className="bg-gradient-to-r from-base-100 via-base-200 to-primary text-primary shadow-xl">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="flex flex-col lg:flex-row items-center gap-8">
+            {/* Profile Picture */}
+            <div className="flex-shrink-0">
+              <ProfilePictureUpload
+                currentUser={user}
+                onUpdate={handleProfileUpdate}
+                size="lg"
+                showUserInfo={false}
+                className=""
+              />
+            </div>
 
-      {/* User Stats */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-base-100 p-4 rounded-lg shadow text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <MapPin className="text-primary" size={20} />
-            <span className="text-lg font-semibold">{stats.totalMaps}</span>
-          </div>
-          <p className="text-sm text-gray-600">Public Maps</p>
-        </div>
-
-        <div className="bg-base-100 p-4 rounded-lg shadow text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Users className="text-primary" size={20} />
-            <span className="text-lg font-semibold">{stats.followers}</span>
-          </div>
-          <p className="text-sm text-gray-600">Followers</p>
-        </div>
-
-        <div className="bg-base-100 p-4 rounded-lg shadow text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Users className="text-primary" size={20} />
-            <span className="text-lg font-semibold">{stats.following}</span>
-          </div>
-          <p className="text-sm text-gray-600">Following</p>
-        </div>
-      </section>
-
-      {/* User Bio */}
-      {user.bio && (
-        <section className="bg-base-100 p-6 rounded-lg shadow">
-          <h2 className="text-xl font-semibold text-primary mb-3">About</h2>
-          <p className="text-base-content">{user.bio}</p>
-        </section>
-      )}
-
-      {/* Public Maps */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-primary">Public Maps</h2>
-          <span className="badge badge-neutral badge-lg">
-            {maps.length} maps
-          </span>
-        </div>
-        {maps.length === 0 ? (
-          <div className="bg-base-100 p-6 rounded-lg shadow text-center">
-            <MapPin className="mx-auto mb-3 text-gray-400" size={48} />
-            <p className="text-lg text-gray-600 mb-2">No public maps yet</p>
-            <p className="text-sm text-gray-500">
-              This mapper hasn't shared any public maps yet.
-            </p>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {maps.map((map) => (
-              <div
-                key={map._id}
-                className="bg-base-100 p-6 rounded-lg shadow hover:bg-base-200 transition-colors border border-base-300"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-primary mb-3">
-                      {map.mapName}
-                    </h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      {/* Created Date */}
-                      <div
-                        className="flex items-center gap-1"
-                        title="Created on"
-                      >
-                        <Calendar size={14} />
-                        <span>
-                          {new Date(map.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-
-                      {/* Views */}
-                      <div
-                        className="flex items-center gap-1 tooltip"
-                        data-tip="Views"
-                        title={`${map.views || 0} views`}
-                      >
-                        <Eye
-                          size={14}
-                          className="bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-black"
-                        />
-
-                        <span>{map.views || 0}</span>
-                      </div>
-
-                      {/* Likes */}
-                      <div
-                        className="flex items-center gap-1 tooltip"
-                        data-tip="Likes"
-                        title={`${map.likes || 0} likes`}
-                      >
-                        <Heart size={14} className="text-red-500" />
-                        <span>{map.likes || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Link
-                    href={`/maps/${map._id}`}
-                    className="btn btn-primary btn-sm hover:btn-secondary transition-colors"
-                    title="View this map"
-                  >
-                    <MapPin size={16} />
-                    View Map
-                  </Link>
+            {/* User Info */}
+            <div className="flex-1 text-center lg:text-left">
+              <div className="flex flex-col lg:flex-row items-center lg:items-start gap-4 mb-6">
+                <h1 className="text-4xl lg:text-5xl font-bold">
+                  {user.username}
+                </h1>
+                <div className="badge badge-warning badge-lg text-white border-0">
+                  <Award size={16} className="mr-1" />
+                  {getBadge(mapCount)}
                 </div>
               </div>
-            ))}
+
+              {/* Stats Row */}
+              <div className="flex justify-center lg:justify-start gap-8 mb-6">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <MapPin size={20} className="text-primary" />
+                    <div className="text-3xl font-bold">{stats.totalMaps}</div>
+                  </div>
+                  <div className="text-primary text-sm">Maps</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <Users size={20} className="text-primary" />
+                    <div className="text-3xl font-bold">{stats.followers}</div>
+                  </div>
+                  <div className="text-primary text-sm">Followers</div>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <User size={20} className="text-primary" />
+                    <div className="text-3xl font-bold">{stats.following}</div>
+                  </div>
+                  <div className="text-primary text-sm">Following</div>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
-      </section>
-    </main>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Left Column - About & Info */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* About Section */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <User size={20} className="text-blue-600" />
+                About {user.username}
+              </h3>
+
+              {user.bio ? (
+                <p className="text-gray-700 leading-relaxed">{user.bio}</p>
+              ) : (
+                <p className="text-gray-500 italic">No bio available</p>
+              )}
+            </div>
+
+            {/* User Stats */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <Globe size={20} className="text-green-600" />
+                Profile Stats
+              </h3>
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Member Since</span>
+                  <span className="font-semibold text-gray-800">
+                    {new Date(user.createdDate).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                    })}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Mapping Level</span>
+                  <div className="text-right">
+                    <div className="badge badge-success badge-sm">
+                      {getBadge(mapCount)}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {mapCount} {mapCount === 1 ? "map" : "maps"} created
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Public Maps</span>
+                  <span className="font-semibold text-blue-600">
+                    {maps.length}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column - Maps */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                    <Map className="text-blue-600" size={28} />
+                    Public Maps
+                  </h2>
+                  <p className="text-gray-600 mt-1">
+                    Discover the amazing places {user.username} has mapped
+                  </p>
+                </div>
+                <div className="badge badge-primary badge-lg">
+                  {maps.length} {maps.length === 1 ? "map" : "maps"}
+                </div>
+              </div>
+
+              {maps.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MapPin className="text-white" size={32} />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    No Public Maps Yet
+                  </h3>
+                  <p className="text-gray-600 max-w-md mx-auto">
+                    {user.username} hasn't shared any public maps yet. Check
+                    back later to see their amazing discoveries!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {maps.map((map) => (
+                    <div
+                      key={map._id}
+                      className="group bg-gradient-to-r from-gray-50 to-white rounded-xl p-6 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-300"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-3">
+                            <h3 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
+                              {map.mapName}
+                            </h3>
+                            <div className="badge badge-outline badge-sm">
+                              <MapPin size={12} className="mr-1" />
+                              Map
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
+                            <div className="flex items-center gap-1">
+                              <Clock size={14} />
+                              <span>
+                                {new Date(map.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div
+                                className="flex items-center gap-1"
+                                title={`${map.views || 0} views`}
+                              >
+                                <Eye size={14} className="text-blue-500" />
+                                <span>{map.views || 0}</span>
+                              </div>
+                              <div
+                                className="flex items-center gap-1"
+                                title={`${map.likes || 0} likes`}
+                              >
+                                <Heart size={14} className="text-red-500" />
+                                <span>{map.likes || 0}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Link
+                          href={`/maps/${map._id}`}
+                          className="btn btn-primary btn-sm group-hover:btn-secondary transition-all duration-300"
+                        >
+                          <MapPin size={16} className="mr-2" />
+                          Explore
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
