@@ -355,10 +355,10 @@ export const poiApi = {
   uploadPhoto: async (
     poiId: string,
     photoFile: File,
-    cropData?: any,
+    cropData?: { x: number; y: number; width: number; height: number } | null,
     isPrimary: boolean = false,
     dateVisited?: string
-  ): Promise<ApiResponse<any>> => {
+  ): Promise<ApiResponse<{ photo: { _id: string; s3Url: string; thumbnailUrl: string } }>> => {
     const formData = new FormData();
     formData.append("photo", photoFile);
     if (cropData) {
@@ -376,7 +376,7 @@ export const poiApi = {
     }).then((res) => res.json());
   },
 
-  deletePhoto: async (photoId: string): Promise<ApiResponse<any>> => {
+  deletePhoto: async (photoId: string): Promise<ApiResponse<{ message: string }>> => {
     return fetch(`${process.env.NEXT_PUBLIC_BACKEND}/photos/${photoId}`, {
       method: "DELETE",
       credentials: "include",
@@ -401,7 +401,7 @@ export const poiApi = {
       throw new ApiError(response.status, "Failed to fetch POIs");
     }
 
-    const data = await response.json();
+    const data: { results?: NearbyPOI[] } = await response.json();
     return data.results || [];
   },
 };
