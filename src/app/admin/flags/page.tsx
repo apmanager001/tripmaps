@@ -90,8 +90,8 @@ const AdminFlagsPage = () => {
     );
   }
 
-  const flags = flagsData?.data || [];
-  const totalPages = flagsData?.totalPages || 1;
+  const flags = flagsData?.data?.data || [];
+  const totalPages = flagsData?.data?.totalPages || 1;
 
   return (
     <div className="min-h-screen bg-base-100 p-6">
