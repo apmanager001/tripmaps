@@ -203,9 +203,231 @@ const verifyUser = async (req, res) => {
   }
 };
 
+// Google OAuth
+const googleAuth = async (req, res) => {
+  try {
+    // Redirect to Google OAuth
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${process.env.GOOGLE_CLIENT_ID}&redirect_uri=${process.env.GOOGLE_REDIRECT_URI}&response_type=code&scope=email profile`;
+    res.redirect(googleAuthUrl);
+  } catch (error) {
+    console.error("Google auth error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Google authentication failed",
+    });
+  }
+};
+
+// Google OAuth callback
+const googleCallback = async (req, res) => {
+  try {
+    const { code } = req.query;
+
+    if (!code) {
+      return res.status(400).json({
+        success: false,
+        message: "Authorization code not provided",
+      });
+    }
+
+    // Exchange code for tokens
+    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: process.env.GOOGLE_CLIENT_ID,
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+      }),
+    });
+
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenData.access_token) {
+      throw new Error("Failed to get access token");
+    }
+
+    // Get user info from Google
+    const userResponse = await fetch(
+      "https://www.googleapis.com/oauth2/v2/userinfo",
+      {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+        },
+      }
+    );
+
+    const userData = await userResponse.json();
+
+    // Check if user exists
+    let user = await User.findOne({ email: userData.email });
+
+    if (!user) {
+      // Create new user
+      const date = new Date();
+      const todaysDate = `${
+        date.getMonth() + 1
+      }-${date.getDate()}-${date.getFullYear()}`;
+
+      user = await User.create({
+        username:
+          userData.name.replace(/\s+/g, "").toLowerCase() +
+          Math.floor(Math.random() * 1000),
+        email: userData.email,
+        password: "oauth_user", // Placeholder for OAuth users
+        role: "member",
+        createdDate: todaysDate,
+        oauthProvider: "google",
+        oauthId: userData.id,
+      });
+    }
+
+    // Create JWT
+    const token = jwt.sign(
+      {
+        email: user.email,
+        _id: user._id,
+        username: user.username,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Set cookie
+    res.cookie("tripMaps", token, {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+
+    // Redirect to frontend
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+  } catch (error) {
+    console.error("Google callback error:", error);
+    res.redirect(`${process.env.FRONTEND_URL}/login?error=google_auth_failed`);
+  }
+};
+
+// Facebook OAuth
+const facebookAuth = async (req, res) => {
+  try {
+    // Redirect to Facebook OAuth
+    const facebookAuthUrl = `https://www.facebook.com/v12.0/dialog/oauth?client_id=${process.env.FACEBOOK_APP_ID}&redirect_uri=${process.env.FACEBOOK_REDIRECT_URI}&response_type=code&scope=email`;
+    res.redirect(facebookAuthUrl);
+  } catch (error) {
+    console.error("Facebook auth error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Facebook authentication failed",
+    });
+  }
+};
+
+// Facebook OAuth callback
+const facebookCallback = async (req, res) => {
+  try {
+    const { code } = req.query;
+
+    if (!code) {
+      return res.status(400).json({
+        success: false,
+        message: "Authorization code not provided",
+      });
+    }
+
+    // Exchange code for tokens
+    const tokenResponse = await fetch(
+      "https://graph.facebook.com/v12.0/oauth/access_token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          client_id: process.env.FACEBOOK_APP_ID,
+          client_secret: process.env.FACEBOOK_APP_SECRET,
+          code,
+          redirect_uri: process.env.FACEBOOK_REDIRECT_URI,
+        }),
+      }
+    );
+
+    const tokenData = await tokenResponse.json();
+
+    if (!tokenData.access_token) {
+      throw new Error("Failed to get access token");
+    }
+
+    // Get user info from Facebook
+    const userResponse = await fetch(
+      `https://graph.facebook.com/me?fields=id,name,email&access_token=${tokenData.access_token}`
+    );
+    const userData = await userResponse.json();
+
+    // Check if user exists
+    let user = await User.findOne({ email: userData.email });
+
+    if (!user) {
+      // Create new user
+      const date = new Date();
+      const todaysDate = `${
+        date.getMonth() + 1
+      }-${date.getDate()}-${date.getFullYear()}`;
+
+      user = await User.create({
+        username:
+          userData.name.replace(/\s+/g, "").toLowerCase() +
+          Math.floor(Math.random() * 1000),
+        email: userData.email,
+        password: "oauth_user", // Placeholder for OAuth users
+        role: "member",
+        createdDate: todaysDate,
+        oauthProvider: "facebook",
+        oauthId: userData.id,
+      });
+    }
+
+    // Create JWT
+    const token = jwt.sign(
+      {
+        email: user.email,
+        _id: user._id,
+        username: user.username,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    // Set cookie
+    res.cookie("tripMaps", token, {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+
+    // Redirect to frontend
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+  } catch (error) {
+    console.error("Facebook callback error:", error);
+    res.redirect(
+      `${process.env.FRONTEND_URL}/login?error=facebook_auth_failed`
+    );
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
   verifyUser,
+  googleAuth,
+  googleCallback,
+  facebookAuth,
+  facebookCallback,
 };

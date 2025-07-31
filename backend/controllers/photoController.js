@@ -38,7 +38,7 @@ const uploadPhoto = async (req, res) => {
     const file = req.file;
 
     // Validate file size (additional check)
-    const maxSize = 5 * 1024 * 1024; // 5MB
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       return res.status(400).json({
         success: false,

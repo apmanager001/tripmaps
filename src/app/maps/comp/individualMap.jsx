@@ -4,6 +4,7 @@ import Maps from "../../dashboard/comp/maps/map";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import SharedButtons from "../../dashboard/comp/maps/shareButtons";
 import InstagramShare from "@/components/utility/InstagramShare";
+import POICard from "@/components/POICard";
 import Link from "next/link";
 import {
   Heart,
@@ -22,6 +23,10 @@ import {
   Pin,
   ExternalLink,
   Bookmark,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Flag,
 } from "lucide-react";
 import { mapApi, poiApi, socialApi } from "@/lib/api";
 import { toast } from "react-hot-toast";
@@ -42,6 +47,11 @@ export default function IndividualMaps({ id }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [isBookmarked, setIsBookmarked] = useState(false);
+
+  // Photo gallery modal states
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
+  const [selectedPOI, setSelectedPOI] = useState(null);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["individualMap", id],
@@ -90,6 +100,19 @@ export default function IndividualMaps({ id }) {
           ...prev,
           [poiId]: !prev[poiId],
         }));
+
+        // Update the POI in the local state with the new likes count from response
+        setPois((prevPois) =>
+          prevPois.map((poi) =>
+            poi._id === poiId
+              ? {
+                  ...poi,
+                  likesCount: data.data.likesCount,
+                }
+              : poi
+          )
+        );
+
         toast.success("POI like updated");
         queryClient.invalidateQueries(["individualMap", id]);
       }
@@ -229,6 +252,35 @@ export default function IndividualMaps({ id }) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleAddComment();
+    }
+  };
+
+  // Photo gallery functions
+  const handleOpenPhotoGallery = (poi, photoIndex = 0) => {
+    setSelectedPOI(poi);
+    setCurrentPhotoIndex(photoIndex);
+    setShowPhotoGallery(true);
+  };
+
+  const handleClosePhotoGallery = () => {
+    setShowPhotoGallery(false);
+    setSelectedPOI(null);
+    setCurrentPhotoIndex(0);
+  };
+
+  const handleNextPhoto = () => {
+    if (selectedPOI && selectedPOI.photos) {
+      setCurrentPhotoIndex((prev) =>
+        prev === selectedPOI.photos.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const handlePrevPhoto = () => {
+    if (selectedPOI && selectedPOI.photos) {
+      setCurrentPhotoIndex((prev) =>
+        prev === 0 ? selectedPOI.photos.length - 1 : prev - 1
+      );
     }
   };
 
@@ -478,7 +530,11 @@ export default function IndividualMaps({ id }) {
         className="rounded overflow-hidden border border-base-300"
         data-map-container="true"
       >
-                                             <Maps key="individualMap-map" mapKey="individualMap-map" coordArray={coordArray} />
+        <Maps
+          key="individualMap-map"
+          mapKey="individualMap-map"
+          coordArray={coordArray}
+        />
       </div>
       <div className="bg-base-100 rounded-lg p-4 shadow-inner border border-base-300">
         <h2 className="text-lg font-semibold text-primary mb-4">
@@ -491,190 +547,15 @@ export default function IndividualMaps({ id }) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {pois.map((poi) => (
-              <div
+              <POICard
                 key={poi._id}
-                className="bg-base-200 rounded-lg hover:shadow-lg transition-all duration-200 border border-base-300 overflow-hidden"
-              >
-                {/* Header with title and like button */}
-                <div className="p-4 border-b border-base-300">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-base-content text-sm leading-tight flex-1 pr-2">
-                      {poi.locationName}
-                    </h3>
-                    <button
-                      onClick={() => handlePoiLike(poi._id)}
-                      disabled={poiLikeMutation.isPending || !isAuthenticated}
-                      className={`btn btn-xs gap-1 flex-shrink-0 ${
-                        !isAuthenticated
-                          ? "btn-disabled opacity-50"
-                          : poiLikes[poi._id]
-                          ? "btn-error"
-                          : "btn-ghost hover:btn-error"
-                      } transition-all duration-200`}
-                      title={
-                        !isAuthenticated
-                          ? "Please log in to like locations"
-                          : ""
-                      }
-                    >
-                      <Heart
-                        className={`w-3 h-3 ${
-                          poiLikes[poi._id]
-                            ? "fill-current text-red-500"
-                            : "text-red-500"
-                        }`}
-                      />
-                      <span className="text-xs">{poi.likes || 0}</span>
-                    </button>
-                  </div>
-
-                  {/* Location Info */}
-                  <div className="text-xs text-gray-600 mb-2">
-                    <div className="flex items-center gap-1 mb-1">
-                      <MapPin className="w-3 h-3" />
-                      <span>
-                        {poi.lat.toFixed(4)}, {poi.lng.toFixed(4)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Date Visited */}
-                  {poi.date_visited && (
-                    <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
-                      <Calendar className="w-3 h-3" />
-                      <span>{formatDate(poi.date_visited)}</span>
-                    </div>
-                  )}
-
-                  {/* Tags */}
-                  {poi.tags && poi.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {poi.tags.slice(0, 3).map((tag, index) => (
-                        <span
-                          key={index}
-                          className="badge badge-xs badge-primary"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {poi.tags.length > 3 && (
-                        <span className="badge badge-xs badge-neutral">
-                          +{poi.tags.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Buttons */}
-                <div className="p-4 space-y-3">
-                  {/* Primary Actions */}
-                  <div className="flex flex-wrap gap-1">
-                    <a
-                      href={`https://www.google.com/maps?q=${poi.lat},${poi.lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-xs btn-soft btn-primary gap-1"
-                      title="View on Google Maps"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      Maps
-                    </a>
-                    <a
-                      href={getDirections(poi.lat, poi.lng, poi.locationName)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-xs btn-soft btn-secondary gap-1"
-                      title="Get directions"
-                    >
-                      <MapPin className="w-3 h-3" />
-                      Route
-                    </a>
-                    <a
-                      href={getStreetView(poi.lat, poi.lng)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-xs btn-soft btn-accent gap-1"
-                      title="Street View"
-                    >
-                      <Eye className="w-3 h-3" />
-                      View
-                    </a>
-                  </div>
-
-                  {/* Secondary Actions */}
-                  <div className="flex flex-wrap gap-1">
-                    <a
-                      href={getWeatherInfo(poi.lat, poi.lng)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-xs btn-soft btn-info gap-1"
-                      title="Check weather"
-                    >
-                      <Info className="w-3 h-3" />
-                      Weather
-                    </a>
-                    <a
-                      href={getLocalTime(poi.lat, poi.lng)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-xs btn-soft btn-warning gap-1"
-                      title="Local time"
-                    >
-                      <Clock className="w-3 h-3" />
-                      Time
-                    </a>
-                    <button
-                      onClick={() =>
-                        copyToClipboard(
-                          `${poi.locationName} - ${poi.lat}, ${poi.lng}`
-                        )
-                      }
-                      className="btn btn-xs btn-soft btn-neutral gap-1"
-                      title="Copy coordinates"
-                    >
-                      <Copy className="w-3 h-3" />
-                      Copy
-                    </button>
-                  </div>
-
-                  {/* Additional Services */}
-                  <div className="flex flex-wrap gap-1">
-                    <a
-                      href={getWikipediaInfo(poi.locationName)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-xs btn-soft btn-success gap-1"
-                      title="Wikipedia info"
-                    >
-                      <Star className="w-3 h-3" />
-                      Wiki
-                    </a>
-                    <a
-                      href={`https://www.tripadvisor.com/Search?q=${poi.locationName}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-xs btn-soft btn-info gap-1"
-                      title="TripAdvisor reviews"
-                    >
-                      <Star className="w-3 h-3" />
-                      TA
-                    </a>
-                    <a
-                      href={`https://www.yelp.com/search?find_desc=${encodeURIComponent(
-                        poi.locationName
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-xs btn-soft btn-warning gap-1"
-                      title="Yelp reviews"
-                    >
-                      <Star className="w-3 h-3" />
-                      Yelp
-                    </a>
-                  </div>
-                </div>
-              </div>
+                poi={poi}
+                showActions={false}
+                showLikeButton={true}
+                showFlagButton={true}
+                compact={true}
+                onViewPhotos={handleOpenPhotoGallery}
+              />
             ))}
           </div>
         )}
@@ -787,6 +668,239 @@ export default function IndividualMaps({ id }) {
           </div>
         </div>
       </div>
+
+      {/* Photo Gallery Modal */}
+      {showPhotoGallery && selectedPOI && selectedPOI.photos && (
+        <div className="modal modal-open">
+          <div className="modal-box w-11/12 max-w-6xl h-5/6 max-h-screen bg-base-100 p-0 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-base-300 bg-gradient-to-r from-primary/10 to-secondary/10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 rounded-lg">
+                  <MapPin size={20} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-xl text-primary">
+                    {selectedPOI.locationName}
+                  </h3>
+                  <p className="text-sm text-neutral-600">
+                    Photo Gallery • {selectedPOI.photos.length} photo
+                    {selectedPOI.photos.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleClosePhotoGallery}
+                className="btn btn-sm btn-circle btn-ghost hover:bg-error/10 hover:text-error"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="flex max-h-full">
+              {/* Main Photo Display */}
+              <div className="flex-1 relative bg-black overflow-hidden max-h-full">
+                <div
+                  className="w-full h-full flex items-center justify-center p-4 max-h-full"
+                  style={{
+                    transform: "scale(1)",
+                    transformOrigin: "center center",
+                    transition: "transform 0.3s ease-in-out",
+                  }}
+                  ref={(el) => {
+                    if (el) {
+                      el._zoomLevel = 1;
+                      el._isZoomed = false;
+                    }
+                  }}
+                  onClick={(e) => {
+                    const container = e.currentTarget;
+                    const rect = container.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    if (!container._isZoomed) {
+                      // Zoom in to clicked point
+                      const scaleX = x / rect.width;
+                      const scaleY = y / rect.height;
+                      container.style.transformOrigin = `${scaleX * 100}% ${
+                        scaleY * 100
+                      }%`;
+                      container.style.transform = "scale(2.5)";
+                      container._zoomLevel = 2.5;
+                      container._isZoomed = true;
+                      container.style.cursor = "zoom-out";
+                    } else {
+                      // Zoom out
+                      container.style.transform = "scale(1)";
+                      container.style.transformOrigin = "center center";
+                      container._zoomLevel = 1;
+                      container._isZoomed = false;
+                      container.style.cursor = "zoom-in";
+                    }
+                  }}
+                >
+                  <img
+                    src={
+                      selectedPOI.photos[currentPhotoIndex]?.s3Url ||
+                      selectedPOI.photos[currentPhotoIndex]?.fullUrl ||
+                      "/placeholder-image.jpg"
+                    }
+                    alt={`Photo ${currentPhotoIndex + 1}`}
+                    className="max-w-full max-h-full object-contain pointer-events-none"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                    }}
+                  />
+                </div>
+
+                {/* Navigation Buttons */}
+                {selectedPOI.photos.length > 1 && (
+                  <>
+                    <button
+                      onClick={handlePrevPhoto}
+                      className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-black/60 text-white p-4 rounded-full hover:bg-black/80 transition-all duration-200 backdrop-blur-sm"
+                    >
+                      <ChevronLeft size={28} />
+                    </button>
+                    <button
+                      onClick={handleNextPhoto}
+                      className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-black/60 text-white p-4 rounded-full hover:bg-black/80 transition-all duration-200 backdrop-blur-sm"
+                    >
+                      <ChevronRight size={28} />
+                    </button>
+                  </>
+                )}
+
+                {/* Photo Counter */}
+                <div className="absolute bottom-6 left-6 bg-black/60 text-white px-4 py-2 rounded-full backdrop-blur-sm">
+                  <span className="text-sm font-medium">
+                    {currentPhotoIndex + 1} / {selectedPOI.photos.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Sidebar with Details and Thumbnails */}
+              <div className="w-80 bg-base-200 border-l border-base-300 flex flex-col">
+                {/* Photo Details */}
+                <div className="p-6 border-b border-base-300">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold text-lg text-primary">
+                      Photo Details
+                    </h4>
+                    <button
+                      onClick={() => {
+                        // Flag functionality can be added here if needed
+                        toast.info("Flag functionality coming soon!");
+                      }}
+                      className="btn btn-sm btn-outline btn-error hover:bg-error hover:text-white transition-all duration-200"
+                      title="Flag this photo"
+                    >
+                      <Flag size={16} className="mr-1" />
+                      Flag
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {selectedPOI.photos[currentPhotoIndex]?.isPrimary && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        <span className="text-sm font-medium text-primary">
+                          Primary Photo
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 p-3 bg-base-100 rounded-lg">
+                      <div className="p-2 bg-info/20 rounded-lg">
+                        <span className="text-info text-lg">📅</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-neutral-500">Date Taken</p>
+                        <p className="font-medium">
+                          {selectedPOI.photos[currentPhotoIndex]?.date_visited
+                            ? new Date(
+                                selectedPOI.photos[
+                                  currentPhotoIndex
+                                ].date_visited
+                              ).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })
+                            : "Not available"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-base-100 rounded-lg">
+                      <div className="p-2 bg-success/20 rounded-lg">
+                        <span className="text-success text-lg">📤</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-neutral-500">Uploaded</p>
+                        <p className="font-medium">
+                          {selectedPOI.photos[currentPhotoIndex]?.created_at
+                            ? new Date(
+                                selectedPOI.photos[currentPhotoIndex].created_at
+                              ).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "Unknown"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Photo Thumbnails */}
+                {selectedPOI.photos.length > 1 && (
+                  <div className="flex-1 p-6 overflow-y-auto">
+                    <h4 className="font-semibold text-lg mb-4 text-primary">
+                      All Photos
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {selectedPOI.photos.map((photo, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPhotoIndex(index)}
+                          className={`relative group rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                            index === currentPhotoIndex
+                              ? "border-primary shadow-lg"
+                              : "border-transparent hover:border-primary/50"
+                          }`}
+                        >
+                          <img
+                            src={
+                              photo?.thumbnailUrl ||
+                              photo?.s3Url ||
+                              photo?.fullUrl ||
+                              "/placeholder-image.jpg"
+                            }
+                            alt={`Thumbnail ${index + 1}`}
+                            className="w-full h-24 object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                          {photo?.isPrimary && (
+                            <div className="absolute top-1 right-1 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full">
+                              ★
+                            </div>
+                          )}
+                          <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-full">
+                            {index + 1}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

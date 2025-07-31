@@ -264,7 +264,7 @@ export default function Dashsection3() {
         {/* Profile Info */}
         <div className="flex-1 bg-base-200 md:shadow-sm md:rounded-lg overflow-auto">
           <div className="flex flex-col">
-            <div className="flex items-center p-6 gap-4 border-b border-base-300">
+            <div className="flex items-center p-6 gap-4 border-b border-base-300 flex-wrap">
               {/* <CircleUser size={48} className="text-primary" /> */}
               <ProfilePictureUpload
                 currentUser={profileData?.data?.user || authUser || user}

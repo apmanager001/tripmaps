@@ -66,12 +66,15 @@ const poiSchema = new Schema(
       default: false,
     },
 
-    likes: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
+    likes: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
+    },
 
     views: {
       type: Number,
@@ -106,6 +109,14 @@ poiSchema.virtual("photoCount", {
   localField: "_id",
   foreignField: "poi_id",
   count: true,
+});
+
+// Virtual for photos - populate actual photo documents
+poiSchema.virtual("photos", {
+  ref: "Photo",
+  localField: "_id",
+  foreignField: "poi_id",
+  options: { sort: { isPrimary: -1, created_at: 1 } }, // Primary photos first, then by creation date
 });
 
 // Ensure virtuals are serialized

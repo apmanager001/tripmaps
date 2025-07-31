@@ -15,14 +15,17 @@ import {
   Edit,
   Lock,
   Globe,
+  Flag,
 } from "lucide-react";
 
 import POICreationInterface from "@/components/utility/poi/POICreationInterface";
+import POICard from "@/components/POICard";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { mapApi, poiApi, tagApi } from "@/lib/api";
+import { mapApi, poiApi, tagApi, flagApi } from "@/lib/api";
 import { useAuthStore } from "@/store/useAuthStore";
 // Removed ImageCropper import - no longer using cropping
 import DeleteConfirmationModal from "../../../components/DeleteConfirmationModal";
+import FlagModal from "../../../components/FlagModal";
 
 const AddPOI = () => {
   const { user } = useAuthStore();
@@ -52,7 +55,6 @@ const AddPOI = () => {
   const [editPhotoFile, setEditPhotoFile] = useState(null);
   const [editPhotoPreview, setEditPhotoPreview] = useState(null);
   const [editPhotoDate, setEditPhotoDate] = useState("");
-  const [editPhotoIsPrimary, setEditPhotoIsPrimary] = useState(false);
   const [editPhotoUploading, setEditPhotoUploading] = useState(false);
   const editPhotoFileInputRef = useRef(null);
 
@@ -68,6 +70,10 @@ const AddPOI = () => {
   // POI deletion confirmation modal states
   const [showPOIDeleteConfirm, setShowPOIDeleteConfirm] = useState(false);
   const [poiToDelete, setPoiToDelete] = useState(null);
+
+  // Flag modal states
+  const [showFlagModal, setShowFlagModal] = useState(false);
+  const [flaggingPhoto, setFlaggingPhoto] = useState(null);
 
   // Fetch user's POIs
   const { data: userPOIsData, refetch: refetchPOIs } = useQuery({
@@ -94,8 +100,7 @@ const AddPOI = () => {
       poi.description?.toLowerCase().includes(query) ||
       poi.tags?.some((tag) =>
         (typeof tag === "object" ? tag.name : tag).toLowerCase().includes(query)
-      ) ||
-      poi.googleMapsLink?.toLowerCase().includes(query)
+      )
     );
   });
 
@@ -143,16 +148,12 @@ const AddPOI = () => {
     setEditFormData({
       locationName: poi.locationName || "",
       description: poi.description || "",
-      googleMapsLink: poi.googleMapsLink || "",
       isPrivate: poi.isPrivate || false,
       tags:
         poi.tags?.map((tag) => (typeof tag === "object" ? tag.name : tag)) ||
         [],
       lat: poi.lat || null,
       lng: poi.lng || null,
-      date_visited: poi.date_visited
-        ? new Date(poi.date_visited).toISOString().split("T")[0]
-        : null,
     });
     setShowEditModal(true);
   };
@@ -171,32 +172,13 @@ const AddPOI = () => {
         return;
       }
 
-      // Validate Google Maps link
-      let validGoogleMapsLink = editFormData.googleMapsLink;
-      if (
-        editFormData.googleMapsLink &&
-        !editFormData.googleMapsLink.match(
-          /^https:\/\/(maps\.google\.com|goo\.gl\/maps)\/.*$/
-        )
-      ) {
-        console.warn(
-          "Invalid Google Maps link filtered out:",
-          editFormData.googleMapsLink
-        );
-        validGoogleMapsLink = "";
-      }
-
       const updateData = {
         locationName: editFormData.locationName,
         description: editFormData.description,
-        googleMapsLink: validGoogleMapsLink,
         isPrivate: editFormData.isPrivate,
         tags: editFormData.tags,
         lat: editFormData.lat,
         lng: editFormData.lng,
-        date_visited: editFormData.date_visited
-          ? new Date(editFormData.date_visited)
-          : null,
       };
 
       const response = await poiApi.updatePOI(editingPOI._id, updateData);
@@ -221,18 +203,15 @@ const AddPOI = () => {
     setEditFormData({
       locationName: "",
       description: "",
-      googleMapsLink: "",
       isPrivate: false,
       tags: [],
       lat: null,
       lng: null,
-      date_visited: null,
     });
     // Reset photo upload state
     setEditPhotoFile(null);
     setEditPhotoPreview(null);
     setEditPhotoDate("");
-    setEditPhotoIsPrimary(false);
     if (editPhotoFileInputRef.current) {
       editPhotoFileInputRef.current.value = "";
     }
@@ -289,14 +268,96 @@ const AddPOI = () => {
     }
   };
 
+  // Helper function to format EXIF date
+  const formatExifDate = (dateString) => {
+    if (!dateString) return null;
+
+    // EXIF date format is typically "YYYY:MM:DD HH:MM:SS"
+    // Convert to ISO format for better compatibility
+    try {
+      const [datePart, timePart] = dateString.split(" ");
+      const [year, month, day] = datePart.split(":");
+      const [hour, minute, second] = timePart.split(":");
+
+      // Create a proper Date object
+      const date = new Date(
+        parseInt(year),
+        parseInt(month) - 1, // Month is 0-indexed
+        parseInt(day),
+        parseInt(hour),
+        parseInt(minute),
+        parseInt(second)
+      );
+
+      return date.toISOString();
+    } catch (error) {
+      console.error("Error parsing EXIF date:", error);
+      return null;
+    }
+  };
+
   // Edit modal photo upload handlers
   const handleEditPhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Check file size (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      if (file.size > maxSize) {
+        toast.error(
+          `File too large. Maximum size is 10MB. Your file is ${(
+            file.size /
+            1024 /
+            1024
+          ).toFixed(2)}MB.`
+        );
+        // Clear the input
+        e.target.value = "";
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please select a valid image file.");
+        e.target.value = "";
+        return;
+      }
+
       setEditPhotoFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         setEditPhotoPreview(e.target.result);
+
+        // Extract EXIF data to get the date
+        const image = new Image();
+        image.src = e.target.result;
+        image.onload = function () {
+          // Check if EXIF library is available
+          if (typeof EXIF !== "undefined" && EXIF.getData) {
+            EXIF.getData(image, function () {
+              const exif = EXIF.getAllTags(this);
+              console.log("EXIF data:", exif);
+
+              let dateVisited = null;
+
+              // Extract date information (try multiple EXIF date fields)
+              if (exif.DateTimeOriginal) {
+                dateVisited = formatExifDate(exif.DateTimeOriginal);
+              } else if (exif.DateTime) {
+                dateVisited = formatExifDate(exif.DateTime);
+              } else if (exif.DateTimeDigitized) {
+                dateVisited = formatExifDate(exif.DateTimeDigitized);
+              } else if (exif.CreateDate) {
+                dateVisited = formatExifDate(exif.CreateDate);
+              }
+
+              // Set the extracted date as date_visited
+              if (dateVisited) {
+                setEditPhotoDate(dateVisited);
+                toast.success("Date extracted from photo EXIF data");
+              }
+            });
+          }
+        };
       };
       reader.readAsDataURL(file);
     }
@@ -322,7 +383,7 @@ const AddPOI = () => {
         editingPOI._id,
         compressedFile,
         null, // No crop data - preserving original aspect ratio
-        editPhotoIsPrimary,
+        false, // Always set as non-primary
         editPhotoDate || null
       );
 
@@ -333,7 +394,6 @@ const AddPOI = () => {
         setEditPhotoFile(null);
         setEditPhotoPreview(null);
         setEditPhotoDate("");
-        setEditPhotoIsPrimary(false);
         if (editPhotoFileInputRef.current) {
           editPhotoFileInputRef.current.value = "";
         }
@@ -357,7 +417,6 @@ const AddPOI = () => {
     setEditPhotoFile(null);
     setEditPhotoPreview(null);
     setEditPhotoDate("");
-    setEditPhotoIsPrimary(false);
     if (editPhotoFileInputRef.current) {
       editPhotoFileInputRef.current.value = "";
     }
@@ -487,6 +546,21 @@ const AddPOI = () => {
     setPoiToDelete(null);
   };
 
+  // Flag handling functions
+  const handleFlagPhoto = (photo, poi) => {
+    setFlaggingPhoto({
+      id: photo._id,
+      url: photo.s3Url || photo.fullUrl,
+      locationName: poi.locationName,
+    });
+    setShowFlagModal(true);
+  };
+
+  const handleCloseFlagModal = () => {
+    setShowFlagModal(false);
+    setFlaggingPhoto(null);
+  };
+
   // Image compression function
   const compressImage = (file, quality = 0.7) => {
     return new Promise((resolve) => {
@@ -508,7 +582,7 @@ const AddPOI = () => {
 
   return (
     <>
-      <div className="pb-6 space-y-8 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="pb-6 space-y-8 w-full max-w-7xl mx-auto md:px-4 sm:px-6 lg:px-8">
         <Script
           src="https://cdn.jsdelivr.net/npm/exif-js"
           strategy="afterInteractive"
@@ -636,142 +710,16 @@ const AddPOI = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredPOIs.map((poi, index) => (
-                <div
+                <POICard
                   key={poi._id || index}
-                  className="bg-base-100 rounded-xl shadow-lg border border-base-300 h-full flex flex-col hover:shadow-xl transition-all duration-200 group"
-                >
-                  {/* Photo Section */}
-                  {poi.photos && poi.photos.length > 0 ? (
-                    <div
-                      className="relative h-48 overflow-hidden rounded-t-xl cursor-pointer group"
-                      onClick={() => handleOpenPhotoGallery(poi, 0)}
-                    >
-                      <img
-                        src={poi.photos[0].s3Url || poi.photos[0].fullUrl}
-                        alt={poi.locationName}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {/* Photo count badge */}
-                      {poi.photos.length > 1 && (
-                        <div className="absolute top-3 right-3 bg-black/50 text-white px-2 py-1 rounded-full text-xs font-medium">
-                          +{poi.photos.length - 1} more
-                        </div>
-                      )}
-                      {/* Primary photo indicator */}
-                      {poi.photos[0].isPrimary && (
-                        <div className="absolute top-3 left-3 bg-primary/80 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                          <svg
-                            className="w-3 h-3"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          Primary
-                        </div>
-                      )}
-                      {/* Photo date badge */}
-                      {poi.photos[0].date_visited && (
-                        <div className="absolute bottom-3 left-3 bg-black/50 text-white px-2 py-1 rounded-full text-xs font-medium">
-                          📅{" "}
-                          {new Date(
-                            poi.photos[0].date_visited
-                          ).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="h-48 bg-base-300 rounded-t-xl flex items-center justify-center">
-                      <MapPin className="w-12 h-12 text-neutral-400" />
-                    </div>
-                  )}
-
-                  {/* Content Section */}
-                  <div className="p-6 flex-1 flex flex-col">
-                    <div className="flex items-start justify-between mb-3">
-                      <h4 className="text-lg font-semibold text-primary line-clamp-2">
-                        {poi.locationName}
-                      </h4>
-                      <div className="flex items-center gap-2 ml-2">
-                        <button
-                          onClick={() => handleEditPOI(poi)}
-                          className="btn btn-ghost btn-sm p-1 hover:bg-base-300"
-                          title="Edit POI"
-                        >
-                          <Edit size={16} className="text-neutral-600" />
-                        </button>
-                        <button
-                          onClick={() => handleOpenPhotoGallery(poi, 0)}
-                          className="btn btn-ghost btn-sm p-1 hover:bg-base-300"
-                          title="View photos"
-                        >
-                          <Eye size={16} className="text-neutral-600" />
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDeletePOI(poi._id, poi.locationName)
-                          }
-                          className="btn btn-ghost btn-sm p-1 hover:bg-error text-neutral-600 hover:text-white"
-                          title="Delete POI"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Description */}
-                    {poi.description && (
-                      <p className="text-sm text-neutral-600 mb-3 line-clamp-2">
-                        {poi.description}
-                      </p>
-                    )}
-
-                    {/* Tags */}
-                    {poi.tags && poi.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {poi.tags.slice(0, 3).map((tag, tagIndex) => (
-                          <span
-                            key={tagIndex}
-                            className="badge badge-primary badge-soft badge-xs"
-                          >
-                            {typeof tag === "object" ? tag.name : tag}
-                          </span>
-                        ))}
-                        {poi.tags.length > 3 && (
-                          <span className="badge badge-neutral badge-soft badge-xs">
-                            +{poi.tags.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Coordinates */}
-                    {poi.lat && poi.lng && (
-                      <div className="text-xs text-neutral-500 mb-3">
-                        📍 {poi.lat.toFixed(6)}, {poi.lng.toFixed(6)}
-                      </div>
-                    )}
-
-                    {/* Privacy Status */}
-                    <div className="flex items-center gap-2 mt-auto">
-                      {poi.isPrivate ? (
-                        <div className="flex items-center gap-1 text-xs text-neutral-500">
-                          <Lock size={12} />
-                          Private
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 text-xs text-neutral-500">
-                          <Globe size={12} />
-                          Public
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  poi={poi}
+                  onEdit={handleEditPOI}
+                  onDelete={handleDeletePOI}
+                  onViewPhotos={handleOpenPhotoGallery}
+                  showActions={true}
+                  showLikeButton={true}
+                  showFlagButton={true}
+                />
               ))}
             </div>
           )}
@@ -781,102 +729,232 @@ const AddPOI = () => {
       {/* Photo Gallery Modal */}
       {showPhotoGallery && selectedPOI && selectedPOI.photos && (
         <div className="modal modal-open">
-          <div className="modal-box w-11/12 max-w-4xl h-5/6 max-h-screen">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-xl text-primary">
-                {selectedPOI.locationName} - Photos
-              </h3>
+          <div className="modal-box w-11/12 max-w-6xl h-5/6 max-h-screen bg-base-100 p-0 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-base-300 bg-gradient-to-r from-primary/10 to-secondary/10">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/20 rounded-lg">
+                  <MapPin size={20} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-xl text-primary">
+                    {selectedPOI.locationName}
+                  </h3>
+                  <p className="text-sm text-neutral-600">
+                    Photo Gallery • {selectedPOI.photos.length} photo
+                    {selectedPOI.photos.length !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={handleClosePhotoGallery}
-                className="btn btn-sm btn-circle btn-ghost"
+                className="btn btn-sm btn-circle btn-ghost hover:bg-error/10 hover:text-error"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="relative">
+            <div className="flex max-h-full">
               {/* Main Photo Display */}
-              <div className="relative h-96 bg-base-300 rounded-lg overflow-hidden">
-                <img
-                  src={
-                    selectedPOI.photos[currentPhotoIndex].s3Url ||
-                    selectedPOI.photos[currentPhotoIndex].fullUrl
-                  }
-                  alt={`Photo ${currentPhotoIndex + 1}`}
-                  className="w-full h-full object-contain"
-                />
+              <div className="flex-1 relative bg-black overflow-hidden max-h-full">
+                <div
+                  className="w-full h-full flex items-center justify-center p-4 max-h-full"
+                  style={{
+                    transform: "scale(1)",
+                    transformOrigin: "center center",
+                    transition: "transform 0.3s ease-in-out",
+                  }}
+                  ref={(el) => {
+                    if (el) {
+                      el._zoomLevel = 1;
+                      el._isZoomed = false;
+                    }
+                  }}
+                  onClick={(e) => {
+                    const container = e.currentTarget;
+                    const rect = container.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    if (!container._isZoomed) {
+                      // Zoom in to clicked point
+                      const scaleX = x / rect.width;
+                      const scaleY = y / rect.height;
+                      container.style.transformOrigin = `${scaleX * 100}% ${
+                        scaleY * 100
+                      }%`;
+                      container.style.transform = "scale(2.5)";
+                      container._zoomLevel = 2.5;
+                      container._isZoomed = true;
+                      container.style.cursor = "zoom-out";
+                    } else {
+                      // Zoom out
+                      container.style.transform = "scale(1)";
+                      container.style.transformOrigin = "center center";
+                      container._zoomLevel = 1;
+                      container._isZoomed = false;
+                      container.style.cursor = "zoom-in";
+                    }
+                  }}
+                >
+                  <img
+                    src={
+                      selectedPOI.photos[currentPhotoIndex]?.s3Url ||
+                      selectedPOI.photos[currentPhotoIndex]?.fullUrl ||
+                      "/placeholder-image.jpg"
+                    }
+                    alt={`Photo ${currentPhotoIndex + 1}`}
+                    className="max-w-full max-h-full object-contain pointer-events-none"
+                    style={{
+                      maxWidth: "100%",
+                      maxHeight: "100%",
+                    }}
+                  />
+                </div>
 
                 {/* Navigation Buttons */}
                 {selectedPOI.photos.length > 1 && (
                   <>
                     <button
                       onClick={handlePrevPhoto}
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-3 rounded-full hover:bg-black/70 transition-colors"
+                      className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-black/60 text-white p-4 rounded-full hover:bg-black/80 transition-all duration-200 backdrop-blur-sm"
                     >
-                      <ChevronLeft size={24} />
+                      <ChevronLeft size={28} />
                     </button>
                     <button
                       onClick={handleNextPhoto}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-3 rounded-full hover:bg-black/70 transition-colors"
+                      className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-black/60 text-white p-4 rounded-full hover:bg-black/80 transition-all duration-200 backdrop-blur-sm"
                     >
-                      <ChevronRight size={24} />
+                      <ChevronRight size={28} />
                     </button>
                   </>
                 )}
+
+                {/* Photo Counter */}
+                <div className="absolute bottom-6 left-6 bg-black/60 text-white px-4 py-2 rounded-full backdrop-blur-sm">
+                  <span className="text-sm font-medium">
+                    {currentPhotoIndex + 1} / {selectedPOI.photos.length}
+                  </span>
+                </div>
               </div>
 
-              {/* Photo Info and Navigation */}
-              <div className="mt-4 text-white text-center">
-                <p className="text-sm mb-2">
-                  Photo {currentPhotoIndex + 1} of {selectedPOI.photos.length}
-                </p>
+              {/* Sidebar with Details and Thumbnails */}
+              <div className="w-80 bg-base-200 border-l border-base-300 flex flex-col">
+                {/* Photo Details */}
+                <div className="p-6 border-b border-base-300">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold text-lg text-primary">
+                      Photo Details
+                    </h4>
+                    <button
+                      onClick={() =>
+                        handleFlagPhoto(
+                          selectedPOI.photos[currentPhotoIndex],
+                          selectedPOI
+                        )
+                      }
+                      className="btn btn-sm btn-outline btn-error hover:bg-error hover:text-white transition-all duration-200"
+                      title="Flag this photo"
+                    >
+                      <Flag size={16} className="mr-1" />
+                      Flag
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {selectedPOI.photos[currentPhotoIndex]?.isPrimary && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full"></div>
+                        <span className="text-sm font-medium text-primary">
+                          Primary Photo
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 p-3 bg-base-100 rounded-lg">
+                      <div className="p-2 bg-info/20 rounded-lg">
+                        <span className="text-info text-lg">📅</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-neutral-500">Date Taken</p>
+                        <p className="font-medium">
+                          {selectedPOI.photos[currentPhotoIndex]?.date_visited
+                            ? new Date(
+                                selectedPOI.photos[
+                                  currentPhotoIndex
+                                ].date_visited
+                              ).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })
+                            : "Not available"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 p-3 bg-base-100 rounded-lg">
+                      <div className="p-2 bg-success/20 rounded-lg">
+                        <span className="text-success text-lg">📤</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-neutral-500">Uploaded</p>
+                        <p className="font-medium">
+                          {selectedPOI.photos[currentPhotoIndex]?.created_at
+                            ? new Date(
+                                selectedPOI.photos[currentPhotoIndex].created_at
+                              ).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })
+                            : "Unknown"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Photo Thumbnails */}
                 {selectedPOI.photos.length > 1 && (
-                  <div className="flex justify-center gap-2 mt-4">
-                    {selectedPOI.photos.map((photo, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setCurrentPhotoIndex(index)}
-                        className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                          index === currentPhotoIndex
-                            ? "border-primary"
-                            : "border-transparent hover:border-white/50"
-                        }`}
-                      >
-                        <img
-                          src={
-                            photo.thumbnailUrl || photo.s3Url || photo.fullUrl
-                          }
-                          alt={`Thumbnail ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
-                    ))}
+                  <div className="flex-1 p-6 overflow-y-auto">
+                    <h4 className="font-semibold text-lg mb-4 text-primary">
+                      All Photos
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {selectedPOI.photos.map((photo, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentPhotoIndex(index)}
+                          className={`relative group rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                            index === currentPhotoIndex
+                              ? "border-primary shadow-lg"
+                              : "border-transparent hover:border-primary/50"
+                          }`}
+                        >
+                          <img
+                            src={
+                              photo?.thumbnailUrl ||
+                              photo?.s3Url ||
+                              photo?.fullUrl ||
+                              "/placeholder-image.jpg"
+                            }
+                            alt={`Thumbnail ${index + 1}`}
+                            className="w-full h-24 object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                          {photo?.isPrimary && (
+                            <div className="absolute top-1 right-1 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full">
+                              ★
+                            </div>
+                          )}
+                          <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-full">
+                            {index + 1}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-
-                {/* Photo Details */}
-                <div className="mt-4 text-sm text-neutral-300">
-                  {selectedPOI.photos[currentPhotoIndex].isPrimary && (
-                    <span className="badge badge-primary badge-sm mr-2">
-                      Primary
-                    </span>
-                  )}
-                  <span>
-                    📅{" "}
-                    {new Date(
-                      selectedPOI.photos[currentPhotoIndex].date_visited
-                    ).toLocaleDateString()}
-                  </span>
-                  <span className="mx-2">•</span>
-                  <span>
-                    Uploaded{" "}
-                    {new Date(
-                      selectedPOI.photos[currentPhotoIndex].created_at
-                    ).toLocaleDateString()}
-                  </span>
-                </div>
               </div>
             </div>
           </div>
@@ -911,116 +989,8 @@ const AddPOI = () => {
             </div>
 
             <div className="space-y-6">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="label">
-                    <span className="label-text font-semibold">
-                      Location Name
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    value={editFormData.locationName}
-                    onChange={(e) =>
-                      handleEditFormChange("locationName", e.target.value)
-                    }
-                    className="input input-bordered w-full"
-                    placeholder="Enter location name"
-                  />
-                </div>
-
-                <div>
-                  <label className="label">
-                    <span className="label-text font-semibold">
-                      Google Maps Link
-                    </span>
-                  </label>
-                  <input
-                    type="url"
-                    value={editFormData.googleMapsLink}
-                    onChange={(e) =>
-                      handleEditFormChange("googleMapsLink", e.target.value)
-                    }
-                    className="input input-bordered w-full"
-                    placeholder="https://maps.google.com/..."
-                  />
-                </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="label">
-                  <span className="label-text font-semibold">Description</span>
-                </label>
-                <textarea
-                  value={editFormData.description}
-                  onChange={(e) =>
-                    handleEditFormChange("description", e.target.value)
-                  }
-                  className="textarea textarea-bordered w-full h-24"
-                  placeholder="Describe this location..."
-                />
-              </div>
-
-              {/* Coordinates */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="label">
-                    <span className="label-text font-semibold">Latitude</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={editFormData.lat || ""}
-                    onChange={(e) =>
-                      handleEditFormChange(
-                        "lat",
-                        parseFloat(e.target.value) || null
-                      )
-                    }
-                    className="input input-bordered w-full"
-                    placeholder="e.g., 40.7128"
-                  />
-                </div>
-
-                <div>
-                  <label className="label">
-                    <span className="label-text font-semibold">Longitude</span>
-                  </label>
-                  <input
-                    type="number"
-                    step="any"
-                    value={editFormData.lng || ""}
-                    onChange={(e) =>
-                      handleEditFormChange(
-                        "lng",
-                        parseFloat(e.target.value) || null
-                      )
-                    }
-                    className="input input-bordered w-full"
-                    placeholder="e.g., -74.0060"
-                  />
-                </div>
-              </div>
-
-              {/* Date Visited */}
-              <div>
-                <label className="label">
-                  <span className="label-text font-semibold">Date Visited</span>
-                </label>
-                <input
-                  type="date"
-                  value={editFormData.date_visited || ""}
-                  onChange={(e) =>
-                    handleEditFormChange("date_visited", e.target.value)
-                  }
-                  className="input input-bordered w-full"
-                />
-              </div>
-
-              {/* Privacy Toggle */}
-              <div className="flex items-center gap-3">
+              {/* Privacy Toggle - Moved to top */}
+              <div className="flex items-center gap-3 pb-4 border-b">
                 <input
                   type="checkbox"
                   id="editPrivacyToggle"
@@ -1032,10 +1002,95 @@ const AddPOI = () => {
                 />
                 <label
                   htmlFor="editPrivacyToggle"
-                  className="label-text font-semibold"
+                  className="label-text text-sm cursor-pointer"
                 >
                   Make this POI private
                 </label>
+              </div>
+
+              {/* Basic Information - 2 Column Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Column - Location Name + Coordinates */}
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="editLocationName" className="label">
+                      <span className="label-text font-semibold">
+                        Location Name
+                      </span>
+                    </label>
+                    <input
+                      id="editLocationName"
+                      type="text"
+                      value={editFormData.locationName}
+                      onChange={(e) =>
+                        handleEditFormChange("locationName", e.target.value)
+                      }
+                      className="input input-bordered w-full"
+                      placeholder="Enter location name"
+                    />
+                  </div>
+
+                  {/* Coordinates - Smaller inputs */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="editLatitude" className="label">
+                        <span className="label-text text-xs">Latitude</span>
+                      </label>
+                      <input
+                        id="editLatitude"
+                        type="number"
+                        step="any"
+                        value={editFormData.lat || ""}
+                        onChange={(e) =>
+                          handleEditFormChange(
+                            "lat",
+                            parseFloat(e.target.value) || null
+                          )
+                        }
+                        className="input input-bordered input-sm w-full"
+                        placeholder="40.7128"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="editLongitude" className="label">
+                        <span className="label-text text-xs">Longitude</span>
+                      </label>
+                      <input
+                        id="editLongitude"
+                        type="number"
+                        step="any"
+                        value={editFormData.lng || ""}
+                        onChange={(e) =>
+                          handleEditFormChange(
+                            "lng",
+                            parseFloat(e.target.value) || null
+                          )
+                        }
+                        className="input input-bordered input-sm w-full"
+                        placeholder="-74.0060"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column - Description */}
+                <div>
+                  <label htmlFor="editDescription" className="label">
+                    <span className="label-text font-semibold">
+                      Description
+                    </span>
+                  </label>
+                  <textarea
+                    id="editDescription"
+                    value={editFormData.description}
+                    onChange={(e) =>
+                      handleEditFormChange("description", e.target.value)
+                    }
+                    className="textarea textarea-bordered w-full h-32"
+                    placeholder="Describe this location..."
+                  />
+                </div>
               </div>
 
               {/* Tags */}
@@ -1061,6 +1116,7 @@ const AddPOI = () => {
                 </div>
                 <div className="flex gap-2">
                   <select
+                    id="editTagSelect"
                     onChange={(e) => {
                       if (e.target.value) {
                         handleAddTagToEdit(e.target.value);
@@ -1079,6 +1135,7 @@ const AddPOI = () => {
                       ))}
                   </select>
                   <input
+                    id="editNewTag"
                     type="text"
                     placeholder="Add new tag..."
                     onKeyDown={(e) => {
@@ -1097,10 +1154,11 @@ const AddPOI = () => {
                 <h4 className="font-semibold text-lg mb-4">Add Photo</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="label">
+                    <label htmlFor="editPhotoFile" className="label">
                       <span className="label-text font-semibold">Photo</span>
                     </label>
                     <input
+                      id="editPhotoFile"
                       ref={editPhotoFileInputRef}
                       type="file"
                       accept="image/*"
@@ -1110,31 +1168,19 @@ const AddPOI = () => {
                   </div>
 
                   <div>
-                    <label className="label">
+                    <label htmlFor="editPhotoDate" className="label">
                       <span className="label-text font-semibold">
                         Photo Date
                       </span>
                     </label>
                     <input
+                      id="editPhotoDate"
                       type="date"
                       value={editPhotoDate}
                       onChange={(e) => setEditPhotoDate(e.target.value)}
                       className="input input-bordered w-full"
                     />
                   </div>
-                </div>
-
-                <div className="flex items-center gap-3 mt-3">
-                  <input
-                    type="checkbox"
-                    id="editPhotoPrimary"
-                    checked={editPhotoIsPrimary}
-                    onChange={(e) => setEditPhotoIsPrimary(e.target.checked)}
-                    className="checkbox checkbox-primary"
-                  />
-                  <label htmlFor="editPhotoPrimary" className="label-text">
-                    Set as primary photo
-                  </label>
                 </div>
 
                 {editPhotoPreview && (
@@ -1173,7 +1219,11 @@ const AddPOI = () => {
                     {editingPOI.photos.map((photo, index) => (
                       <div key={index} className="relative group">
                         <img
-                          src={photo.s3Url || photo.fullUrl}
+                          src={
+                            photo?.s3Url ||
+                            photo?.fullUrl ||
+                            "/placeholder-image.jpg"
+                          }
                           alt={`Photo ${index + 1}`}
                           className="w-full h-24 object-cover rounded-lg"
                         />
@@ -1185,7 +1235,7 @@ const AddPOI = () => {
                             <Trash2 size={14} />
                           </button>
                         </div>
-                        {photo.isPrimary && (
+                        {photo?.isPrimary && (
                           <div className="absolute top-1 left-1 bg-primary text-white px-1 py-0.5 rounded text-xs">
                             Primary
                           </div>
@@ -1224,6 +1274,17 @@ const AddPOI = () => {
           onCancel={cancelDeletePOI}
           title="Delete POI"
           message={`Are you sure you want to delete "${poiToDelete?.poiName}"? This will permanently remove the POI and all its associated photos from your account and cannot be recovered.`}
+        />
+      )}
+
+      {/* Flag Modal */}
+      {showFlagModal && flaggingPhoto && (
+        <FlagModal
+          isOpen={showFlagModal}
+          onClose={handleCloseFlagModal}
+          photoId={flaggingPhoto.id}
+          photoUrl={flaggingPhoto.url}
+          locationName={flaggingPhoto.locationName}
         />
       )}
     </>

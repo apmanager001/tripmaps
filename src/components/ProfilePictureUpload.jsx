@@ -44,9 +44,9 @@ const ProfilePictureUpload = ({
       return;
     }
 
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB");
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
       return;
     }
 
@@ -170,7 +170,7 @@ const ProfilePictureUpload = ({
   }
 
   return (
-    <div className={`flex items-center gap-4 ${className}`}>
+    <div className={`flex items-center gap-4 ${className} min-w-24`}>
       {/* Profile Picture Display/Upload */}
       <div className="relative group">
         {imageUrl ? (

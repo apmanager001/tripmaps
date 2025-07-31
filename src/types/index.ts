@@ -296,3 +296,35 @@ export interface NearbyPOI {
     };
   };
 }
+
+// Flag related types
+export interface Flag {
+  _id: string;
+  photoId: string | { _id: string; s3Url?: string; thumbnailUrl?: string };
+  flaggedBy: string | User;
+  photoOwner: string | User;
+  poiId: string | { _id: string; locationName: string };
+  mapId: string | { _id: string; title: string };
+  reason: "inappropriate" | "copyright" | "spam" | "other";
+  details?: string;
+  status: "pending" | "reviewed" | "resolved" | "dismissed";
+  adminNotes?: string;
+  reviewedBy?: string | User;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FlagResponse {
+  success: boolean;
+  data: Flag[];
+  totalPages: number;
+  currentPage: number;
+  total: number;
+}
+
+export interface FlagCheckResponse {
+  success: boolean;
+  hasFlagged: boolean;
+  flag: Flag | null;
+}

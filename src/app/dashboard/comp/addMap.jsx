@@ -16,6 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { poiApi } from "@/lib/api";
 import { useAuthStore } from "@/store/useAuthStore";
 import POICreationInterface from "@/components/utility/poi/POICreationInterface";
+import POICard from "@/components/POICard";
 
 const AddMaps = () => {
   const fileInputRef = useRef(null);
@@ -33,31 +34,42 @@ const AddMaps = () => {
   const [showPoiSearch, setShowPoiSearch] = useState(false);
   const [showPhotoUpload, setShowPhotoUpload] = useState(false);
 
-  // POI search query - only show public POIs or user's own private POIs
+  // POI search query - comprehensive search (name, tags, description) - public POIs only
   const { data: poiSearchResults, refetch: refetchPoiSearch } = useQuery({
     queryKey: ["poiSearch", poiSearchQuery],
     queryFn: async () => {
       if (!poiSearchQuery || poiSearchQuery.length < 2) return { pois: [] };
-      const response = await poiApi.searchPOIsByName(poiSearchQuery);
-      const pois = response.data?.pois || [];
-
-      // Filter POIs: show public ones or user's own private ones
-      const filteredPois = pois.filter((poi) => {
-        // Handle null/undefined isPrivate property
-        const isPrivate = Boolean(poi.isPrivate);
-
-        if (!isPrivate) return true; // Show all public POIs
-        if (poi.user_id && poi.user_id === user?._id) return true; // Show user's own private POIs
-        return false; // Hide other users' private POIs
-      });
-
-      return { pois: filteredPois };
+      const response = await poiApi.searchPOIsComprehensive(poiSearchQuery);
+      return response.data || { pois: [] };
     },
     enabled: poiSearchQuery.length >= 2,
   });
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
+
+    // Validate file sizes
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const invalidFiles = files.filter((file) => file.size > maxSize);
+
+    if (invalidFiles.length > 0) {
+      const fileNames = invalidFiles.map((file) => file.name).join(", ");
+      toast.error(`Files too large (max 10MB): ${fileNames}`);
+      e.target.value = "";
+      return;
+    }
+
+    // Validate file types
+    const invalidTypes = files.filter(
+      (file) => !file.type.startsWith("image/")
+    );
+    if (invalidTypes.length > 0) {
+      const fileNames = invalidTypes.map((file) => file.name).join(", ");
+      toast.error(`Invalid file types (images only): ${fileNames}`);
+      e.target.value = "";
+      return;
+    }
+
     const previews = files.map((file) => URL.createObjectURL(file));
     setImages(previews);
     setCurrentIndex(0);
@@ -239,18 +251,20 @@ const AddMaps = () => {
       return;
     }
 
-    // Add the full POI information to the map builder
+    // Add the full POI data to the map builder
     const poiWithInfo = {
+      poi_id: poi._id,
+      isExistingPOI: true,
+      // Include all the display data we need
       lat: poi.lat,
       lng: poi.lng,
       locationName: poi.locationName,
       description: poi.description || "",
-      date_visited: poi.date_visited || new Date().toISOString().split("T")[0],
+      date_visited: poi.date_visited,
       tags: poi.tags || [],
       googleMapsLink: poi.googleMapsLink || "",
       isPrivate: poi.isPrivate || false,
-      poi_id: poi._id, // Reference to the original POI
-      isExistingPOI: true, // Flag to indicate this is an existing POI
+      photos: poi.photos || [],
     };
     setCoordArray((prev) => [...prev, poiWithInfo]);
     toast.success(`Added ${poi.locationName} to map!`);
@@ -404,56 +418,31 @@ const AddMaps = () => {
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2 max-h-60 overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                   {poiSearchResults.pois.map((poi) => (
-                    <div
-                      key={poi._id}
-                      className="flex items-center justify-between p-3 bg-base-100 rounded-lg border border-base-300 hover:bg-base-200 transition-colors"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h5 className="font-semibold">{poi.locationName}</h5>
-                          {Boolean(poi.isPrivate) && (
-                            <span className="badge badge-warning badge-xs">
-                              Private
-                            </span>
-                          )}
-                          {poi.user_id && poi.user_id === user?._id && (
-                            <span className="badge badge-success badge-xs">
-                              Yours
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-neutral-600 mb-2">
-                          📍 {poi.lat.toFixed(6)}, {poi.lng.toFixed(6)}
-                        </p>
-                        {poi.description && (
-                          <p className="text-xs text-neutral-500 mb-2 line-clamp-1">
+                    <div key={poi._id} className="relative">
+                      <POICard
+                        poi={poi}
+                        showActions={false}
+                        showLikeButton={true}
+                        showFlagButton={false}
+                        compact={true}
+                        className="h-full"
+                      />
+
+                      {/* Description Preview Overlay */}
+                      {poi.description && (
+                        <div className="absolute bottom-2 left-2 right-2 bg-black/70 backdrop-blur-sm rounded-lg p-2">
+                          <p className="text-xs text-white line-clamp-1 opacity-90">
                             {poi.description}
                           </p>
-                        )}
-                        {poi.tags && poi.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {poi.tags.slice(0, 3).map((tag, index) => (
-                              <span
-                                key={index}
-                                className="badge badge-outline badge-xs"
-                              >
-                                {typeof tag === "object" ? tag.name : tag}
-                              </span>
-                            ))}
-                            {poi.tags.length > 3 && (
-                              <span className="badge badge-outline badge-xs">
-                                +{poi.tags.length - 3}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
+
                       <button
                         id={`poiAddToMapButton-${poi._id}`}
                         onClick={() => handleAddPoiToMap(poi)}
-                        className="btn btn-sm btn-primary ml-3"
+                        className="btn btn-sm btn-primary absolute top-2 right-2 z-10"
                       >
                         Add to Map
                       </button>

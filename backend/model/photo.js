@@ -46,7 +46,7 @@ const photoSchema = new Schema(
     fileSize: {
       type: Number,
       required: [true, "File size is required"],
-      max: [2 * 1024 * 1024, "File size cannot exceed 2MB"], // 2MB limit
+      max: [10 * 1024 * 1024, "File size cannot exceed 10MB"], // 10MB limit
     },
 
     mimeType: {

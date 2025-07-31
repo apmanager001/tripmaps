@@ -227,7 +227,7 @@ const SearchPage = () => {
                       )}
                       <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
                         <span>👤 {poi.user_id?.username || "Unknown"}</span>
-                        <span>❤️ {poi.likes || 0}</span>
+                        <span>❤️ {poi.likesCount || 0}</span>
                       </div>
                       {poi.tags && poi.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-2">

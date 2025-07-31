@@ -329,6 +329,16 @@ export const poiApi = {
     );
   },
 
+  searchPOIsComprehensive: async (
+    query: string,
+    page = 1,
+    limit = 20
+  ): Promise<ApiResponse<{ pois: POI[]; pagination: Pagination }>> => {
+    return apiRequest<ApiResponse<{ pois: POI[]; pagination: Pagination }>>(
+      `/pois/search?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`
+    );
+  },
+
   searchMapsByPOIName: async (
     poiName: string,
     page = 1,
@@ -358,7 +368,9 @@ export const poiApi = {
     cropData?: { x: number; y: number; width: number; height: number } | null,
     isPrimary: boolean = false,
     dateVisited?: string
-  ): Promise<ApiResponse<{ photo: { _id: string; s3Url: string; thumbnailUrl: string } }>> => {
+  ): Promise<
+    ApiResponse<{ photo: { _id: string; s3Url: string; thumbnailUrl: string } }>
+  > => {
     const formData = new FormData();
     formData.append("photo", photoFile);
     if (cropData) {
@@ -376,7 +388,9 @@ export const poiApi = {
     }).then((res) => res.json());
   },
 
-  deletePhoto: async (photoId: string): Promise<ApiResponse<{ message: string }>> => {
+  deletePhoto: async (
+    photoId: string
+  ): Promise<ApiResponse<{ message: string }>> => {
     return fetch(`${process.env.NEXT_PUBLIC_BACKEND}/photos/${photoId}`, {
       method: "DELETE",
       credentials: "include",
@@ -583,6 +597,56 @@ export const homepageApi = {
     >("/pois/popular-locations");
   },
 
+  getPopularPOIs: async (): Promise<
+    ApiResponse<
+      {
+        _id: string;
+        locationName: string;
+        likes: string[];
+        likesCount: number;
+        photos: Array<{
+          _id: string;
+          s3Url?: string;
+          thumbnailUrl?: string;
+          fullUrl?: string;
+        }>;
+        user_id: {
+          _id: string;
+          username: string;
+        };
+        map_id: {
+          _id: string;
+          mapName: string;
+        };
+      }[]
+    >
+  > => {
+    return apiRequest<
+      ApiResponse<
+        {
+          _id: string;
+          locationName: string;
+          likes: string[];
+          likesCount: number;
+          photos: Array<{
+            _id: string;
+            s3Url?: string;
+            thumbnailUrl?: string;
+            fullUrl?: string;
+          }>;
+          user_id: {
+            _id: string;
+            username: string;
+          };
+          map_id: {
+            _id: string;
+            mapName: string;
+          };
+        }[]
+      >
+    >("/pois/popular");
+  },
+
   getTopUsers: async (): Promise<
     ApiResponse<
       { _id: string; username: string; mapsCount: number; totalViews: number }[]
@@ -598,6 +662,60 @@ export const homepageApi = {
         }[]
       >
     >("/users/top");
+  },
+};
+
+// ===== FLAG API =====
+export const flagApi = {
+  createFlag: async (data: {
+    photoId: string;
+    reason?: string;
+    details?: string;
+  }): Promise<ApiResponse<any>> => {
+    return apiRequest<ApiResponse<any>>("/flags", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  getAllFlags: async (params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.status) searchParams.append("status", params.status);
+    if (params?.page) searchParams.append("page", params.page.toString());
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+
+    return apiRequest<ApiResponse<any>>(`/flags?${searchParams.toString()}`);
+  },
+
+  updateFlagStatus: async (
+    flagId: string,
+    data: { status: string; adminNotes?: string }
+  ): Promise<ApiResponse<any>> => {
+    return apiRequest<ApiResponse<any>>(`/flags/${flagId}/status`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
+  getFlagsByUser: async (params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<any>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append("page", params.page.toString());
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+
+    return apiRequest<ApiResponse<any>>(
+      `/flags/user?${searchParams.toString()}`
+    );
+  },
+
+  checkUserFlag: async (photoId: string): Promise<ApiResponse<any>> => {
+    return apiRequest<ApiResponse<any>>(`/flags/check/${photoId}`);
   },
 };
 

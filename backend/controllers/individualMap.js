@@ -11,8 +11,10 @@ const getIndividualMap = async (req, res) => {
       return res.status(404).json({ error: "Map not found" });
     }
 
-    // Get POIs for this map
-    const pois = await POI.find({ map_id: mapId });
+    // Get POIs for this map with photos
+    const pois = await POI.find({ map_id: mapId })
+      .populate("photos")
+      .populate("user_id", "username");
 
     res.status(200).json({
       map,

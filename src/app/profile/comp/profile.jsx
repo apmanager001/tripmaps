@@ -14,12 +14,23 @@ import {
   Clock,
 } from "lucide-react";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
-import { userApi } from "@/lib/api";
+import MapCard from "@/components/MapCard";
+import { userApi, mapApi } from "@/lib/api";
 
 async function fetchProfileData(id) {
   try {
-    const data = await userApi.getProfile(id);
-    return data;
+    const [userData, mapsData] = await Promise.all([
+      userApi.getProfile(id),
+      mapApi.getUserMaps(id, 1, 50), // Fetch up to 50 maps
+    ]);
+
+    return {
+      ...userData,
+      data: {
+        ...userData.data,
+        maps: mapsData.data.maps || [],
+      },
+    };
   } catch (error) {
     console.error("Error fetching profile data:", error);
     throw error;
@@ -235,57 +246,7 @@ export default function Profile({ id }) {
               ) : (
                 <div className="grid gap-4">
                   {maps.map((map) => (
-                    <div
-                      key={map._id}
-                      className="group bg-gradient-to-r from-gray-50 to-white rounded-xl p-6 border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-300"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-3">
-                            <h3 className="text-xl font-bold text-gray-800 group-hover:text-blue-600 transition-colors">
-                              {map.mapName}
-                            </h3>
-                            <div className="badge badge-outline badge-sm">
-                              <MapPin size={12} className="mr-1" />
-                              Map
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-6 text-sm text-gray-600 mb-4">
-                            <div className="flex items-center gap-1">
-                              <Clock size={14} />
-                              <span>
-                                {new Date(map.createdAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              <div
-                                className="flex items-center gap-1"
-                                title={`${map.views || 0} views`}
-                              >
-                                <Eye size={14} className="text-blue-500" />
-                                <span>{map.views || 0}</span>
-                              </div>
-                              <div
-                                className="flex items-center gap-1"
-                                title={`${map.likes || 0} likes`}
-                              >
-                                <Heart size={14} className="text-red-500" />
-                                <span>{map.likes || 0}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <Link
-                          href={`/maps/${map._id}`}
-                          className="btn btn-primary btn-sm group-hover:btn-secondary transition-all duration-300"
-                        >
-                          <MapPin size={16} className="mr-2" />
-                          Explore
-                        </Link>
-                      </div>
-                    </div>
+                    <MapCard key={map._id} map={map} showActions={true} />
                   ))}
                 </div>
               )}

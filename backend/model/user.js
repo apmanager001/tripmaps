@@ -16,6 +16,16 @@ const userSchema = new Schema({
     required: [true, "Please provide a Password"],
     unique: false,
   },
+  // OAuth fields
+  oauthProvider: {
+    type: String,
+    enum: ["google", "facebook", null],
+    default: null,
+  },
+  oauthId: {
+    type: String,
+    default: null,
+  },
   username: {
     type: String,
     required: [true, "Please provide an unique Username"],

@@ -6,35 +6,10 @@ const POILike = require("../model/poiLike");
 const EditHistory = require("../model/editHistory");
 const mongoose = require("mongoose");
 const Photo = require("../model/photo");
-const AWS = require("aws-sdk");
-
-// Configure AWS SDK for Cloudflare R2
-AWS.config.update({
-  accessKeyId: process.env.R2_ACCESS_KEY_ID,
-  secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  region: "auto",
-  endpoint: "https://57504fc5bc651800ba47b85ed3c810bf.r2.cloudflarestorage.com",
-  s3ForcePathStyle: true,
-  signatureVersion: "v4",
-});
-
-const s3 = new AWS.S3();
-const BUCKET_NAME = process.env.R2_BUCKET_NAME;
-
-// Generate presigned URL for photo access
-const generatePresignedUrl = async (s3Key) => {
-  try {
-    const presignedUrl = await s3.getSignedUrlPromise("getObject", {
-      Bucket: BUCKET_NAME,
-      Key: s3Key,
-      Expires: 3600, // 1 hour
-    });
-    return presignedUrl;
-  } catch (error) {
-    console.error("Error generating presigned URL:", error);
-    return null;
-  }
-};
+const {
+  generatePresignedUrl,
+  generatePresignedUrlsForPhotos,
+} = require("../helpers/photoHelpers");
 
 // Create a new POI
 const createPOI = async (req, res) => {
@@ -139,7 +114,8 @@ const getPOI = async (req, res) => {
 
     const poi = await POI.findById(id)
       .populate("user_id", "username email")
-      .populate("map_id", "mapName user_id");
+      .populate("map_id", "mapName user_id")
+      .populate("photos"); // Use the virtual field to populate photos
 
     if (!poi) {
       return res.status(404).json({
@@ -156,10 +132,22 @@ const getPOI = async (req, res) => {
 
     const tags = poiTags.map((pt) => pt.tag_id);
 
+    // Generate presigned URLs for photos if they exist
+    const photosWithUrls =
+      poi.photos && Array.isArray(poi.photos)
+        ? await generatePresignedUrlsForPhotos(poi.photos)
+        : [];
+
+    // Add photos to the POI object
+    const poiWithPhotos = {
+      ...poi.toObject(),
+      photos: photosWithUrls,
+    };
+
     res.json({
       success: true,
       data: {
-        poi,
+        poi: poiWithPhotos,
         tags,
       },
     });
@@ -379,9 +367,10 @@ const getPOIsByMap = async (req, res) => {
 
     const pois = await POI.find({ map_id: mapId })
       .populate("user_id", "username")
+      .populate("photos") // Include photos for map POIs
       .sort({ createdAt: 1 });
 
-    // Get tags for each POI
+    // Get tags for each POI, add likes count, and generate presigned URLs for photos
     const poisWithTags = await Promise.all(
       pois.map(async (poi) => {
         const poiTags = await POITag.find({ poi_id: poi._id }).populate(
@@ -389,9 +378,17 @@ const getPOIsByMap = async (req, res) => {
           "name"
         );
 
+        // Generate presigned URLs for photos if they exist
+        const photosWithUrls =
+          poi.photos && Array.isArray(poi.photos)
+            ? await generatePresignedUrlsForPhotos(poi.photos)
+            : [];
+
         return {
           ...poi.toObject(),
           tags: poiTags.map((pt) => pt.tag_id),
+          likesCount: poi.likes ? poi.likes.length : 0,
+          photos: photosWithUrls,
         };
       })
     );
@@ -443,8 +440,13 @@ const searchPOIsByLocation = async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    // Filter out POIs from private maps
+    // Filter out POIs from private maps and add likes count
     const filteredPOIs = pois.filter((poi) => !poi.map_id.isPrivate);
+
+    const poisWithLikesCount = filteredPOIs.map((poi) => ({
+      ...poi.toObject(),
+      likesCount: poi.likes ? poi.likes.length : 0,
+    }));
 
     const total = await POI.countDocuments({
       lat: {
@@ -460,7 +462,7 @@ const searchPOIsByLocation = async (req, res) => {
     res.json({
       success: true,
       data: {
-        pois: filteredPOIs,
+        pois: poisWithLikesCount,
         pagination: {
           page,
           limit,
@@ -471,6 +473,234 @@ const searchPOIsByLocation = async (req, res) => {
     });
   } catch (error) {
     console.error("Error searching POIs by location:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+// Search POIs comprehensively (name, tags, description) - public only
+const searchPOIsComprehensive = async (req, res) => {
+  try {
+    const { q } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    if (!q || q.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query must be at least 2 characters",
+      });
+    }
+
+    const searchRegex = new RegExp(q, "i");
+
+    // Search in POI name, description, and tags
+    const pois = await POI.aggregate([
+      {
+        $lookup: {
+          from: "poitags",
+          localField: "_id",
+          foreignField: "poi_id",
+          as: "poiTags",
+        },
+      },
+      {
+        $lookup: {
+          from: "tags",
+          localField: "poiTags.tag_id",
+          foreignField: "_id",
+          as: "tags",
+        },
+      },
+      {
+        $lookup: {
+          from: "tripMaps",
+          localField: "map_id",
+          foreignField: "_id",
+          as: "map",
+        },
+      },
+      {
+        $unwind: {
+          path: "$map",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "photos",
+          localField: "_id",
+          foreignField: "poi_id",
+          as: "photos",
+        },
+      },
+      {
+        $match: {
+          $and: [
+            {
+              $or: [
+                { locationName: searchRegex },
+                { description: searchRegex },
+                { "tags.name": searchRegex },
+              ],
+            },
+            {
+              $or: [
+                { map: { $exists: false } }, // POIs without maps
+                { "map.isPrivate": false }, // POIs from public maps
+              ],
+            },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          likesCount: { $size: { $ifNull: ["$likes", []] } },
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+      {
+        $project: {
+          _id: 1,
+          locationName: 1,
+          description: 1,
+          lat: 1,
+          lng: 1,
+          photos: {
+            $map: {
+              input: "$photos",
+              as: "photo",
+              in: {
+                _id: "$$photo._id",
+                s3Key: "$$photo.s3Key",
+                thumbnailKey: "$$photo.thumbnailKey",
+                isPrimary: "$$photo.isPrimary",
+                date_visited: "$$photo.date_visited",
+                created_at: "$$photo.created_at",
+              },
+            },
+          },
+          date_visited: 1,
+          googleMapsLink: 1,
+          isPrivate: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          likes: 1,
+          likesCount: 1,
+          user_id: "$user",
+          map_id: "$map",
+          tags: 1,
+        },
+      },
+    ]);
+
+    // Generate presigned URLs for photos using the helper
+    const poisWithPresignedUrls = await Promise.all(
+      pois.map(async (poi) => {
+        if (poi.photos && poi.photos.length > 0) {
+          const photosWithUrls = await generatePresignedUrlsForPhotos(
+            poi.photos
+          );
+          return {
+            ...poi,
+            photos: photosWithUrls,
+          };
+        }
+        return poi;
+      })
+    );
+
+    const total = await POI.aggregate([
+      {
+        $lookup: {
+          from: "poitags",
+          localField: "_id",
+          foreignField: "poi_id",
+          as: "poiTags",
+        },
+      },
+      {
+        $lookup: {
+          from: "tags",
+          localField: "poiTags.tag_id",
+          foreignField: "_id",
+          as: "tags",
+        },
+      },
+      {
+        $lookup: {
+          from: "tripMaps",
+          localField: "map_id",
+          foreignField: "_id",
+          as: "map",
+        },
+      },
+      {
+        $unwind: {
+          path: "$map",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $match: {
+          $and: [
+            {
+              $or: [
+                { locationName: searchRegex },
+                { description: searchRegex },
+                { "tags.name": searchRegex },
+              ],
+            },
+            {
+              $or: [{ map: { $exists: false } }, { "map.isPrivate": false }],
+            },
+          ],
+        },
+      },
+      {
+        $count: "total",
+      },
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        pois: poisWithPresignedUrls,
+        pagination: {
+          page,
+          limit,
+          total: total[0]?.total || 0,
+          pages: Math.ceil((total[0]?.total || 0) / limit),
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error searching POIs comprehensively:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -511,7 +741,7 @@ const searchPOIsByName = async (req, res) => {
       return !poi.map_id.isPrivate;
     });
 
-    // Get tags for each POI
+    // Get tags for each POI and add likes count
     const poisWithTags = await Promise.all(
       filteredPOIs.map(async (poi) => {
         const poiTags = await POITag.find({ poi_id: poi._id }).populate(
@@ -521,6 +751,7 @@ const searchPOIsByName = async (req, res) => {
         return {
           ...poi.toObject(),
           tags: poiTags.map((pt) => pt.tag_id),
+          likesCount: poi.likes ? poi.likes.length : 0,
         };
       })
     );
@@ -566,7 +797,7 @@ const togglePOILike = async (req, res) => {
 
     // Check if user can access the POI (map must be public or user must own it)
     const map = await Map.findById(poi.map_id);
-    if (map.isPrivate && map.user_id.toString() !== userId.toString()) {
+    if (map && map.isPrivate && map.user_id.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
         message: "Cannot like POI from private map",
@@ -574,28 +805,38 @@ const togglePOILike = async (req, res) => {
     }
 
     // Check if the user has already liked this POI
-    const existingLike = await POILike.findOne({ poi_id: id, user_id: userId });
+    const userHasLiked = poi.likes && poi.likes.includes(userId);
 
-    if (existingLike) {
-      // Unlike the POI
-      await POILike.findByIdAndDelete(existingLike._id);
-      await POI.findByIdAndUpdate(id, { $inc: { likes: -1 } }, { new: true });
+    if (userHasLiked) {
+      // Unlike the POI - remove user from likes array
+      const updatedPOI = await POI.findByIdAndUpdate(
+        id,
+        { $pull: { likes: userId } },
+        { new: true }
+      ).populate("user_id", "username");
+
       return res.json({
         success: true,
-        data: await POI.findById(id).populate("user_id", "username"),
+        data: {
+          ...updatedPOI.toObject(),
+          likesCount: updatedPOI.likes ? updatedPOI.likes.length : 0,
+        },
         message: "POI unliked",
       });
     } else {
-      // Like the POI
-      const newLike = new POILike({
-        poi_id: id,
-        user_id: userId,
-      });
-      await newLike.save();
-      await POI.findByIdAndUpdate(id, { $inc: { likes: 1 } }, { new: true });
+      // Like the POI - add user to likes array
+      const updatedPOI = await POI.findByIdAndUpdate(
+        id,
+        { $addToSet: { likes: userId } },
+        { new: true }
+      ).populate("user_id", "username");
+
       return res.json({
         success: true,
-        data: await POI.findById(id).populate("user_id", "username"),
+        data: {
+          ...updatedPOI.toObject(),
+          likesCount: updatedPOI.likes ? updatedPOI.likes.length : 0,
+        },
         message: "POI liked",
       });
     }
@@ -740,6 +981,7 @@ const getUserPOIs = async (req, res) => {
     const pois = await POI.find({ user_id: userId })
       .populate("map_id", "mapName")
       .populate("user_id", "username")
+      .populate("photos") // Use virtual populate for photos
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
@@ -752,34 +994,18 @@ const getUserPOIs = async (req, res) => {
           "name"
         );
 
-        // Get photos for this POI
-        const photos = await Photo.find({ poi_id: poi._id })
-          .sort({ isPrimary: -1, createdAt: -1 }) // Primary photos first, then by creation date
-          .select(
-            "s3Key thumbnailKey isPrimary created_at date_visited user_id"
-          );
-
-        // Generate presigned URLs for photos
-        const photosWithUrls = await Promise.all(
-          photos.map(async (photo) => {
-            if (photo.s3Key) {
-              const presignedUrl = await generatePresignedUrl(photo.s3Key);
-              if (presignedUrl) {
-                return {
-                  ...photo.toObject(),
-                  s3Url: presignedUrl,
-                  thumbnailUrl: presignedUrl, // Assuming thumbnail is the same as full URL for now
-                };
-              }
-            }
-            return photo; // Return original if no presigned URL
-          })
-        );
+        // Generate presigned URLs for photos using the helper
+        const photosWithUrls =
+          poi.photos && Array.isArray(poi.photos)
+            ? await generatePresignedUrlsForPhotos(poi.photos)
+            : [];
 
         return {
           ...poi.toObject(),
           tags: poiTags.map((pt) => pt.tag_id),
           photos: photosWithUrls,
+          likesCount: poi.likes ? poi.likes.length : 0,
+          isLiked: poi.likes && poi.likes.includes(userId),
         };
       })
     );
@@ -876,6 +1102,171 @@ const getPopularLocations = async (req, res) => {
   }
 };
 
+// Get popular POIs with photos for homepage display
+const getPopularPOIs = async (req, res) => {
+  try {
+    console.log("Fetching popular POIs...");
+
+    // First, let's check what POIs exist
+    const totalPOIs = await POI.countDocuments();
+    console.log("Total POIs in database:", totalPOIs);
+
+    // Check POIs with maps
+    const poisWithMaps = await POI.countDocuments({
+      map_id: { $exists: true, $ne: null },
+    });
+    console.log("POIs with maps:", poisWithMaps);
+
+    // Check POIs with photos
+    const poisWithPhotos = await POI.aggregate([
+      {
+        $lookup: {
+          from: "photos",
+          localField: "_id",
+          foreignField: "poi_id",
+          as: "photos",
+        },
+      },
+      {
+        $match: {
+          photos: { $ne: [] },
+        },
+      },
+      {
+        $count: "count",
+      },
+    ]);
+    console.log("POIs with photos:", poisWithPhotos[0]?.count || 0);
+
+    // Fetch POIs from public maps with photos, sorted by likes (descending)
+    const popularPOIs = await POI.aggregate([
+      // Join with Map to filter only public maps
+      {
+        $lookup: {
+          from: "maps",
+          localField: "map_id",
+          foreignField: "_id",
+          as: "map",
+        },
+      },
+      // Join with Photo to get photos
+      {
+        $lookup: {
+          from: "photos",
+          localField: "_id",
+          foreignField: "poi_id",
+          as: "photos",
+        },
+      },
+      // Filter: include POIs with public maps OR POIs without maps
+      {
+        $match: {
+          $or: [
+            // POIs with public maps
+            {
+              map: { $ne: [] },
+              "map.isPrivate": false,
+            },
+            // POIs without maps (standalone POIs)
+            {
+              map: { $size: 0 },
+            },
+          ],
+        },
+      },
+      // Add a computed field for likes count
+      {
+        $addFields: {
+          likesCount: { $size: "$likes" },
+        },
+      },
+      // Sort by likes count (descending)
+      {
+        $sort: { likesCount: -1 },
+      },
+      // Limit to 6 results
+      {
+        $limit: 6,
+      },
+      // Project the fields we want
+      {
+        $project: {
+          _id: 1,
+          locationName: 1,
+          description: 1,
+          likes: 1,
+          likesCount: 1,
+          photos: {
+            $map: {
+              input: "$photos",
+              as: "photo",
+              in: {
+                _id: "$$photo._id",
+                s3Key: "$$photo.s3Key",
+                thumbnailKey: "$$photo.thumbnailKey",
+                isPrimary: "$$photo.isPrimary",
+                date_visited: "$$photo.date_visited",
+                created_at: "$$photo.created_at",
+              },
+            },
+          },
+          user_id: { $arrayElemAt: ["$map.user_id", 0] },
+          map_id: {
+            $cond: {
+              if: { $gt: [{ $size: "$map" }, 0] },
+              then: {
+                _id: { $arrayElemAt: ["$map._id", 0] },
+                mapName: { $arrayElemAt: ["$map.mapName", 0] },
+              },
+              else: null,
+            },
+          },
+        },
+      },
+    ]);
+
+    console.log("Popular POIs found:", popularPOIs.length);
+    console.log("Sample POI:", popularPOIs[0]);
+
+    // Generate presigned URLs for photos using the helper
+    const poisWithPresignedUrls = await Promise.all(
+      popularPOIs.map(async (poi) => {
+        if (poi.photos && poi.photos.length > 0) {
+          const photosWithUrls = await generatePresignedUrlsForPhotos(
+            poi.photos
+          );
+          return {
+            ...poi,
+            photos: photosWithUrls,
+          };
+        }
+        return poi;
+      })
+    );
+
+    // Populate user information for each POI
+    const populatedPOIs = await POI.populate(poisWithPresignedUrls, [
+      {
+        path: "user_id",
+        select: "username",
+      },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      data: populatedPOIs,
+    });
+  } catch (error) {
+    console.error("Error fetching popular POIs:", error);
+    console.error("Error stack:", error.stack);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createPOI,
   getPOI,
@@ -885,7 +1276,9 @@ module.exports = {
   getUserPOIs,
   searchPOIsByLocation,
   searchPOIsByName,
+  searchPOIsComprehensive,
   searchMapsByPOIName,
   getPopularLocations,
+  getPopularPOIs,
   togglePOILike,
 };

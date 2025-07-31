@@ -7,6 +7,10 @@ const {
   loginUser,
   logoutUser,
   verifyUser,
+  googleAuth,
+  googleCallback,
+  facebookAuth,
+  facebookCallback,
 } = require("../controllers/authcontroller");
 
 const {
@@ -39,9 +43,11 @@ const {
   getUserPOIs,
   searchPOIsByLocation,
   searchPOIsByName,
+  searchPOIsComprehensive,
   searchMapsByPOIName,
   togglePOILike,
   getPopularLocations,
+  getPopularPOIs,
 } = require("../controllers/poiController");
 
 const { getAllTags, createTag } = require("../controllers/tagController");
@@ -84,6 +90,14 @@ const {
   unlikeComment,
 } = require("../controllers/socialController");
 
+const {
+  createFlag,
+  getAllFlags,
+  updateFlagStatus,
+  getFlagsByUser,
+  checkUserFlag,
+} = require("../controllers/flagController");
+
 const { jwtAuth } = require("../helpers/jwtAuth");
 const {
   validateRegistration,
@@ -98,6 +112,12 @@ router.post("/register", validateRegistration, registerUser);
 router.post("/login", validateLogin, loginUser);
 router.post("/logout", logoutUser);
 router.get("/verifyUser", verifyUser);
+
+// ===== OAUTH ROUTES =====
+router.get("/auth/google", googleAuth);
+router.get("/auth/google/callback", googleCallback);
+router.get("/auth/facebook", facebookAuth);
+router.get("/auth/facebook/callback", facebookCallback);
 
 // ===== USER ROUTES =====
 router.get("/users/profile/:id", getUserProfile);
@@ -134,8 +154,10 @@ router.post("/pois", jwtAuth, createPOI);
 router.get("/pois/user", jwtAuth, getUserPOIs);
 router.get("/pois/search/location", searchPOIsByLocation);
 router.get("/pois/search/name", searchPOIsByName);
+router.get("/pois/search", searchPOIsComprehensive);
 router.get("/pois/search/maps/:poiName", searchMapsByPOIName);
 router.get("/pois/popular-locations", getPopularLocations);
+router.get("/pois/popular", getPopularPOIs);
 router.get("/pois/:id", getPOI);
 router.put("/pois/:id", jwtAuth, updatePOI);
 router.delete("/pois/:id", jwtAuth, deletePOI);
@@ -185,6 +207,13 @@ router.patch("/photos/:photoId/primary", jwtAuth, setPrimaryPhoto);
 router.delete("/photos/:photoId", jwtAuth, deletePhoto);
 router.get("/users/:userId/photos", getUserPhotos);
 router.put("/photos/:photoId", jwtAuth, updatePhoto);
+
+// ===== FLAG ROUTES =====
+router.post("/flags", jwtAuth, createFlag);
+router.get("/flags", jwtAuth, getAllFlags);
+router.put("/flags/:flagId/status", jwtAuth, updateFlagStatus);
+router.get("/flags/user", jwtAuth, getFlagsByUser);
+router.get("/flags/check/:photoId", jwtAuth, checkUserFlag);
 
 // ===== LEGACY ROUTES (for backward compatibility) =====
 // These routes maintain compatibility with existing frontend code

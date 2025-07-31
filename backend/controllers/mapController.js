@@ -8,6 +8,47 @@ const POITag = require("../model/poiTag");
 const Tag = require("../model/tag");
 const User = require("../model/user");
 const mongoose = require("mongoose");
+const { generatePresignedUrlsForPhotos } = require("../helpers/photoHelpers");
+
+// Helper function to create a new POI
+const createNewPOI = async (coord, mapId, userId) => {
+  const poi = new POI({
+    map_id: mapId,
+    user_id: userId,
+    lat: coord.lat,
+    lng: coord.lng,
+    locationName: coord.name || coord.locationName || null,
+    description: coord.description || "",
+    googleMapsLink: coord.googleMapsLink || "",
+    isPrivate: coord.isPrivate || false,
+    date_visited: coord.date_visited || new Date(),
+  });
+
+  const savedPOI = await poi.save();
+
+  // Handle tags if provided
+  if (coord.tags && Array.isArray(coord.tags) && coord.tags.length > 0) {
+    const tagPromises = coord.tags.map(async (tagName) => {
+      // Find or create tag
+      let tag = await Tag.findOne({ name: tagName });
+      if (!tag) {
+        tag = new Tag({ name: tagName });
+        await tag.save();
+      }
+
+      // Create POI-Tag relationship
+      const poiTag = new POITag({
+        poi_id: savedPOI._id,
+        tag_id: tag._id,
+      });
+      return poiTag.save();
+    });
+
+    await Promise.all(tagPromises);
+  }
+
+  return savedPOI;
+};
 
 // Create a new map
 const createMap = async (req, res) => {
@@ -31,44 +72,39 @@ const createMap = async (req, res) => {
 
     const savedMap = await newMap.save();
 
-    // Create POIs for each coordinate
+    // Create or link POIs for each coordinate
     const poiPromises = coordArray.map(async (coord, index) => {
-      const poi = new POI({
-        map_id: savedMap._id,
-        user_id: userId,
-        lat: coord.lat,
-        lng: coord.lng,
-        locationName: coord.name || coord.locationName || null,
-        date_visited: coord.date_visited || new Date(),
-      });
+      let savedPOI;
 
-      const savedPOI = await poi.save();
+      // Check if this is an existing POI (has poi_id and isExistingPOI flag)
+      if (coord.poi_id && coord.isExistingPOI) {
+        // This is a reference to an existing POI - just link it to the map
+        const existingPOI = await POI.findById(coord.poi_id);
 
-      // Handle tags if provided
-      if (coord.tags && Array.isArray(coord.tags) && coord.tags.length > 0) {
-        const tagPromises = coord.tags.map(async (tagName) => {
-          // Find or create tag
-          let tag = await Tag.findOne({ name: tagName });
-          if (!tag) {
-            tag = new Tag({ name: tagName });
-            await tag.save();
-          }
-
-          // Create POI-Tag relationship
-          const poiTag = new POITag({
-            poi_id: savedPOI._id,
-            tag_id: tag._id,
-          });
-          return poiTag.save();
-        });
-
-        await Promise.all(tagPromises);
+        if (existingPOI) {
+          // Update the existing POI to link it to this map
+          savedPOI = await POI.findByIdAndUpdate(
+            coord.poi_id,
+            { map_id: savedMap._id },
+            { new: true }
+          );
+          console.log(
+            `Linked existing POI ${coord.poi_id} to map ${savedMap._id}`
+          );
+        } else {
+          console.log(`Existing POI ${coord.poi_id} not found, skipping`);
+          return null;
+        }
+      } else {
+        // Create a new POI (has coordinates and other data)
+        savedPOI = await createNewPOI(coord, savedMap._id, userId);
       }
 
       return savedPOI;
     });
 
-    await Promise.all(poiPromises);
+    const poiResults = await Promise.all(poiPromises);
+    const validPOIs = poiResults.filter((poi) => poi !== null);
 
     // Populate user info
     const populatedMap = await Map.findById(savedMap._id).populate(
@@ -119,11 +155,53 @@ const getMap = async (req, res) => {
       });
     }
 
-    // Get POIs for this map
+    // Get POIs for this map with photos and tags
     const pois = await POI.find({ map_id: id }).sort({ createdAt: 1 });
 
+    // Get photos and tags for each POI, and generate presigned URLs
+    const poisWithPhotosAndTags = await Promise.all(
+      pois.map(async (poi) => {
+        // Get photos for this POI
+        const PhotoModel = require("../model/photo");
+
+        // Try different approaches to find photos
+        let photos = await PhotoModel.find({ poi_id: poi._id })
+          .sort({ isPrimary: -1, createdAt: -1 })
+          .select(
+            "s3Key thumbnailKey isPrimary created_at date_visited user_id"
+          );
+
+        // If no photos found, try with string ID
+        if (photos.length === 0) {
+          photos = await PhotoModel.find({ poi_id: poi._id.toString() })
+            .sort({ isPrimary: -1, createdAt: -1 })
+            .select(
+              "s3Key thumbnailKey isPrimary created_at date_visited user_id"
+            );
+        }
+
+        // Generate presigned URLs for photos using the helper
+        const photosWithUrls = await generatePresignedUrlsForPhotos(photos);
+
+        // Get tags for this POI
+        const poiTags = await POITag.find({ poi_id: poi._id }).populate(
+          "tag_id",
+          "name"
+        );
+
+        const result = {
+          ...poi.toObject(),
+          photos: photosWithUrls,
+          tags: poiTags.map((pt) => pt.tag_id),
+          likesCount: poi.likes ? poi.likes.length : 0,
+        };
+
+        return result;
+      })
+    );
+
     // Check POI likes for current user
-    let poisWithLikes = pois;
+    let poisWithLikes = poisWithPhotosAndTags;
     if (userId) {
       const poiLikes = await POILike.find({
         poi_id: { $in: pois.map((p) => p._id) },
@@ -131,8 +209,8 @@ const getMap = async (req, res) => {
       });
       const likedPoiIds = poiLikes.map((like) => like.poi_id.toString());
 
-      poisWithLikes = pois.map((poi) => ({
-        ...poi.toObject(),
+      poisWithLikes = poisWithPhotosAndTags.map((poi) => ({
+        ...poi,
         isLiked: likedPoiIds.includes(poi._id.toString()),
       }));
     }
@@ -190,9 +268,26 @@ const getUserMaps = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    // First, try to find the user by ID or username
+    let user;
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      // If it's a valid ObjectId, search by _id
+      user = await User.findById(userId);
+    } else {
+      // If it's not a valid ObjectId, search by username
+      user = await User.findOne({ username: userId });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
     // Build query - show private maps only to owner
-    const query = { user_id: userId };
-    if (!currentUserId || currentUserId.toString() !== userId) {
+    const query = { user_id: user._id };
+    if (!currentUserId || currentUserId.toString() !== user._id.toString()) {
       query.isPrivate = false;
     }
 
@@ -202,12 +297,45 @@ const getUserMaps = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
+    // Populate POIs with photos for each map
+    const mapsWithPOIs = await Promise.all(
+      maps.map(async (map) => {
+        const pois = await POI.find({ map_id: map._id })
+          .populate({
+            path: "photos",
+            options: { sort: { isPrimary: -1, created_at: 1 } },
+          })
+          .limit(4); // Limit to 4 POIs for thumbnail display
+
+        // Generate presigned URLs for photos in each POI
+        const poisWithPresignedUrls = await Promise.all(
+          pois.map(async (poi) => {
+            if (poi.photos && poi.photos.length > 0) {
+              const photosWithUrls = await generatePresignedUrlsForPhotos(
+                poi.photos
+              );
+              return {
+                ...poi.toObject(),
+                photos: photosWithUrls,
+              };
+            }
+            return poi.toObject();
+          })
+        );
+
+        return {
+          ...map.toObject(),
+          pois: poisWithPresignedUrls,
+        };
+      })
+    );
+
     const total = await Map.countDocuments(query);
 
     res.json({
       success: true,
       data: {
-        maps,
+        maps: mapsWithPOIs,
         pagination: {
           page,
           limit,
@@ -292,12 +420,18 @@ const deleteMap = async (req, res) => {
       });
     }
 
-    // Cascade delete related data
+    // Delete map-related data but preserve POIs
     await Promise.all([
+      // Delete the map itself
       Map.findByIdAndDelete(id),
-      POI.deleteMany({ map_id: id }),
+      // Delete map likes
+      MapLike.deleteMany({ map_id: id }),
+      // Delete map bookmarks
       Bookmark.deleteMany({ map_id: id }),
+      // Delete map comments
       MapComment.deleteMany({ map_id: id }),
+      // Remove map_id from POIs (make them standalone POIs)
+      POI.updateMany({ map_id: id }, { $unset: { map_id: 1 } }),
     ]);
 
     res.json({
@@ -408,15 +542,48 @@ const searchMaps = async (req, res) => {
 // Get popular maps
 const getPopularMaps = async (req, res) => {
   try {
-    // Fetch public maps sorted by likes (descending) and limit to 3
+    // Fetch public maps sorted by likes (descending) and limit to 6
     const popularMaps = await Map.find({ isPrivate: false })
       .populate("user_id", "username email")
       .sort({ likes: -1 })
-      .limit(3);
+      .limit(6);
+
+    // Populate POIs with photos for each map
+    const mapsWithPOIs = await Promise.all(
+      popularMaps.map(async (map) => {
+        const pois = await POI.find({ map_id: map._id })
+          .populate({
+            path: "photos",
+            options: { sort: { isPrimary: -1, created_at: 1 } },
+          })
+          .limit(4); // Limit to 4 POIs for thumbnail display
+
+        // Generate presigned URLs for photos in each POI
+        const poisWithPresignedUrls = await Promise.all(
+          pois.map(async (poi) => {
+            if (poi.photos && poi.photos.length > 0) {
+              const photosWithUrls = await generatePresignedUrlsForPhotos(
+                poi.photos
+              );
+              return {
+                ...poi.toObject(),
+                photos: photosWithUrls,
+              };
+            }
+            return poi.toObject();
+          })
+        );
+
+        return {
+          ...map.toObject(),
+          pois: poisWithPresignedUrls,
+        };
+      })
+    );
 
     return res.json({
       success: true,
-      data: popularMaps,
+      data: mapsWithPOIs,
     });
   } catch (error) {
     console.error("Error fetching popular maps:", error);

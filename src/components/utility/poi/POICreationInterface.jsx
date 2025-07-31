@@ -87,6 +87,29 @@ const POICreationInterface = ({
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
+
+    // Validate file sizes
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    const invalidFiles = files.filter((file) => file.size > maxSize);
+
+    if (invalidFiles.length > 0) {
+      const fileNames = invalidFiles.map((file) => file.name).join(", ");
+      toast.error(`Files too large (max 10MB): ${fileNames}`);
+      e.target.value = "";
+      return;
+    }
+
+    // Validate file types
+    const invalidTypes = files.filter(
+      (file) => !file.type.startsWith("image/")
+    );
+    if (invalidTypes.length > 0) {
+      const fileNames = invalidTypes.map((file) => file.name).join(", ");
+      toast.error(`Invalid file types (images only): ${fileNames}`);
+      e.target.value = "";
+      return;
+    }
+
     const previews = files.map((file) => URL.createObjectURL(file));
     setImages(previews);
     setCurrentIndex(0);

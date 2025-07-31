@@ -1,8 +1,8 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { CircleUser } from "lucide-react";
 import { userApi } from "@/lib/api";
+import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 
 const fetchTopUsers = async () => {
   const response = await userApi.getTopUsers(10);
@@ -46,7 +46,10 @@ export default function TopUsers() {
   }
 
   return (
-    <section className="my-12 px-6" id="top-users">
+    <section
+      className="my-12 px-6 flex flex-col justify-center items-center"
+      id="top-users"
+    >
       <h2 className="text-2xl font-semibold mb-6">Top Contributors</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-center items-center">
         {data.slice(0, 12).map((user) => (
@@ -56,11 +59,12 @@ export default function TopUsers() {
             className="bg-base-100 rounded-lg shadow-sm hover:shadow-md transition-all hover:scale-105 p-4 text-center cursor-pointer w-32 "
           >
             <div className="flex flex-col items-center gap-3">
-              <div className="avatar">
-                <div className="w-16 h-16 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2 flex items-center justify-center bg-primary text-primary-content">
-                  <CircleUser className="w-16 h-16" />
-                </div>
-              </div>
+              <ProfilePictureUpload
+                currentUser={user}
+                size="md"
+                showUserInfo={false}
+                className="justify-center"
+              />
               <div className="flex flex-col items-center gap-1">
                 <p className="font-semibold text-lg">{user.username}</p>
                 <div className="flex flex-col gap-1 text-sm text-neutral-600">

@@ -277,15 +277,40 @@ const getTopUsers = async (req, res) => {
         $project: {
           _id: 1,
           username: "$user.username",
+          profilePicture: "$user.profilePicture",
           mapCount: 1,
           totalViews: 1,
         },
       },
     ]);
 
+    // Generate presigned URLs for profile pictures
+    const topUsersWithPresignedUrls = await Promise.all(
+      topUsers.map(async (user) => {
+        if (user.profilePicture?.s3Key) {
+          const presignedUrl = await generateProfilePresignedUrl(
+            user.profilePicture.s3Key
+          );
+          if (presignedUrl) {
+            user.profilePicture.s3Url = presignedUrl;
+          }
+
+          if (user.profilePicture?.thumbnailKey) {
+            const thumbnailPresignedUrl = await generateProfilePresignedUrl(
+              user.profilePicture.thumbnailKey
+            );
+            if (thumbnailPresignedUrl) {
+              user.profilePicture.thumbnailUrl = thumbnailPresignedUrl;
+            }
+          }
+        }
+        return user;
+      })
+    );
+
     res.json({
       success: true,
-      data: topUsers,
+      data: topUsersWithPresignedUrls,
     });
   } catch (error) {
     console.error("Error fetching top users:", error);

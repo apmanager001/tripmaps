@@ -7,7 +7,7 @@ const PhotoUpload = ({
   poiId,
   onUploadSuccess,
   onUploadError,
-  maxFileSize = 2 * 1024 * 1024, // 2MB
+  maxFileSize = 10 * 1024 * 1024, // 10MB
   acceptedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"],
 }) => {
   const [selectedFile, setSelectedFile] = useState(null);
