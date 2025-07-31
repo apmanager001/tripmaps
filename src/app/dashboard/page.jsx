@@ -1,10 +1,18 @@
-import React from 'react'
-import Dashboard from './comp/dashboard'
+import React, { Suspense } from "react";
+import Dashboard from "./comp/dashboard";
 
 const Page = () => {
   return (
-    <><Dashboard /></>
-  )
-}
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          Loading dashboard...
+        </div>
+      }
+    >
+      <Dashboard />
+    </Suspense>
+  );
+};
 
-export default Page
+export default Page;
