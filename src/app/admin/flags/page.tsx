@@ -22,8 +22,15 @@ const AdminFlagsPage = () => {
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: ({ flagId, status, adminNotes }) =>
-      flagApi.updateFlagStatus(flagId, { status, adminNotes }),
+    mutationFn: ({
+      flagId,
+      status,
+      adminNotes,
+    }: {
+      flagId: string;
+      status: string;
+      adminNotes?: string;
+    }) => flagApi.updateFlagStatus(flagId, { status, adminNotes }),
     onSuccess: () => {
       toast.success("Flag status updated successfully");
       queryClient.invalidateQueries(["adminFlags"]);
@@ -33,11 +40,15 @@ const AdminFlagsPage = () => {
     },
   });
 
-  const handleUpdateStatus = (flagId, status, adminNotes = "") => {
+  const handleUpdateStatus = (
+    flagId: string,
+    status: string,
+    adminNotes: string = ""
+  ) => {
     updateStatusMutation.mutate({ flagId, status, adminNotes });
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case "pending":
         return <Clock size={16} className="text-yellow-500" />;
@@ -52,7 +63,7 @@ const AdminFlagsPage = () => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
         return "badge-warning";
