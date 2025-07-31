@@ -1267,6 +1267,75 @@ const getPopularPOIs = async (req, res) => {
   }
 };
 
+// Add POI to map
+const addPOIToMap = async (req, res) => {
+  try {
+    const { mapId, poiId } = req.params;
+    const userId = req.user._id;
+
+    // Verify map exists and user has access
+    const map = await Map.findById(mapId);
+    if (!map) {
+      return res.status(404).json({
+        success: false,
+        message: "Map not found",
+      });
+    }
+
+    // Check if user owns the map or map is public
+    if (map.user_id.toString() !== userId.toString() && map.isPrivate) {
+      return res.status(403).json({
+        success: false,
+        message: "Not authorized to add POI to this map",
+      });
+    }
+
+    // Verify POI exists
+    const poi = await POI.findById(poiId);
+    if (!poi) {
+      return res.status(404).json({
+        success: false,
+        message: "POI not found",
+      });
+    }
+
+    // Check if POI is public or user owns it
+    if (poi.isPrivate && poi.user_id.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Cannot add private POI to map",
+      });
+    }
+
+    // Update POI to link it to the map
+    const updatedPOI = await POI.findByIdAndUpdate(
+      poiId,
+      { map_id: mapId },
+      { new: true, runValidators: true }
+    ).populate("user_id", "username");
+
+    // Record edit history
+    await new EditHistory({
+      user_id: userId,
+      target_type: "poi",
+      target_id: poiId,
+      change_summary: `Added POI to map: ${map.mapName}`,
+    }).save();
+
+    res.json({
+      success: true,
+      message: "POI added to map successfully",
+      data: updatedPOI,
+    });
+  } catch (error) {
+    console.error("Error adding POI to map:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   createPOI,
   getPOI,
@@ -1281,4 +1350,5 @@ module.exports = {
   getPopularLocations,
   getPopularPOIs,
   togglePOILike,
+  addPOIToMap,
 };

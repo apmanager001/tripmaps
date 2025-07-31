@@ -118,7 +118,7 @@ export default function Profile({ id }) {
                 <h1 className="text-4xl lg:text-5xl font-bold">
                   {user.username}
                 </h1>
-                <div className="badge badge-warning badge-lg text-white border-0">
+                <div className="badge badge-warning badge-lg text-white border-0 whitespace-nowrap text-xs sm:text-sm">
                   <Award size={16} className="mr-1" />
                   {getBadge(mapCount)}
                 </div>
@@ -193,7 +193,7 @@ export default function Profile({ id }) {
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Mapping Level</span>
                   <div className="text-right">
-                    <div className="badge badge-success badge-sm">
+                    <div className="badge badge-success badge-sm whitespace-nowrap text-xs">
                       {getBadge(mapCount)}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
@@ -225,7 +225,7 @@ export default function Profile({ id }) {
                     Discover the amazing places {user.username} has mapped
                   </p>
                 </div>
-                <div className="badge badge-primary badge-lg">
+                <div className="badge badge-primary badge-lg whitespace-nowrap text-xs sm:text-sm">
                   {maps.length} {maps.length === 1 ? "map" : "maps"}
                 </div>
               </div>

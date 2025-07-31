@@ -342,6 +342,23 @@ export const poiApi = {
     );
   },
 
+  searchPOIs: async (
+    query: string,
+    options: { isPrivate?: boolean; page?: number; limit?: number } = {}
+  ): Promise<ApiResponse<{ pois: POI[]; pagination: Pagination }>> => {
+    const { isPrivate = undefined, page = 1, limit = 20 } = options;
+    const params = new URLSearchParams({
+      q: query,
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(isPrivate !== undefined && { isPrivate: isPrivate.toString() }),
+    });
+
+    return apiRequest<ApiResponse<{ pois: POI[]; pagination: Pagination }>>(
+      `/pois/search?${params.toString()}`
+    );
+  },
+
   searchMapsByPOIName: async (
     poiName: string,
     page = 1,
@@ -360,6 +377,12 @@ export const poiApi = {
 
   likePOI: async (poiId: string): Promise<ApiResponse<POI>> => {
     return apiRequest<ApiResponse<POI>>(`/pois/${poiId}/like`, {
+      method: "POST",
+    });
+  },
+
+  addPOIToMap: async (mapId: string, poiId: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>(`/maps/${mapId}/pois/${poiId}`, {
       method: "POST",
     });
   },

@@ -48,6 +48,7 @@ const {
   togglePOILike,
   getPopularLocations,
   getPopularPOIs,
+  addPOIToMap,
 } = require("../controllers/poiController");
 
 const { getAllTags, createTag } = require("../controllers/tagController");
@@ -162,6 +163,7 @@ router.get("/pois/:id", getPOI);
 router.put("/pois/:id", jwtAuth, updatePOI);
 router.delete("/pois/:id", jwtAuth, deletePOI);
 router.get("/maps/:mapId/pois", getPOIsByMap);
+router.post("/maps/:mapId/pois/:poiId", jwtAuth, addPOIToMap);
 router.post("/pois/:id/like", jwtAuth, togglePOILike);
 
 // ===== TAG ROUTES =====

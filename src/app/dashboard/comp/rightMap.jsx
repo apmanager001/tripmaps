@@ -12,6 +12,7 @@ export default function NewMap({
   coordArray = [],
   setCoordArray = () => {},
   mapName = "",
+  setMapName = () => {},
 }) {
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
@@ -95,7 +96,6 @@ export default function NewMap({
         description: coord.description,
         date_visited: coord.date_visited,
         tags: coord.tags,
-        googleMapsLink: coord.googleMapsLink,
         isPrivate: coord.isPrivate,
         photos: coord.photos,
         isExistingPOI: true,
@@ -108,6 +108,50 @@ export default function NewMap({
 
   return (
     <>
+      {/* Map Name Input */}
+      {safeCoordArray.length > 0 && (
+        <div className="bg-base-200 p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-primary/10 rounded-lg">
+              <svg
+                className="w-6 h-6 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <label htmlFor="mapNameInput" className="label">
+                <span className="label-text font-semibold text-primary">
+                  Map Name *
+                </span>
+              </label>
+              <input
+                id="mapNameInput"
+                type="text"
+                placeholder="Enter a name for your map..."
+                className="input input-bordered w-full"
+                value={mapName}
+                onChange={(e) => setMapName(e.target.value)}
+                aria-label="Enter map name"
+              />
+              {!mapName.trim() && (
+                <p className="text-xs text-warning mt-1">
+                  ⚠️ Map name is required to save your map
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Map Table */}
       {safeCoordArray.length > 0 && (
         <div className="space-y-4 bg-base-200 p-6 rounded-lg">
@@ -275,17 +319,6 @@ export default function NewMap({
                       </td>
                       <td>
                         <div className="flex gap-1">
-                          {displayData.googleMapsLink && (
-                            <a
-                              href={displayData.googleMapsLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="btn btn-xs btn-outline"
-                              title="View on Google Maps"
-                            >
-                              🗺️
-                            </a>
-                          )}
                           <button
                             onClick={() => handleDelete(index)}
                             className="btn btn-xs btn-error btn-soft"

@@ -3,8 +3,6 @@ import React, { useState, useRef, useEffect } from "react";
 import Script from "next/script";
 import { toast } from "react-hot-toast";
 import {
-  ChevronLeft,
-  ChevronRight,
   Info,
   MapPin,
   X,
@@ -20,10 +18,10 @@ import {
 
 import POICreationInterface from "@/components/utility/poi/POICreationInterface";
 import POICard from "@/components/POICard";
+import POIPhotoGallery from "@/components/POIPhotoGallery";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { mapApi, poiApi, tagApi, flagApi } from "@/lib/api";
 import { useAuthStore } from "@/store/useAuthStore";
-// Removed ImageCropper import - no longer using cropping
 import DeleteConfirmationModal from "../../../components/DeleteConfirmationModal";
 import FlagModal from "../../../components/FlagModal";
 
@@ -250,22 +248,6 @@ const AddPOI = () => {
     setShowPhotoGallery(false);
     setSelectedPOI(null);
     setCurrentPhotoIndex(0);
-  };
-
-  const handleNextPhoto = () => {
-    if (selectedPOI && selectedPOI.photos) {
-      setCurrentPhotoIndex((prev) =>
-        prev === selectedPOI.photos.length - 1 ? 0 : prev + 1
-      );
-    }
-  };
-
-  const handlePrevPhoto = () => {
-    if (selectedPOI && selectedPOI.photos) {
-      setCurrentPhotoIndex((prev) =>
-        prev === 0 ? selectedPOI.photos.length - 1 : prev - 1
-      );
-    }
   };
 
   // Helper function to format EXIF date
@@ -726,240 +708,15 @@ const AddPOI = () => {
         </div>
       </div>
 
-      {/* Photo Gallery Modal */}
-      {showPhotoGallery && selectedPOI && selectedPOI.photos && (
-        <div className="modal modal-open">
-          <div className="modal-box w-11/12 max-w-6xl h-5/6 max-h-screen bg-base-100 p-0 overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-base-300 bg-gradient-to-r from-primary/10 to-secondary/10">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/20 rounded-lg">
-                  <MapPin size={20} className="text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-xl text-primary">
-                    {selectedPOI.locationName}
-                  </h3>
-                  <p className="text-sm text-neutral-600">
-                    Photo Gallery • {selectedPOI.photos.length} photo
-                    {selectedPOI.photos.length !== 1 ? "s" : ""}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={handleClosePhotoGallery}
-                className="btn btn-sm btn-circle btn-ghost hover:bg-error/10 hover:text-error"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div className="flex max-h-full">
-              {/* Main Photo Display */}
-              <div className="flex-1 relative bg-black overflow-hidden max-h-full">
-                <div
-                  className="w-full h-full flex items-center justify-center p-4 max-h-full"
-                  style={{
-                    transform: "scale(1)",
-                    transformOrigin: "center center",
-                    transition: "transform 0.3s ease-in-out",
-                  }}
-                  ref={(el) => {
-                    if (el) {
-                      el._zoomLevel = 1;
-                      el._isZoomed = false;
-                    }
-                  }}
-                  onClick={(e) => {
-                    const container = e.currentTarget;
-                    const rect = container.getBoundingClientRect();
-                    const x = e.clientX - rect.left;
-                    const y = e.clientY - rect.top;
-
-                    if (!container._isZoomed) {
-                      // Zoom in to clicked point
-                      const scaleX = x / rect.width;
-                      const scaleY = y / rect.height;
-                      container.style.transformOrigin = `${scaleX * 100}% ${
-                        scaleY * 100
-                      }%`;
-                      container.style.transform = "scale(2.5)";
-                      container._zoomLevel = 2.5;
-                      container._isZoomed = true;
-                      container.style.cursor = "zoom-out";
-                    } else {
-                      // Zoom out
-                      container.style.transform = "scale(1)";
-                      container.style.transformOrigin = "center center";
-                      container._zoomLevel = 1;
-                      container._isZoomed = false;
-                      container.style.cursor = "zoom-in";
-                    }
-                  }}
-                >
-                  <img
-                    src={
-                      selectedPOI.photos[currentPhotoIndex]?.s3Url ||
-                      selectedPOI.photos[currentPhotoIndex]?.fullUrl ||
-                      "/placeholder-image.jpg"
-                    }
-                    alt={`Photo ${currentPhotoIndex + 1}`}
-                    className="max-w-full max-h-full object-contain pointer-events-none"
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: "100%",
-                    }}
-                  />
-                </div>
-
-                {/* Navigation Buttons */}
-                {selectedPOI.photos.length > 1 && (
-                  <>
-                    <button
-                      onClick={handlePrevPhoto}
-                      className="absolute left-6 top-1/2 transform -translate-y-1/2 bg-black/60 text-white p-4 rounded-full hover:bg-black/80 transition-all duration-200 backdrop-blur-sm"
-                    >
-                      <ChevronLeft size={28} />
-                    </button>
-                    <button
-                      onClick={handleNextPhoto}
-                      className="absolute right-6 top-1/2 transform -translate-y-1/2 bg-black/60 text-white p-4 rounded-full hover:bg-black/80 transition-all duration-200 backdrop-blur-sm"
-                    >
-                      <ChevronRight size={28} />
-                    </button>
-                  </>
-                )}
-
-                {/* Photo Counter */}
-                <div className="absolute bottom-6 left-6 bg-black/60 text-white px-4 py-2 rounded-full backdrop-blur-sm">
-                  <span className="text-sm font-medium">
-                    {currentPhotoIndex + 1} / {selectedPOI.photos.length}
-                  </span>
-                </div>
-              </div>
-
-              {/* Sidebar with Details and Thumbnails */}
-              <div className="w-80 bg-base-200 border-l border-base-300 flex flex-col">
-                {/* Photo Details */}
-                <div className="p-6 border-b border-base-300">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-semibold text-lg text-primary">
-                      Photo Details
-                    </h4>
-                    <button
-                      onClick={() =>
-                        handleFlagPhoto(
-                          selectedPOI.photos[currentPhotoIndex],
-                          selectedPOI
-                        )
-                      }
-                      className="btn btn-sm btn-outline btn-error hover:bg-error hover:text-white transition-all duration-200"
-                      title="Flag this photo"
-                    >
-                      <Flag size={16} className="mr-1" />
-                      Flag
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    {selectedPOI.photos[currentPhotoIndex]?.isPrimary && (
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        <span className="text-sm font-medium text-primary">
-                          Primary Photo
-                        </span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-3 p-3 bg-base-100 rounded-lg">
-                      <div className="p-2 bg-info/20 rounded-lg">
-                        <span className="text-info text-lg">📅</span>
-                      </div>
-                      <div>
-                        <p className="text-xs text-neutral-500">Date Taken</p>
-                        <p className="font-medium">
-                          {selectedPOI.photos[currentPhotoIndex]?.date_visited
-                            ? new Date(
-                                selectedPOI.photos[
-                                  currentPhotoIndex
-                                ].date_visited
-                              ).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })
-                            : "Not available"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 p-3 bg-base-100 rounded-lg">
-                      <div className="p-2 bg-success/20 rounded-lg">
-                        <span className="text-success text-lg">📤</span>
-                      </div>
-                      <div>
-                        <p className="text-xs text-neutral-500">Uploaded</p>
-                        <p className="font-medium">
-                          {selectedPOI.photos[currentPhotoIndex]?.created_at
-                            ? new Date(
-                                selectedPOI.photos[currentPhotoIndex].created_at
-                              ).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              })
-                            : "Unknown"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Photo Thumbnails */}
-                {selectedPOI.photos.length > 1 && (
-                  <div className="flex-1 p-6 overflow-y-auto">
-                    <h4 className="font-semibold text-lg mb-4 text-primary">
-                      All Photos
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      {selectedPOI.photos.map((photo, index) => (
-                        <button
-                          key={index}
-                          onClick={() => setCurrentPhotoIndex(index)}
-                          className={`relative group rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                            index === currentPhotoIndex
-                              ? "border-primary shadow-lg"
-                              : "border-transparent hover:border-primary/50"
-                          }`}
-                        >
-                          <img
-                            src={
-                              photo?.thumbnailUrl ||
-                              photo?.s3Url ||
-                              photo?.fullUrl ||
-                              "/placeholder-image.jpg"
-                            }
-                            alt={`Thumbnail ${index + 1}`}
-                            className="w-full h-24 object-cover group-hover:scale-105 transition-transform duration-200"
-                          />
-                          {photo?.isPrimary && (
-                            <div className="absolute top-1 right-1 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full">
-                              ★
-                            </div>
-                          )}
-                          <div className="absolute bottom-1 left-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded-full">
-                            {index + 1}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* POI Photo Gallery */}
+      <POIPhotoGallery
+        isOpen={showPhotoGallery}
+        onClose={handleClosePhotoGallery}
+        poi={selectedPOI}
+        initialPhotoIndex={currentPhotoIndex}
+        showFlagButton={true}
+        onFlagPhoto={handleFlagPhoto}
+      />
 
       {/* Delete Photo Confirmation Modal */}
       {showDeleteConfirm && (

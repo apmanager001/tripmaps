@@ -29,8 +29,13 @@ const POICreationInterface = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Modal state for creating new tags
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [newTagName, setNewTagName] = useState("");
+  const [pendingTagIndex, setPendingTagIndex] = useState(null);
+
   // Fetch available tags if not provided
-  const { data: fetchedTags = [] } = useQuery({
+  const { data: fetchedTags = [], refetch: refetchTags } = useQuery({
     queryKey: ["availableTags"],
     queryFn: async () => {
       try {
@@ -45,6 +50,64 @@ const POICreationInterface = ({
   });
 
   const tagsToUse = availableTags.length > 0 ? availableTags : fetchedTags;
+
+  // Create new tag function
+  const createNewTag = async (tagName) => {
+    try {
+      const response = await tagApi.createTag(tagName);
+      if (response.success) {
+        toast.success(`Tag "${tagName}" created successfully!`);
+        // Refetch tags to include the new one
+        refetchTags();
+        return response.data;
+      } else {
+        toast.error(response.message || "Failed to create tag");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error creating tag:", error);
+      toast.error(`Failed to create tag: ${error.message}`);
+      return null;
+    }
+  };
+
+  // Modal handlers for creating new tags
+  const openTagModal = (index) => {
+    setPendingTagIndex(index);
+    setNewTagName("");
+    setShowTagModal(true);
+  };
+
+  const closeTagModal = () => {
+    setShowTagModal(false);
+    setNewTagName("");
+    setPendingTagIndex(null);
+  };
+
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) {
+      toast.error("Please enter a tag name");
+      return;
+    }
+
+    const newTag = await createNewTag(newTagName.trim());
+    if (newTag && pendingTagIndex !== null) {
+      const updatedPOIs = [...poiArray];
+      if (!updatedPOIs[pendingTagIndex].tags.includes(newTag.name)) {
+        updatedPOIs[pendingTagIndex].tags.push(newTag.name);
+        setPoiArray(updatedPOIs);
+      }
+    }
+    closeTagModal();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleCreateTag();
+    } else if (e.key === "Escape") {
+      closeTagModal();
+    }
+  };
 
   // Toggle dropdown
   const toggleDropdown = () => {
@@ -238,42 +301,80 @@ const POICreationInterface = ({
 
     setIsSaving(true);
     try {
-      const savePromises = poiArray.map(async (poi) => {
-        // Create POI
-        const poiData = {
-          locationName: poi.locationName,
-          description: poi.description || "",
-          lat: poi.lat,
-          lng: poi.lng,
-          tags: poi.tags,
-          googleMapsLink: poi.googleMapsLink || "",
-          isPrivate: poi.isPrivate || false,
-          date_visited: poi.date_visited,
-        };
+      const results = [];
 
-        const poiResponse = await poiApi.createPOI(poiData);
-        const createdPOI = poiResponse.data;
+      for (const poi of poiArray) {
+        try {
+          // Create POI
+          const poiData = {
+            locationName: poi.locationName,
+            description: poi.description || "",
+            lat: poi.lat,
+            lng: poi.lng,
+            tags: poi.tags,
+            googleMapsLink: poi.googleMapsLink || "",
+            isPrivate: poi.isPrivate || false,
+            date_visited: poi.date_visited,
+          };
 
-        // Upload photo if exists
-        if (poi.image && poi.image.startsWith("blob:")) {
-          // Convert blob URL to file
-          const response = await fetch(poi.image);
-          const blob = await response.blob();
-          const file = new File([blob], "photo.jpg", { type: "image/jpeg" });
+          const poiResponse = await poiApi.createPOI(poiData);
+          const createdPOI = poiResponse.data;
+          results.push(createdPOI);
 
-          const formData = new FormData();
-          formData.append("photo", file);
-          formData.append("date_visited", poi.date_visited);
-          formData.append("isPrimary", true);
+          // Upload photo if exists
+          if (poi.image && poi.image.startsWith("blob:")) {
+            try {
+              // Convert blob URL to file
+              const response = await fetch(poi.image);
+              if (!response.ok) {
+                throw new Error(
+                  `Failed to fetch image: ${response.statusText}`
+                );
+              }
 
-          await poiApi.uploadPhoto(createdPOI._id, formData);
+              const blob = await response.blob();
+              const file = new File([blob], "photo.jpg", {
+                type: "image/jpeg",
+              });
+
+              const uploadResponse = await poiApi.uploadPhoto(
+                createdPOI._id,
+                file,
+                null, // cropData
+                true, // isPrimary
+                poi.date_visited // dateVisited
+              );
+              if (!uploadResponse.success) {
+                console.warn(
+                  `Failed to upload photo for POI ${createdPOI._id}:`,
+                  uploadResponse.message
+                );
+              } else {
+                console.log(
+                  `Photo uploaded successfully for POI ${createdPOI._id}`
+                );
+              }
+            } catch (photoError) {
+              console.error(
+                `Error uploading photo for POI ${createdPOI._id}:`,
+                photoError
+              );
+              // Don't fail the entire operation if photo upload fails
+              toast.error(
+                `POI saved but photo upload failed for ${poi.locationName}`
+              );
+            }
+          }
+        } catch (poiError) {
+          console.error(`Error saving POI ${poi.locationName}:`, poiError);
+          toast.error(`Failed to save POI: ${poi.locationName}`);
         }
+      }
 
-        return createdPOI;
-      });
-
-      await Promise.all(savePromises);
-      toast.success(`Successfully saved ${poiArray.length} POI(s)!`);
+      const successCount = results.length;
+      if (successCount > 0) {
+        toast.success(`Successfully saved ${successCount} POI(s)!`);
+      }
 
       // Reset state and close dropdown
       setPoiArray([]);
@@ -696,12 +797,18 @@ const POICreationInterface = ({
 
                                     {/* Add Tag Section */}
                                     <div className="flex gap-1">
-                                      {tagsToUse.length > 0 ? (
-                                        <select
-                                          id={`poi-tag-select-${index}`}
-                                          className="select select-bordered select-xs w-24"
-                                          onChange={(e) => {
-                                            if (e.target.value) {
+                                      <select
+                                        id={`poi-tag-select-${index}`}
+                                        className="select select-bordered select-xs w-40"
+                                        onChange={async (e) => {
+                                          if (e.target.value) {
+                                            if (
+                                              e.target.value === "create-new"
+                                            ) {
+                                              // Show input for new tag
+                                              openTagModal(index);
+                                            } else {
+                                              // Add existing tag
                                               const updatedPOIs = [...poiArray];
                                               if (
                                                 !updatedPOIs[
@@ -713,49 +820,35 @@ const POICreationInterface = ({
                                                 );
                                                 setPoiArray(updatedPOIs);
                                               }
-                                              e.target.value = "";
                                             }
-                                          }}
+                                            e.target.value = "";
+                                          }
+                                        }}
+                                      >
+                                        <option value="">Add tag...</option>
+                                        {tagsToUse.map((tag) => (
+                                          <option
+                                            key={tag._id}
+                                            value={tag.name}
+                                          >
+                                            {tag.name}
+                                          </option>
+                                        ))}
+                                        <option
+                                          value="create-new"
+                                          className="font-semibold text-primary bg-primary/10"
                                         >
-                                          <option value="">Add tag...</option>
-                                          {tagsToUse.map((tag) => (
-                                            <option
-                                              key={tag._id}
-                                              value={tag.name}
-                                            >
-                                              {tag.name}
-                                            </option>
-                                          ))}
-                                        </select>
-                                      ) : (
-                                        <input
-                                          id={`poi-tag-input-${index}`}
-                                          type="text"
-                                          placeholder="Add tag..."
-                                          className="input input-bordered input-xs w-24"
-                                          onKeyPress={(e) => {
-                                            if (
-                                              e.key === "Enter" &&
-                                              e.target.value.trim()
-                                            ) {
-                                              const updatedPOIs = [...poiArray];
-                                              if (
-                                                !updatedPOIs[
-                                                  index
-                                                ].tags.includes(
-                                                  e.target.value.trim()
-                                                )
-                                              ) {
-                                                updatedPOIs[index].tags.push(
-                                                  e.target.value.trim()
-                                                );
-                                                setPoiArray(updatedPOIs);
-                                              }
-                                              e.target.value = "";
-                                            }
-                                          }}
-                                        />
-                                      )}
+                                          ➕ Create new tag...
+                                        </option>
+                                      </select>
+                                      <button
+                                        id={`create-new-tag-button-${index}`}
+                                        onClick={() => openTagModal(index)}
+                                        className="btn btn-xs btn-primary btn-outline"
+                                        title="Create new tag"
+                                      >
+                                        <Plus size={12} />
+                                      </button>
                                     </div>
                                   </div>
                                 </td>
@@ -783,6 +876,46 @@ const POICreationInterface = ({
           </div>
         )}
       </div>
+
+      {/* Tag Creation Modal */}
+      {showTagModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          onClick={closeTagModal}
+        >
+          <div
+            className="bg-base-100 rounded-lg p-6 shadow-xl w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-primary mb-4">
+              Create New Tag
+            </h3>
+            <input
+              type="text"
+              value={newTagName}
+              onChange={(e) => setNewTagName(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="input input-bordered input-sm w-full mb-4"
+              placeholder="Enter tag name"
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={closeTagModal}
+                className="btn btn-sm btn-outline"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateTag}
+                className="btn btn-sm btn-primary"
+              >
+                Create Tag
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

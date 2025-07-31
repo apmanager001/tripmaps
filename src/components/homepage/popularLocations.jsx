@@ -5,9 +5,7 @@ import { homepageApi } from "@/lib/api";
 import POICard from "@/components/POICard";
 
 const fetchPopularPOIs = async () => {
-  console.log("Fetching popular POIs from frontend...");
   const response = await homepageApi.getPopularPOIs();
-  console.log("Popular POIs response:", response);
   return response.data || [];
 };
 

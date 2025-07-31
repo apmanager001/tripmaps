@@ -6,7 +6,7 @@ const Page = async ({ params }) => {
 
   return (
     <div>
-      <PointOfInterest poiName={id} />
+      <PointOfInterest poiId={id} />
     </div>
   );
 };

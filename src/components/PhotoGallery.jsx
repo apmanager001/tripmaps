@@ -135,8 +135,8 @@ const PhotoGallery = ({ poiId, onPhotoUpdate }) => {
 
   return (
     <div className="space-y-4">
-      {/* Photo Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Photo Grid - Mobile Responsive */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
         {photos.map((photo) => (
           <div
             key={photo._id}
@@ -147,7 +147,8 @@ const PhotoGallery = ({ poiId, onPhotoUpdate }) => {
               <div className="absolute top-2 left-2 z-10">
                 <div className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs flex items-center">
                   <Star className="h-3 w-3 mr-1" />
-                  Primary
+                  <span className="hidden sm:inline">Primary</span>
+                  <span className="sm:hidden">★</span>
                 </div>
               </div>
             )}
@@ -161,8 +162,8 @@ const PhotoGallery = ({ poiId, onPhotoUpdate }) => {
                 onClick={() => openLightbox(photo)}
               />
 
-              {/* Overlay Actions */}
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
+              {/* Desktop Overlay Actions */}
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center hidden sm:flex">
                 <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-2">
                   <button
                     onClick={() => openLightbox(photo)}
@@ -199,23 +200,62 @@ const PhotoGallery = ({ poiId, onPhotoUpdate }) => {
                   </button>
                 </div>
               </div>
+
+              {/* Mobile Action Buttons - Always Visible */}
+              <div className="absolute top-2 right-2 flex gap-1 sm:hidden">
+                <button
+                  onClick={() => openLightbox(photo)}
+                  className="p-1.5 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+                  title="View full size"
+                >
+                  <ExternalLink className="h-3 w-3 text-white" />
+                </button>
+
+                {!photo.isPrimary && (
+                  <button
+                    onClick={() => handleSetPrimary(photo._id)}
+                    className="p-1.5 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+                    title="Set as primary"
+                  >
+                    <Star className="h-3 w-3 text-white" />
+                  </button>
+                )}
+
+                <button
+                  onClick={() => handleDownload(photo)}
+                  className="p-1.5 bg-black/50 rounded-full hover:bg-black/70 transition-colors"
+                  title="Download"
+                >
+                  <Download className="h-3 w-3 text-white" />
+                </button>
+
+                <button
+                  onClick={() => handleDeletePhoto(photo._id)}
+                  className="p-1.5 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                  title="Delete photo"
+                >
+                  <Trash2 className="h-3 w-3 text-white" />
+                </button>
+              </div>
             </div>
 
             {/* Photo Info */}
-            <div className="p-3">
+            <div className="p-2 sm:p-3">
               <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>
-                  {photo.originalFileName?.length > 20
-                    ? `${photo.originalFileName.substring(0, 20)}...`
+                <span className="truncate flex-1 mr-2">
+                  {photo.originalFileName?.length > 15
+                    ? `${photo.originalFileName.substring(0, 15)}...`
                     : photo.originalFileName}
                 </span>
-                <span>{(photo.fileSize / 1024 / 1024).toFixed(1)}MB</span>
+                <span className="flex-shrink-0">
+                  {(photo.fileSize / 1024 / 1024).toFixed(1)}MB
+                </span>
               </div>
 
               {photo.user_id && (
                 <div className="flex items-center text-xs text-gray-400 mt-1">
-                  <MapPin className="h-3 w-3 mr-1" />
-                  <span>by {photo.user_id.username}</span>
+                  <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                  <span className="truncate">by {photo.user_id.username}</span>
                 </div>
               )}
             </div>
@@ -223,16 +263,16 @@ const PhotoGallery = ({ poiId, onPhotoUpdate }) => {
         ))}
       </div>
 
-      {/* Lightbox */}
+      {/* Lightbox - Mobile Responsive */}
       {showLightbox && selectedPhoto && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-4">
-          <div className="relative max-w-4xl max-h-[90vh]">
+        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="relative w-full max-w-4xl max-h-[90vh]">
             {/* Close Button */}
             <button
               onClick={closeLightbox}
-              className="absolute top-4 right-4 z-10 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors"
+              className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 bg-white rounded-full p-2 hover:bg-gray-100 transition-colors"
             >
-              <X className="h-6 w-6" />
+              <X className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
 
             {/* Image */}
@@ -242,39 +282,39 @@ const PhotoGallery = ({ poiId, onPhotoUpdate }) => {
               className="max-w-full max-h-full object-contain"
             />
 
-            {/* Photo Info */}
-            <div className="absolute bottom-4 left-4 right-4 bg-black bg-opacity-75 text-white p-4 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">
+            {/* Photo Info - Mobile Responsive */}
+            <div className="absolute bottom-2 left-2 right-2 sm:bottom-4 sm:left-4 sm:right-4 bg-black bg-opacity-75 text-white p-3 sm:p-4 rounded-lg">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm sm:text-base truncate">
                     {selectedPhoto.originalFileName}
                   </p>
-                  <p className="text-sm text-gray-300">
+                  <p className="text-xs sm:text-sm text-gray-300">
                     {(selectedPhoto.fileSize / 1024 / 1024).toFixed(2)}MB •
                     {selectedPhoto.width}×{selectedPhoto.height}px
                   </p>
                   {selectedPhoto.user_id && (
-                    <p className="text-sm text-gray-300">
+                    <p className="text-xs sm:text-sm text-gray-300 truncate">
                       Uploaded by {selectedPhoto.user_id.username}
                     </p>
                   )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-shrink-0">
                   {!selectedPhoto.isPrimary && (
                     <button
                       onClick={() => {
                         handleSetPrimary(selectedPhoto._id);
                         closeLightbox();
                       }}
-                      className="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm transition-colors"
+                      className="px-2 py-1 sm:px-3 sm:py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs sm:text-sm transition-colors"
                     >
                       Set Primary
                     </button>
                   )}
                   <button
                     onClick={() => handleDownload(selectedPhoto)}
-                    className="px-3 py-1 bg-gray-600 hover:bg-gray-700 rounded text-sm transition-colors"
+                    className="px-2 py-1 sm:px-3 sm:py-1 bg-gray-600 hover:bg-gray-700 rounded text-xs sm:text-sm transition-colors"
                   >
                     Download
                   </button>

@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { poiApi } from "@/lib/api";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/store/useAuthStore";
+import Link from "next/link";
 import {
   MapPin,
   Edit,
@@ -15,6 +16,7 @@ import {
   Flag,
 } from "lucide-react";
 import FlagModal from "./FlagModal";
+import POIPhotoGallery from "./POIPhotoGallery";
 
 const POICard = ({
   poi,
@@ -27,11 +29,14 @@ const POICard = ({
   className = "",
   compact = false,
   onClick,
+  overlayButton = null,
 }) => {
   const { isAuthenticated } = useAuthStore();
   const queryClient = useQueryClient();
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [flaggingPhoto, setFlaggingPhoto] = useState(null);
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
   // POI like mutation
   const likeMutation = useMutation({
@@ -105,15 +110,14 @@ const POICard = ({
 
   const handleViewPhotos = (e) => {
     e.stopPropagation();
-    if (onViewPhotos) {
-      onViewPhotos(poi, 0);
-    }
+    setSelectedPhotoIndex(0);
+    setShowPhotoGallery(true);
   };
 
   return (
     <>
       <div
-        className={`bg-base-100 rounded-xl shadow-lg border border-base-300 h-full flex flex-col hover:shadow-xl transition-all duration-200 group ${
+        className={`relative bg-base-100 rounded-xl shadow-lg border border-base-300 h-full flex flex-col hover:shadow-xl transition-all duration-200 group ${
           compact ? "max-w-sm" : ""
         } ${className}`}
         onClick={onClick}
@@ -178,10 +182,39 @@ const POICard = ({
 
         {/* Content Section */}
         <div className={`p-6 flex-1 flex flex-col ${compact ? "p-4" : ""}`}>
-          {/* Title */}
-          <h4 className="text-lg font-semibold text-primary line-clamp-2 mb-3">
-            {poi.locationName}
-          </h4>
+          {/* Title and Action Buttons Row */}
+          <div className="flex items-start justify-between mb-3">
+            <Link
+              href={`/point_of_interest/${poi._id}`}
+              className="text-lg font-semibold text-primary line-clamp-2 flex-1 mr-3 hover:text-primary-focus hover:underline transition-colors duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {poi.locationName}
+            </Link>
+
+            {/* Flag and Delete buttons - moved to top right */}
+            {showActions && (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {showFlagButton && poi.photos && poi.photos.length > 0 && (
+                  <button
+                    onClick={(e) => handleFlagPhoto(e, poi.photos[0], poi)}
+                    className="p-1.5 rounded-md hover:bg-red-50 text-neutral-500 hover:text-red-600 transition-all duration-200"
+                    title="Flag photo"
+                  >
+                    <Flag size={14} />
+                  </button>
+                )}
+
+                <button
+                  onClick={handleDelete}
+                  className="p-1.5 rounded-md hover:bg-error/10 text-neutral-500 hover:text-error transition-all duration-200"
+                  title="Delete POI"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Action Icons Row - Like and Edit */}
           <div
@@ -269,9 +302,8 @@ const POICard = ({
             </div>
           )}
 
-          {/* Bottom Row - Privacy Status and Action Buttons */}
+          {/* Bottom Row - Privacy Status */}
           <div className="flex items-center justify-between mt-auto">
-            {/* Left side - Privacy Status */}
             <div className="flex items-center gap-1 text-xs text-neutral-500">
               {poi.isPrivate ? (
                 <>
@@ -285,31 +317,13 @@ const POICard = ({
                 </>
               )}
             </div>
-
-            {/* Right side - Flag and Delete buttons */}
-            {showActions && (
-              <div className="flex items-center gap-1">
-                {showFlagButton && poi.photos && poi.photos.length > 0 && (
-                  <button
-                    onClick={(e) => handleFlagPhoto(e, poi.photos[0], poi)}
-                    className="p-1.5 rounded-md hover:bg-red-50 text-neutral-500 hover:text-red-600 transition-all duration-200"
-                    title="Flag photo"
-                  >
-                    <Flag size={14} />
-                  </button>
-                )}
-
-                <button
-                  onClick={handleDelete}
-                  className="p-1.5 rounded-md hover:bg-error/10 text-neutral-500 hover:text-error transition-all duration-200"
-                  title="Delete POI"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
+            {overlayButton && (
+              <div className="mt-3 flex justify-end">{overlayButton}</div>
             )}
           </div>
         </div>
+
+        {/* Overlay Button */}
       </div>
 
       {/* Flag Modal */}
@@ -322,6 +336,16 @@ const POICard = ({
           locationName={flaggingPhoto.locationName}
         />
       )}
+
+      {/* POI Photo Gallery */}
+      <POIPhotoGallery
+        isOpen={showPhotoGallery}
+        onClose={() => setShowPhotoGallery(false)}
+        poi={poi}
+        initialPhotoIndex={selectedPhotoIndex}
+        showFlagButton={showFlagButton}
+        onFlagPhoto={handleFlagPhoto}
+      />
     </>
   );
 };

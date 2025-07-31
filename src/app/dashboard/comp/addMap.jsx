@@ -291,48 +291,6 @@ const AddMaps = () => {
         )}
       </div>
 
-      {/* Map Name Input */}
-      <div className="bg-base-200 p-4 rounded-lg shadow">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <svg
-              className="w-6 h-6 text-primary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"
-              />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <label htmlFor="mapNameInput" className="label">
-              <span className="label-text font-semibold text-primary">
-                Map Name *
-              </span>
-            </label>
-            <input
-              id="mapNameInput"
-              type="text"
-              placeholder="Enter a name for your map..."
-              className="input input-bordered w-full"
-              value={mapName}
-              onChange={(e) => setMapName(e.target.value)}
-              aria-label="Enter map name"
-            />
-            {!mapName.trim() && (
-              <p className="text-xs text-warning mt-1">
-                ⚠️ Map name is required to save your map
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="bg-base-200 p-4 rounded-lg shadow ">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-primary">Map View</h3>
@@ -420,14 +378,23 @@ const AddMaps = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
                   {poiSearchResults.pois.map((poi) => (
-                    <div key={poi._id} className="relative">
+                    <div key={poi._id} className="relative group">
                       <POICard
                         poi={poi}
                         showActions={false}
                         showLikeButton={true}
-                        showFlagButton={false}
+                        showFlagButton={true}
                         compact={true}
                         className="h-full"
+                        overlayButton={
+                          <button
+                            id={`poiAddToMapButton-${poi._id}`}
+                            onClick={() => handleAddPoiToMap(poi)}
+                            className="btn btn-sm btn-primary shadow-lg"
+                          >
+                            Add to Map
+                          </button>
+                        }
                       />
 
                       {/* Description Preview Overlay */}
@@ -438,14 +405,6 @@ const AddMaps = () => {
                           </p>
                         </div>
                       )}
-
-                      <button
-                        id={`poiAddToMapButton-${poi._id}`}
-                        onClick={() => handleAddPoiToMap(poi)}
-                        className="btn btn-sm btn-primary absolute top-2 right-2 z-10"
-                      >
-                        Add to Map
-                      </button>
                     </div>
                   ))}
                 </div>
@@ -459,6 +418,7 @@ const AddMaps = () => {
           coordArray={coordArray}
           setCoordArray={setCoordArray}
           mapName={mapName}
+          setMapName={setMapName}
         />
       </div>
     </div>

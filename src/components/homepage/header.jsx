@@ -3,7 +3,6 @@ import NavigationMenu from "./headerMenu";
 import Link from "next/link";
 
 const Header = async () => {
-
   return (
     <div className="relative z-10">
       <div className="navbar bg-base-200 px-4 py-2">

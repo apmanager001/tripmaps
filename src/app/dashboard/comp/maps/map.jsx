@@ -120,8 +120,30 @@ const Maps = ({
                 <div className="w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-full cursor-pointer hover:scale-110 transition-transform duration-200">
                   <div className="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
                 </div>
-                <div className="absolute bottom-8 z-10 left-1/2 -translate-x-1/2 bg-white text-xs text-black rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 transform scale-95 group-hover:scale-100 border border-gray-200 min-w-48">
+                <div className="absolute bottom-8 z-10 left-1/2 -translate-x-1/2 bg-white text-xs text-black rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 transform scale-95 group-hover:scale-100 border border-gray-200 min-w-64">
                   <div className="p-3">
+                    {/* Thumbnail Image */}
+                    {(point.thumbnailUrl ||
+                      point.image ||
+                      point.photos?.[0]?.thumbnailUrl ||
+                      point.photos?.[0]?.s3Url) && (
+                      <div className="mb-3">
+                        <img
+                          src={
+                            point.thumbnailUrl ||
+                            point.image ||
+                            point.photos?.[0]?.thumbnailUrl ||
+                            point.photos?.[0]?.s3Url
+                          }
+                          alt={point.name || point.locationName || "Location"}
+                          className="w-full h-24 object-cover rounded-md shadow-sm"
+                          onError={(e) => {
+                            e.target.style.display = "none";
+                          }}
+                        />
+                      </div>
+                    )}
+
                     {/* Location Name */}
                     <div className="font-semibold text-sm text-gray-800 mb-2 border-b border-gray-100 pb-1">
                       {point.name || point.locationName || "Unknown Location"}
