@@ -157,8 +157,12 @@ const AdminFlagsPage = () => {
                     <div className="flex-shrink-0">
                       <Image
                         src={
-                          flag.photoId?.s3Url ||
-                          flag.photoId?.thumbnailUrl ||
+                          (typeof flag.photoId === "object"
+                            ? flag.photoId?.s3Url
+                            : null) ||
+                          (typeof flag.photoId === "object"
+                            ? flag.photoId?.thumbnailUrl
+                            : null) ||
                           "/placeholder-image.jpg"
                         }
                         alt="Flagged photo"
@@ -173,10 +177,15 @@ const AdminFlagsPage = () => {
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <h3 className="font-semibold text-lg">
-                            {flag.poiId?.locationName || "Unknown Location"}
+                            {(typeof flag.poiId === "object"
+                              ? flag.poiId?.locationName
+                              : null) || "Unknown Location"}
                           </h3>
                           <p className="text-sm text-neutral-500">
-                            Map: {flag.mapId?.title || "Unknown Map"}
+                            Map:{" "}
+                            {(typeof flag.mapId === "object"
+                              ? flag.mapId?.title
+                              : null) || "Unknown Map"}
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -195,7 +204,9 @@ const AdminFlagsPage = () => {
                             Flagged by:
                           </p>
                           <p className="text-sm">
-                            {flag.flaggedBy?.username || "Unknown User"}
+                            {(typeof flag.flaggedBy === "object"
+                              ? flag.flaggedBy?.username
+                              : null) || "Unknown User"}
                           </p>
                         </div>
                         <div>
@@ -203,7 +214,9 @@ const AdminFlagsPage = () => {
                             Photo owner:
                           </p>
                           <p className="text-sm">
-                            {flag.photoOwner?.username || "Unknown User"}
+                            {(typeof flag.photoOwner === "object"
+                              ? flag.photoOwner?.username
+                              : null) || "Unknown User"}
                           </p>
                         </div>
                         <div>
