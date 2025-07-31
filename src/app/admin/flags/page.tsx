@@ -33,7 +33,7 @@ const AdminFlagsPage = () => {
     }) => flagApi.updateFlagStatus(flagId, { status, adminNotes }),
     onSuccess: () => {
       toast.success("Flag status updated successfully");
-      queryClient.invalidateQueries(["adminFlags"]);
+      queryClient.invalidateQueries({ queryKey: ["adminFlags"] });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update flag status");
