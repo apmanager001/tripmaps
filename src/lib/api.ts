@@ -15,6 +15,9 @@ import {
   Following,
   NearbyPOI,
   Bookmark,
+  Flag,
+  FlagResponse,
+  FlagCheckResponse,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
@@ -671,8 +674,8 @@ export const flagApi = {
     photoId: string;
     reason?: string;
     details?: string;
-  }): Promise<ApiResponse<any>> => {
-    return apiRequest<ApiResponse<any>>("/flags", {
+  }): Promise<ApiResponse<Flag>> => {
+    return apiRequest<ApiResponse<Flag>>("/flags", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -682,20 +685,22 @@ export const flagApi = {
     status?: string;
     page?: number;
     limit?: number;
-  }): Promise<ApiResponse<any>> => {
+  }): Promise<ApiResponse<FlagResponse>> => {
     const searchParams = new URLSearchParams();
     if (params?.status) searchParams.append("status", params.status);
     if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.limit) searchParams.append("limit", params.limit.toString());
 
-    return apiRequest<ApiResponse<any>>(`/flags?${searchParams.toString()}`);
+    return apiRequest<ApiResponse<FlagResponse>>(
+      `/flags?${searchParams.toString()}`
+    );
   },
 
   updateFlagStatus: async (
     flagId: string,
     data: { status: string; adminNotes?: string }
-  ): Promise<ApiResponse<any>> => {
-    return apiRequest<ApiResponse<any>>(`/flags/${flagId}/status`, {
+  ): Promise<ApiResponse<Flag>> => {
+    return apiRequest<ApiResponse<Flag>>(`/flags/${flagId}/status`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
@@ -704,18 +709,22 @@ export const flagApi = {
   getFlagsByUser: async (params?: {
     page?: number;
     limit?: number;
-  }): Promise<ApiResponse<any>> => {
+  }): Promise<ApiResponse<FlagResponse>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.limit) searchParams.append("limit", params.limit.toString());
 
-    return apiRequest<ApiResponse<any>>(
+    return apiRequest<ApiResponse<FlagResponse>>(
       `/flags/user?${searchParams.toString()}`
     );
   },
 
-  checkUserFlag: async (photoId: string): Promise<ApiResponse<any>> => {
-    return apiRequest<ApiResponse<any>>(`/flags/check/${photoId}`);
+  checkUserFlag: async (
+    photoId: string
+  ): Promise<ApiResponse<FlagCheckResponse>> => {
+    return apiRequest<ApiResponse<FlagCheckResponse>>(
+      `/flags/check/${photoId}`
+    );
   },
 };
 

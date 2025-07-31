@@ -4,17 +4,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { flagApi } from "@/lib/api";
 import { Flag, Eye, CheckCircle, XCircle, Clock } from "lucide-react";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 const AdminFlagsPage = () => {
   const [statusFilter, setStatusFilter] = useState("pending");
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
 
-  const {
-    data: flagsData,
-    isLoading,
-    refetch,
-  } = useQuery({
+  const { data: flagsData, isLoading } = useQuery({
     queryKey: ["adminFlags", statusFilter, currentPage],
     queryFn: () =>
       flagApi.getAllFlags({
@@ -147,13 +144,15 @@ const AdminFlagsPage = () => {
                   <div className="flex items-start gap-4">
                     {/* Photo */}
                     <div className="flex-shrink-0">
-                      <img
+                      <Image
                         src={
                           flag.photoId?.s3Url ||
                           flag.photoId?.thumbnailUrl ||
                           "/placeholder-image.jpg"
                         }
                         alt="Flagged photo"
+                        width={96}
+                        height={96}
                         className="w-24 h-24 object-cover rounded-lg"
                       />
                     </div>
