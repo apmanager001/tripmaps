@@ -97,7 +97,7 @@ const AddMaps = () => {
       image.onload = function () {
         EXIF.getData(image, function () {
           const exif = EXIF.getAllTags(this);
-          console.log(exif);
+          // EXIF data extracted
 
           let lat = null;
           let lng = null;

@@ -80,7 +80,7 @@ export default function Dashsection3() {
         } catch (error) {
           // Silently handle access errors for private maps
           if (error.message === "Cannot access POIs of private map") {
-            console.log(`Skipping private map ${map._id} - access denied`);
+            // Skipping private map - access denied
             return [];
           }
           console.error(`Error fetching POIs for map ${map._id}:`, error);

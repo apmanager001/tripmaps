@@ -202,7 +202,6 @@ const POICreationInterface = ({
         if (typeof EXIF !== "undefined" && EXIF.getData) {
           EXIF.getData(image, function () {
             const exif = EXIF.getAllTags(this);
-            console.log(exif);
 
             let lat = null;
             let lng = null;
@@ -350,9 +349,7 @@ const POICreationInterface = ({
                   uploadResponse.message
                 );
               } else {
-                console.log(
-                  `Photo uploaded successfully for POI ${createdPOI._id}`
-                );
+                // Photo uploaded successfully
               }
             } catch (photoError) {
               console.error(

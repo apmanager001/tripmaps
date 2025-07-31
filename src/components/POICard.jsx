@@ -42,7 +42,7 @@ const POICard = ({
   const likeMutation = useMutation({
     mutationFn: () => poiApi.likePOI(poi._id),
     onSuccess: (data) => {
-      console.log("Like success response:", data);
+      // Like success response
       if (data.success) {
         toast.success("POI like updated");
         // Invalidate relevant queries to refresh data
@@ -67,15 +67,14 @@ const POICard = ({
 
   const handleLike = (e) => {
     e.stopPropagation();
-    console.log("Like button clicked, authentication status:", isAuthenticated);
-    console.log("POI ID:", poi._id);
+    // Like button clicked
 
     if (!isAuthenticated) {
       toast.error("Please log in to like POIs");
       return;
     }
 
-    console.log("Attempting to like POI...");
+    // Attempting to like POI
     likeMutation.mutate();
   };
 

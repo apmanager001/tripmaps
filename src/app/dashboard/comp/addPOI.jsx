@@ -79,7 +79,7 @@ const AddPOI = () => {
     queryFn: async () => {
       if (!user?._id) return { pois: [] };
       const response = await poiApi.getUserPOIs(1, 100); // Increased limit to 100
-      console.log("API Response:", response); // Debug log
+      // API Response received
       // The backend returns data directly, not wrapped in a 'pois' property
       return { pois: response.data || [] };
     },
@@ -115,11 +115,7 @@ const AddPOI = () => {
 
   const handleTogglePOIPrivacy = async (poiId, currentPrivacy) => {
     try {
-      console.log("Toggling POI privacy:", {
-        poiId,
-        currentPrivacy,
-        newPrivacy: !currentPrivacy,
-      });
+      // Toggling POI privacy
 
       const response = await poiApi.updatePOI(poiId, {
         isPrivate: !currentPrivacy,
@@ -317,7 +313,7 @@ const AddPOI = () => {
           if (typeof EXIF !== "undefined" && EXIF.getData) {
             EXIF.getData(image, function () {
               const exif = EXIF.getAllTags(this);
-              console.log("EXIF data:", exif);
+              // EXIF data extracted
 
               let dateVisited = null;
 

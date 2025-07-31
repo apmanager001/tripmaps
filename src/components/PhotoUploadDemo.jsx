@@ -128,7 +128,7 @@ const PhotoUploadDemo = () => {
               <PhotoUpload
                 poiId={demoPOIId}
                 onUploadSuccess={(photo) => {
-                  console.log("Upload successful:", photo);
+                  // Upload successful
                 }}
                 onUploadError={(error) => {
                   console.error("Upload failed:", error);
@@ -152,7 +152,7 @@ const PhotoUploadDemo = () => {
               <PhotoGallery
                 poiId={demoPOIId}
                 onPhotoUpdate={() => {
-                  console.log("Photo gallery updated");
+                  // Photo gallery updated
                 }}
               />
             </div>

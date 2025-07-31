@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { Home, Map, ArrowLeft, Search, User } from "lucide-react";
+import { Home, Map, ArrowLeft, User } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function NotFound() {
@@ -23,8 +23,8 @@ export default function NotFound() {
             Page Not Found
           </h2>
           <p className="text-gray-600 leading-relaxed">
-            Oops! It looks like you've wandered off the map. The page you're
-            looking for doesn't exist or has been moved.
+            Oops! It looks like you&apos;ve wandered off the map. The page
+            you&apos;re looking for doesn&apos;t exist or has been moved.
           </p>
         </div>
 
