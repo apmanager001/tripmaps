@@ -10,6 +10,8 @@ const Maps = ({
   isClickable = false,
   zoom,
   mapKey,
+  onNavigateToLocation,
+  navigateToCoordinates = null,
 }) => {
   const [viewState, setViewState] = useState({
     longitude: -84.5,
@@ -142,8 +144,63 @@ const Maps = ({
     [isClickable, onMapClick]
   );
 
+  const navigateToLocation = useCallback((coordinates) => {
+    if (coordinates && coordinates.lat && coordinates.lng) {
+      // Validate coordinates
+      const lat = parseFloat(coordinates.lat);
+      const lng = parseFloat(coordinates.lng);
+
+      if (
+        isNaN(lat) ||
+        isNaN(lng) ||
+        lat < -90 ||
+        lat > 90 ||
+        lng < -180 ||
+        lng > 180
+      ) {
+        console.error("Invalid coordinates:", coordinates);
+        return;
+      }
+
+      setViewState((prev) => ({
+        ...prev,
+        longitude: lng,
+        latitude: lat,
+        zoom: 14, // Zoom in close to the location
+      }));
+    }
+  }, []);
+
+  // Handle navigation to specific coordinates when prop changes
+  useEffect(() => {
+    if (
+      navigateToCoordinates &&
+      navigateToCoordinates.lat &&
+      navigateToCoordinates.lng
+    ) {
+      const lat = parseFloat(navigateToCoordinates.lat);
+      const lng = parseFloat(navigateToCoordinates.lng);
+
+      if (
+        !isNaN(lat) &&
+        !isNaN(lng) &&
+        lat >= -90 &&
+        lat <= 90 &&
+        lng >= -180 &&
+        lng <= 180
+      ) {
+        setViewState((prev) => ({
+          ...prev,
+          longitude: lng,
+          latitude: lat,
+          zoom: 14,
+        }));
+      }
+    }
+  }, [navigateToCoordinates]);
+
   return (
-    <div className="h-96 overflow-hidden my-10 md:my-0 relative">
+    <div id="map" className="h-96 overflow-hidden my-10 md:my-0 relative">
       <Map
         {...viewState}
         onMove={(evt) => setViewState(evt.viewState)}

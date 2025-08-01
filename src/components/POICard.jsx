@@ -15,6 +15,7 @@ import {
   Heart,
   Flag,
   Info,
+  Navigation,
 } from "lucide-react";
 import FlagModal from "./FlagModal";
 import POIPhotoGallery from "./POIPhotoGallery";
@@ -31,14 +32,19 @@ const POICard = ({
   compact = false,
   onClick,
   overlayButton = null,
+  mapLocation = false,
+  onNavigateToMap,
 }) => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const queryClient = useQueryClient();
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [flaggingPhoto, setFlaggingPhoto] = useState(null);
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [showDescriptionTooltip, setShowDescriptionTooltip] = useState(false);
+
+  // Check if current user is the creator of this POI
+  const isCreator = user && poi.user_id && user._id === poi.user_id;
 
   // POI like mutation
   const likeMutation = useMutation({
@@ -120,6 +126,25 @@ const POICard = ({
     setShowDescriptionTooltip(!showDescriptionTooltip);
   };
 
+  const handleNavigateToMap = (e) => {
+    e.stopPropagation();
+    if (onNavigateToMap && poi.lat && poi.lng) {
+      try {
+        // Scroll to map element
+        const mapElement = document.getElementById("map");
+        if (mapElement) {
+          mapElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        // Call the callback to zoom to this POI location
+        const coordinates = { lat: poi.lat, lng: poi.lng };
+        onNavigateToMap(coordinates);
+      } catch (error) {
+        console.error("Error navigating to map:", error);
+        toast.error("Failed to navigate to map location");
+      }
+    }
+  };
+
   const hasImage = poi.photos && poi.photos.length > 0;
   const imageUrl = hasImage
     ? poi.photos[0]?.s3Url || poi.photos[0]?.fullUrl
@@ -172,22 +197,26 @@ const POICard = ({
             {showActions && (
               <div className="flex items-center gap-2 flex-shrink-0">
                 {showFlagButton && hasImage && (
-                  <button
-                    onClick={(e) => handleFlagPhoto(e, poi.photos[0], poi)}
-                    className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-red-600/80 text-white backdrop-blur-sm transition-all duration-200"
-                    title="Flag photo"
-                  >
-                    <Flag size={16} />
-                  </button>
+                  <div className="tooltip tooltip-bottom" data-tip="Flag photo">
+                    <button
+                      onClick={(e) => handleFlagPhoto(e, poi.photos[0], poi)}
+                      className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-red-600/80 text-white backdrop-blur-sm transition-all duration-200"
+                    >
+                      <Flag size={16} />
+                    </button>
+                  </div>
                 )}
 
-                <button
-                  onClick={handleDelete}
-                  className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-error/80 text-white backdrop-blur-sm transition-all duration-200"
-                  title="Delete POI"
-                >
-                  <Trash2 size={16} />
-                </button>
+                {isCreator && (
+                  <div className="tooltip tooltip-bottom" data-tip="Delete POI">
+                    <button
+                      onClick={handleDelete}
+                      className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-error/80 text-white backdrop-blur-sm transition-all duration-200"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -210,15 +239,19 @@ const POICard = ({
               {/* Description Icon Button */}
               {poi.description && (
                 <div className="relative flex-shrink-0">
-                  <button
-                    onClick={handleDescriptionToggle}
-                    onMouseEnter={() => setShowDescriptionTooltip(true)}
-                    onMouseLeave={() => setShowDescriptionTooltip(false)}
-                    className="p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
-                    title="View description"
+                  <div
+                    className="tooltip tooltip-bottom"
+                    data-tip="View description"
                   >
-                    <Info size={16} />
-                  </button>
+                    <button
+                      onClick={handleDescriptionToggle}
+                      onMouseEnter={() => setShowDescriptionTooltip(true)}
+                      onMouseLeave={() => setShowDescriptionTooltip(false)}
+                      className="p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
+                    >
+                      <Info size={16} />
+                    </button>
+                  </div>
 
                   {/* Description Tooltip */}
                   {showDescriptionTooltip && (
@@ -290,48 +323,73 @@ const POICard = ({
               {/* Like, View Photos, and Edit buttons */}
               <div className="flex items-center gap-2">
                 {showLikeButton && (
-                  <button
-                    onClick={handleLike}
-                    disabled={likeMutation.isPending || !isAuthenticated}
-                    className={` flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-200 backdrop-blur-sm ${
-                      poi.isLiked
-                        ? "bg-red-600/80 text-white shadow-lg"
-                        : "bg-black/60 hover:bg-black/80 text-white cursor-pointer"
-                    }`}
-                    title={!isAuthenticated ? "Please log in to like POIs" : ""}
+                  <div
+                    className="tooltip tooltip-top"
+                    data-tip={
+                      !isAuthenticated
+                        ? "Please log in to like POIs"
+                        : "Like this location"
+                    }
                   >
-                    <Heart
-                      size={16}
-                      className={poi.isLiked ? "fill-current" : ""}
-                    />
-                    {poi.likesCount > 0 && (
-                      <span className="text-sm font-medium">
-                        {poi.likesCount}
-                      </span>
-                    )}
-                  </button>
+                    <button
+                      onClick={handleLike}
+                      disabled={likeMutation.isPending || !isAuthenticated}
+                      className={` flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-200 backdrop-blur-sm ${
+                        poi.isLiked
+                          ? "bg-red-600/80 text-white shadow-lg"
+                          : "bg-black/60 hover:bg-black/80 text-white cursor-pointer"
+                      }`}
+                    >
+                      <Heart
+                        size={16}
+                        className={poi.isLiked ? "fill-current" : ""}
+                      />
+                      {poi.likesCount > 0 && (
+                        <span className="text-sm font-medium">
+                          {poi.likesCount}
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* Navigation Button */}
+                {mapLocation && poi.lat && poi.lng && (
+                  <div
+                    className="tooltip tooltip-top"
+                    data-tip="Navigate to location on map"
+                  >
+                    <button
+                      onClick={handleNavigateToMap}
+                      className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
+                    >
+                      <Navigation size={16} />
+                    </button>
+                  </div>
                 )}
 
                 {/* View Photos Button */}
                 {hasImage && (
-                  <button
-                    onClick={handleViewPhotos}
-                    className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
-                    title="View photos"
-                  >
-                    <Eye size={16} />
-                  </button>
+                  <div className="tooltip tooltip-top" data-tip="View photos">
+                    <button
+                      onClick={handleViewPhotos}
+                      className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
+                    >
+                      <Eye size={16} />
+                    </button>
+                  </div>
                 )}
 
-                {showActions && (
-                  <button
-                    onClick={handleEdit}
-                    className="cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
-                    title="Edit POI"
-                  >
-                    <Edit size={16} />
-                    <span className="text-sm font-medium">Edit</span>
-                  </button>
+                {showActions && isCreator && (
+                  <div className="tooltip tooltip-top" data-tip="Edit POI">
+                    <button
+                      onClick={handleEdit}
+                      className="cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
+                    >
+                      <Edit size={16} />
+                      <span className="text-sm font-medium">Edit</span>
+                    </button>
+                  </div>
                 )}
               </div>
             </div>

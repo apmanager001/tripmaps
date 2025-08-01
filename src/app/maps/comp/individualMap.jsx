@@ -64,6 +64,9 @@ export default function IndividualMaps({ id }) {
   // Add POI modal state
   const [showAddPOIModal, setShowAddPOIModal] = useState(false);
 
+  // Navigation state
+  const [navigateToCoordinates, setNavigateToCoordinates] = useState(null);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["individualMap", id],
     queryFn: async () => {
@@ -295,6 +298,15 @@ export default function IndividualMaps({ id }) {
     });
     // You can add flag modal logic here if needed
     toast.info("Flag functionality coming soon!");
+  };
+
+  const handleNavigateToMap = (coordinates) => {
+    setNavigateToCoordinates(coordinates);
+
+    // Reset coordinates after a short delay to allow for future navigation
+    setTimeout(() => {
+      setNavigateToCoordinates(null);
+    }, 100);
   };
 
   const copyToClipboard = (text) => {
@@ -592,6 +604,7 @@ export default function IndividualMaps({ id }) {
           key="individualMap-map"
           mapKey="individualMap-map"
           coordArray={coordArray}
+          navigateToCoordinates={navigateToCoordinates}
         />
       </div>
       <div
@@ -643,6 +656,8 @@ export default function IndividualMaps({ id }) {
                   showFlagButton={true}
                   compact={true}
                   onViewPhotos={handleOpenPhotoGallery}
+                  mapLocation={true}
+                  onNavigateToMap={handleNavigateToMap}
                 />
               ))}
             </div>

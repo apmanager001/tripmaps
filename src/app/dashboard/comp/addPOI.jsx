@@ -735,6 +735,7 @@ const AddPOI = () => {
                   onDelete={handleDeletePOI}
                   onViewPhotos={handleOpenPhotoGallery}
                   showActions={true}
+                  mapLocation={false}
                   showLikeButton={true}
                   showFlagButton={true}
                 />

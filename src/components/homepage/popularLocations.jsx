@@ -61,6 +61,7 @@ export default function PopularLocations() {
             showActions={false}
             showLikeButton={true}
             showFlagButton={false}
+            mapLocation={false}
             compact={true}
             className="cursor-pointer"
             onClick={() => router.push(`/point_of_interest/${poi._id}`)}

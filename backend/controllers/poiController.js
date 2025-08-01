@@ -1107,17 +1107,13 @@ const getPopularLocations = async (req, res) => {
 // Get popular POIs with photos for homepage display
 const getPopularPOIs = async (req, res) => {
   try {
-    console.log("Fetching popular POIs...");
-
     // First, let's check what POIs exist
     const totalPOIs = await POI.countDocuments();
-    console.log("Total POIs in database:", totalPOIs);
 
     // Check POIs with maps
     const poisWithMaps = await POI.countDocuments({
       map_id: { $exists: true, $ne: null },
     });
-    console.log("POIs with maps:", poisWithMaps);
 
     // Check POIs with photos
     const poisWithPhotos = await POI.aggregate([
@@ -1138,7 +1134,6 @@ const getPopularPOIs = async (req, res) => {
         $count: "count",
       },
     ]);
-    console.log("POIs with photos:", poisWithPhotos[0]?.count || 0);
 
     // Fetch POIs from public maps with photos, sorted by likes (descending)
     const popularPOIs = await POI.aggregate([
@@ -1226,9 +1221,6 @@ const getPopularPOIs = async (req, res) => {
         },
       },
     ]);
-
-    console.log("Popular POIs found:", popularPOIs.length);
-    console.log("Sample POI:", popularPOIs[0]);
 
     // Generate presigned URLs for photos using the helper
     const poisWithPresignedUrls = await Promise.all(
