@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { flagApi } from "@/lib/api";
-import { Flag, Eye, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Flag, Eye, CheckCircle, CircleX, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import Image from "next/image";
 
@@ -57,7 +57,7 @@ const AdminFlagsPage = () => {
       case "resolved":
         return <CheckCircle size={16} className="text-green-500" />;
       case "dismissed":
-        return <XCircle size={16} className="text-red-500" />;
+        return <CircleX size={16} className="text-red-500" />;
       default:
         return <Clock size={16} />;
     }
@@ -277,7 +277,7 @@ const AdminFlagsPage = () => {
                             className="btn btn-error btn-sm"
                             disabled={updateStatusMutation.isPending}
                           >
-                            <XCircle size={16} />
+                            <CircleX size={16} />
                             Dismiss
                           </button>
                           <button

@@ -81,7 +81,7 @@ const MapCard = ({ map, showActions = true, className = "", onClick }) => {
               <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-blue-200 transition-colors break-words drop-shadow-lg">
                 {map.mapName || "Untitled Map"}
               </h3>
-              <div className="badge badge-outline badge-sm flex-shrink-0 bg-white/20 border-white/30 text-white">
+              <div className="badge badge-outline bg-primary/40 badge-sm flex-shrink-0  border-white/30 text-white">
                 <MapPin size={12} className="mr-1" />
                 Map
               </div>

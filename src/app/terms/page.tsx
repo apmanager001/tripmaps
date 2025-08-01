@@ -9,7 +9,7 @@ import {
   Upload,
   AlertTriangle,
   CheckCircle,
-  XCircle,
+  CircleX,
 } from "lucide-react";
 
 const TermsOfService = () => {
@@ -207,7 +207,7 @@ const TermsOfService = () => {
 
             <div className="bg-error/10 border border-error/20 rounded-lg p-6">
               <h3 className="text-xl font-semibold text-error mb-3">
-                <XCircle size={20} className="inline mr-2" />
+                <CircleX size={20} className="inline mr-2" />
                 Prohibited Content
               </h3>
               <p className="text-base-content/80 leading-relaxed">

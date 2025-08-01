@@ -114,9 +114,12 @@ const Footer = () => {
             <h4 className="text-lg font-semibold text-primary">Support</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="#" className="hover:text-primary transition-colors">
-                  Help Center
-                </a>
+                <Link
+                  href="/guide"
+                  className="hover:text-primary transition-colors"
+                >
+                  User Guide
+                </Link>
               </li>
               <li>
                 <Link
