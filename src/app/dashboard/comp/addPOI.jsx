@@ -34,6 +34,9 @@ const AddPOI = () => {
   const [tagModalPOIIndex, setTagModalPOIIndex] = useState(null);
   const [newTagName, setNewTagName] = useState("");
   const [poiSearchQuery, setPoiSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [poisPerPage] = useState(20);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
 
   // Edit modal states
   const [showEditModal, setShowEditModal] = useState(false);
@@ -75,32 +78,38 @@ const AddPOI = () => {
 
   // Fetch user's POIs
   const { data: userPOIsData, refetch: refetchPOIs } = useQuery({
-    queryKey: ["userPOIs", user?._id],
+    queryKey: ["userPOIs", user?._id, currentPage, debouncedSearchQuery],
     queryFn: async () => {
-      if (!user?._id) return { pois: [] };
-      const response = await poiApi.getUserPOIs(1, 100); // Increased limit to 100
-      // API Response received
-      // The backend returns data directly, not wrapped in a 'pois' property
-      return { pois: response.data || [] };
+      if (!user?._id) return { pois: [], total: 0, pages: 1 };
+
+      // If there's a search query, use the search endpoint
+      if (debouncedSearchQuery.trim()) {
+        const response = await poiApi.searchUserPOIs(
+          debouncedSearchQuery.trim(),
+          currentPage,
+          poisPerPage
+        );
+        return {
+          pois: response.data || [],
+          total: response.pagination?.total || 0,
+          pages: response.pagination?.pages || 1,
+        };
+      } else {
+        // Otherwise, use the regular getUserPOIs endpoint
+        const response = await poiApi.getUserPOIs(currentPage, poisPerPage);
+        return {
+          pois: response.data || [],
+          total: response.pagination?.total || 0,
+          pages: response.pagination?.pages || 1,
+        };
+      }
     },
     enabled: !!user?._id,
   });
 
   const userPOIs = userPOIsData?.pois || [];
-
-  // Filter POIs based on search query
-  const filteredPOIs = userPOIs.filter((poi) => {
-    if (!poiSearchQuery.trim()) return true;
-
-    const query = poiSearchQuery.toLowerCase();
-    return (
-      poi.locationName?.toLowerCase().includes(query) ||
-      poi.description?.toLowerCase().includes(query) ||
-      poi.tags?.some((tag) =>
-        (typeof tag === "object" ? tag.name : tag).toLowerCase().includes(query)
-      )
-    );
-  });
+  const totalPOIs = userPOIsData?.total || 0;
+  const totalPages = userPOIsData?.pages || 1;
 
   // Fetch available tags
   const { data: availableTags = [] } = useQuery({
@@ -278,11 +287,11 @@ const AddPOI = () => {
   const handleEditPhotoChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Check file size (10MB limit)
-      const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+      // Check file size (15MB limit)
+      const maxSize = 15 * 1024 * 1024; // 15MB in bytes
       if (file.size > maxSize) {
         toast.error(
-          `File too large. Maximum size is 10MB. Your file is ${(
+          `File too large. Maximum size is 15MB. Your file is ${(
             file.size /
             1024 /
             1024
@@ -524,6 +533,32 @@ const AddPOI = () => {
     setPoiToDelete(null);
   };
 
+  // Pagination functions
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    // Scroll to the top of the POIs section
+    const poisSection = document.getElementById("pois-section");
+    if (poisSection) {
+      poisSection.scrollIntoView({ behavior: "smooth" });
+    }
+    // Don't reset search when changing pages during search
+  };
+
+  const handleSearch = (query) => {
+    setPoiSearchQuery(query);
+    // Reset to first page when searching
+    setCurrentPage(1);
+  };
+
+  // Debounced search to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(poiSearchQuery);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [poiSearchQuery]);
+
   // Flag handling functions
   const handleFlagPhoto = (photo, poi) => {
     setFlaggingPhoto({
@@ -579,7 +614,10 @@ const AddPOI = () => {
         <POICreationInterface availableTags={availableTags} />
 
         {/* User's POIs Section */}
-        <div className="bg-base-200 p-8 rounded-xl shadow-lg border border-base-300">
+        <div
+          className="bg-base-200 p-2 md:p-8 md:rounded-xl md:shadow-lg border border-base-300"
+          id="pois-section"
+        >
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-primary/10 rounded-xl">
@@ -588,7 +626,9 @@ const AddPOI = () => {
               <div>
                 <h3 className="text-2xl font-bold text-primary">Your POIs</h3>
                 <p className="text-neutral-600">
-                  {filteredPOIs.length} of {userPOIs.length} locations
+                  {debouncedSearchQuery.trim()
+                    ? `${userPOIs.length} of ${totalPOIs} locations`
+                    : `Page ${currentPage} of ${totalPages} • ${totalPOIs} total locations`}
                 </p>
               </div>
             </div>
@@ -602,7 +642,7 @@ const AddPOI = () => {
                 type="text"
                 placeholder="Search your POIs..."
                 value={poiSearchQuery}
-                onChange={(e) => setPoiSearchQuery(e.target.value)}
+                onChange={(e) => handleSearch(e.target.value)}
                 className="input input-bordered w-full pl-12 pr-10 h-12 text-base"
                 aria-label="Search POIs by name, description, tags, or Google Maps link"
               />
@@ -624,7 +664,7 @@ const AddPOI = () => {
               {poiSearchQuery && (
                 <button
                   id="clearSearchButton"
-                  onClick={() => setPoiSearchQuery("")}
+                  onClick={() => handleSearch("")}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center group"
                   aria-label="Clear search query"
                 >
@@ -640,7 +680,7 @@ const AddPOI = () => {
           </div>
 
           {/* POIs Grid */}
-          {userPOIs.length === 0 ? (
+          {totalPOIs === 0 ? (
             <div className="text-center py-12 text-neutral-500">
               <div className="p-4 bg-base-300 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <MapPin className="w-10 h-10 opacity-50" />
@@ -654,7 +694,7 @@ const AddPOI = () => {
                 location!
               </p>
             </div>
-          ) : filteredPOIs.length === 0 ? (
+          ) : userPOIs.length === 0 ? (
             <div className="text-center py-12 text-neutral-500">
               <div className="p-4 bg-base-300 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
                 <svg
@@ -673,11 +713,11 @@ const AddPOI = () => {
               </div>
               <h4 className="text-xl font-semibold mb-2">No Results Found</h4>
               <p className="text-neutral-600 mb-4">
-                No POIs found matching "{poiSearchQuery}"
+                No POIs found matching "{debouncedSearchQuery}"
               </p>
               <button
                 id="clearSearchResultsButton"
-                onClick={() => setPoiSearchQuery("")}
+                onClick={() => handleSearch("")}
                 className="btn btn-outline btn-primary hover:btn-primary transition-all duration-200"
                 aria-label="Clear search results"
               >
@@ -687,7 +727,7 @@ const AddPOI = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredPOIs.map((poi, index) => (
+              {userPOIs.map((poi, index) => (
                 <POICard
                   key={poi._id || index}
                   poi={poi}
@@ -699,6 +739,52 @@ const AddPOI = () => {
                   showFlagButton={true}
                 />
               ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-8">
+              <div className="join">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="join-item btn btn-outline"
+                >
+                  «
+                </button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => handlePageChange(pageNum)}
+                      className={`join-item btn ${
+                        currentPage === pageNum ? "btn-primary" : "btn-outline"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="join-item btn btn-outline"
+                >
+                  »
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -41,6 +41,7 @@ const {
   deletePOI,
   getPOIsByMap,
   getUserPOIs,
+  searchUserPOIs,
   searchPOIsByLocation,
   searchPOIsByName,
   searchPOIsComprehensive,
@@ -99,6 +100,16 @@ const {
   checkUserFlag,
 } = require("../controllers/flagController");
 
+const {
+  submitContact,
+  getAllContacts,
+  getContactById,
+  updateContactStatus,
+  addContactNote,
+  deleteContact,
+  getContactStats,
+} = require("../controllers/contactController");
+
 const { jwtAuth } = require("../helpers/jwtAuth");
 const {
   validateRegistration,
@@ -153,6 +164,7 @@ router.post("/maps/:id/like", jwtAuth, toggleMapLike);
 // ===== POI ROUTES =====
 router.post("/pois", jwtAuth, createPOI);
 router.get("/pois/user", jwtAuth, getUserPOIs);
+router.get("/pois/user/search", jwtAuth, searchUserPOIs);
 router.get("/pois/search/location", searchPOIsByLocation);
 router.get("/pois/search/name", searchPOIsByName);
 router.get("/pois/search", searchPOIsComprehensive);
@@ -216,6 +228,18 @@ router.get("/flags", jwtAuth, getAllFlags);
 router.put("/flags/:flagId/status", jwtAuth, updateFlagStatus);
 router.get("/flags/user", jwtAuth, getFlagsByUser);
 router.get("/flags/check/:photoId", jwtAuth, checkUserFlag);
+
+// ===== CONTACT ROUTES =====
+// Public contact form submission
+router.post("/contact", submitContact);
+
+// Admin/moderator contact management (protected routes)
+router.get("/admin/contacts", jwtAuth, getAllContacts);
+router.get("/admin/contacts/stats", jwtAuth, getContactStats);
+router.get("/admin/contacts/:id", jwtAuth, getContactById);
+router.put("/admin/contacts/:id/status", jwtAuth, updateContactStatus);
+router.post("/admin/contacts/:id/notes", jwtAuth, addContactNote);
+router.delete("/admin/contacts/:id", jwtAuth, deleteContact);
 
 // ===== LEGACY ROUTES (for backward compatibility) =====
 // These routes maintain compatibility with existing frontend code

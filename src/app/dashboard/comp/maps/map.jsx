@@ -16,6 +16,7 @@ const Maps = ({
     latitude: 44.5,
     zoom: zoom || 1,
   });
+  const [clickedMarker, setClickedMarker] = useState(null);
 
   // Reset view state when mapKey changes (component switch)
   useEffect(() => {
@@ -26,11 +27,11 @@ const Maps = ({
     });
   }, [mapKey, zoom]);
 
-  // Calculate center when coordArray changes
+  // Calculate center and optimal zoom when coordArray changes
   useEffect(() => {
     if (coordArray.length === 0) return;
 
-    const calcCenter = (coords) => {
+    const calcCenterAndBounds = (coords) => {
       // Filter out coordinates that are null, undefined, or have invalid lat/lng
       const validCoords = coords.filter(
         (p) =>
@@ -45,20 +46,64 @@ const Maps = ({
 
       if (validCoords.length === 0) return null;
 
-      const avgLat =
-        validCoords.reduce((sum, p) => sum + p.lat, 0) / validCoords.length;
-      const avgLon =
-        validCoords.reduce((sum, p) => sum + p.lng, 0) / validCoords.length;
-      return { lat: avgLat, lon: avgLon };
+      // Calculate bounds
+      const lats = validCoords.map((p) => p.lat);
+      const lngs = validCoords.map((p) => p.lng);
+
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLng = Math.min(...lngs);
+      const maxLng = Math.max(...lngs);
+
+      // Calculate center
+      const centerLat = (minLat + maxLat) / 2;
+      const centerLng = (minLng + maxLng) / 2;
+
+      // Calculate optimal zoom based on bounds
+      const latDiff = maxLat - minLat;
+      const lngDiff = maxLng - minLng;
+      const maxDiff = Math.max(latDiff, lngDiff);
+
+      let optimalZoom;
+      if (validCoords.length === 1) {
+        optimalZoom = 12; // Single point - closer zoom
+      } else if (maxDiff < 0.01) {
+        optimalZoom = 14; // Very close points
+      } else if (maxDiff < 0.05) {
+        optimalZoom = 12; // Close points
+      } else if (maxDiff < 0.1) {
+        optimalZoom = 10; // Medium distance
+      } else if (maxDiff < 0.5) {
+        optimalZoom = 8; // Far apart
+      } else if (maxDiff < 1) {
+        optimalZoom = 6; // Very far apart
+      } else {
+        optimalZoom = 4; // Extremely far apart
+      }
+
+      // Add padding to bounds for better visual
+      const padding = maxDiff * 0.1; // 10% padding
+      const paddedBounds = {
+        north: maxLat + padding,
+        south: minLat - padding,
+        east: maxLng + padding,
+        west: minLng - padding,
+      };
+
+      return {
+        center: { lat: centerLat, lng: centerLng },
+        bounds: paddedBounds,
+        zoom: optimalZoom,
+      };
     };
 
-    const center = calcCenter(coordArray);
-    if (center) {
+    const result = calcCenterAndBounds(coordArray);
+    if (result) {
       setViewState((prev) => ({
         ...prev,
-        longitude: center.lon,
-        latitude: center.lat,
-        zoom: zoom || (coordArray.length === 1 ? 10 : 5), // Use prop zoom or default logic
+        longitude: result.center.lng,
+        latitude: result.center.lat,
+        zoom: zoom || result.zoom, // Use prop zoom if provided, otherwise calculated zoom
       }));
     }
   }, [coordArray, zoom]);
@@ -77,19 +122,32 @@ const Maps = ({
     }));
   }, []);
 
+  const handleMarkerClick = useCallback(
+    (markerId) => {
+      setClickedMarker(clickedMarker === markerId ? null : markerId);
+    },
+    [clickedMarker]
+  );
+
+  // Close tooltip when clicking outside
+  const handleMapClick = useCallback(
+    (evt) => {
+      if (isClickable && onMapClick) {
+        const { lng, lat } = evt.lngLat;
+        onMapClick({ lng, lat });
+      }
+      // Close any open tooltip when clicking on the map
+      setClickedMarker(null);
+    },
+    [isClickable, onMapClick]
+  );
+
   return (
     <div className="h-96 overflow-hidden my-10 md:my-0 relative">
       <Map
         {...viewState}
         onMove={(evt) => setViewState(evt.viewState)}
-        onClick={
-          isClickable
-            ? (evt) => {
-                const { lng, lat } = evt.lngLat;
-                onMapClick && onMapClick({ lng, lat });
-              }
-            : undefined
-        }
+        onClick={handleMapClick}
         mapStyle="https://tiles.openfreemap.org/styles/bright"
         style={{ width: "100%", height: "100%", position: "relative" }}
         projection="mercator"
@@ -99,28 +157,56 @@ const Maps = ({
       >
         {coordArray.map((point, index) => {
           // Ensure coordinates are numbers and not null/undefined
-          const lng =
-            typeof point.lng === "string" ? parseFloat(point.lng) : point.lng;
-          const lat =
-            typeof point.lat === "string" ? parseFloat(point.lat) : point.lat;
+          let lng = point.lng;
+          let lat = point.lat;
 
-          // Skip rendering if coordinates are null, undefined, or NaN
-          if (!lng || !lat || isNaN(lng) || isNaN(lat)) {
+          // Handle string coordinates
+          if (typeof lng === "string") {
+            lng = parseFloat(lng);
+          }
+          if (typeof lat === "string") {
+            lat = parseFloat(lat);
+          }
+
+          // Skip rendering if coordinates are null, undefined, NaN, or out of valid ranges
+          if (
+            !lng ||
+            !lat ||
+            isNaN(lng) ||
+            isNaN(lat) ||
+            lat < -90 ||
+            lat > 90 || // Valid latitude range
+            lng < -180 ||
+            lng > 180 // Valid longitude range
+          ) {
+            console.warn(`Invalid coordinates for point ${index}:`, point);
             return null;
           }
 
+          const markerId = `marker-${lat}-${lng}-${index}`;
+          const isTooltipVisible = clickedMarker === markerId;
+
           return (
-            <Marker
-              key={`marker-${lat}-${lng}-${index}`}
-              longitude={lng}
-              latitude={lat}
-            >
+            <Marker key={markerId} longitude={lng} latitude={lat}>
               <div className="relative group">
                 {/* Custom styled pin marker */}
-                <div className="w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-full cursor-pointer hover:scale-110 transition-transform duration-200">
+                <div
+                  className="w-6 h-6 bg-red-500 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-full cursor-pointer hover:scale-110 transition-transform duration-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMarkerClick(markerId);
+                  }}
+                >
                   <div className="w-2 h-2 bg-white rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
                 </div>
-                <div className="absolute bottom-8 z-10 left-1/2 -translate-x-1/2 bg-white text-xs text-black rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 transform scale-95 group-hover:scale-100 border border-gray-200 min-w-64">
+                <div
+                  className={`absolute bottom-8 left-1/2 -translate-x-1/2 bg-white text-xs text-black rounded-lg shadow-lg transition-all duration-200 transform border border-gray-200 min-w-64 ${
+                    isTooltipVisible
+                      ? "opacity-100 scale-100"
+                      : "opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100"
+                  }`}
+                  style={{ zIndex: 9999 }}
+                >
                   <div className="p-3">
                     {/* Thumbnail Image */}
                     {(point.thumbnailUrl ||

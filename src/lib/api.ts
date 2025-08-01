@@ -308,6 +308,18 @@ export const poiApi = {
     );
   },
 
+  searchUserPOIs: async (
+    query: string,
+    page = 1,
+    limit = 20
+  ): Promise<ApiResponse<{ pois: POI[]; pagination: Pagination }>> => {
+    return apiRequest<ApiResponse<{ pois: POI[]; pagination: Pagination }>>(
+      `/pois/user/search?q=${encodeURIComponent(
+        query
+      )}&page=${page}&limit=${limit}`
+    );
+  },
+
   searchPOIsByLocation: async (
     lat: number,
     lng: number,
@@ -748,6 +760,84 @@ export const flagApi = {
     return apiRequest<ApiResponse<FlagCheckResponse>>(
       `/flags/check/${photoId}`
     );
+  },
+};
+
+// ===== CONTACT API =====
+export const contactApi = {
+  submitContact: async (data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    category?: string;
+  }): Promise<ApiResponse<{ id: string; submittedAt: string }>> => {
+    return apiRequest<ApiResponse<{ id: string; submittedAt: string }>>(
+      "/contact",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      }
+    );
+  },
+
+  getAllContacts: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    category?: string;
+    priority?: string;
+    search?: string;
+    sortBy?: string;
+    sortOrder?: string;
+  }): Promise<ApiResponse<any>> => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.append("page", params.page.toString());
+    if (params?.limit) searchParams.append("limit", params.limit.toString());
+    if (params?.status) searchParams.append("status", params.status);
+    if (params?.category) searchParams.append("category", params.category);
+    if (params?.priority) searchParams.append("priority", params.priority);
+    if (params?.search) searchParams.append("search", params.search);
+    if (params?.sortBy) searchParams.append("sortBy", params.sortBy);
+    if (params?.sortOrder) searchParams.append("sortOrder", params.sortOrder);
+
+    return apiRequest<ApiResponse<any>>(
+      `/admin/contacts?${searchParams.toString()}`
+    );
+  },
+
+  getContactById: async (id: string): Promise<ApiResponse<any>> => {
+    return apiRequest<ApiResponse<any>>(`/admin/contacts/${id}`);
+  },
+
+  updateContactStatus: async (
+    id: string,
+    data: { status?: string; assignedTo?: string }
+  ): Promise<ApiResponse<any>> => {
+    return apiRequest<ApiResponse<any>>(`/admin/contacts/${id}/status`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
+
+  addContactNote: async (
+    id: string,
+    data: { note: string }
+  ): Promise<ApiResponse<any>> => {
+    return apiRequest<ApiResponse<any>>(`/admin/contacts/${id}/notes`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  deleteContact: async (id: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>(`/admin/contacts/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  getContactStats: async (): Promise<ApiResponse<any>> => {
+    return apiRequest<ApiResponse<any>>("/admin/contacts/stats");
   },
 };
 

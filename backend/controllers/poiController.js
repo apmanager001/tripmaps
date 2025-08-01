@@ -886,7 +886,9 @@ const searchMapsByPOIName = async (req, res) => {
       .sort({ createdAt: -1 });
 
     // Filter out POIs from private maps and group by map
-    const publicPOIs = pois.filter((poi) => !poi.map_id.isPrivate);
+    const publicPOIs = pois.filter(
+      (poi) => poi.map_id && !poi.map_id.isPrivate
+    );
 
     // Group POIs by map to avoid duplicates
     const mapGroups = {};
@@ -1336,6 +1338,180 @@ const addPOIToMap = async (req, res) => {
   }
 };
 
+// Search user's own POIs comprehensively (name, tags, description)
+const searchUserPOIs = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { q } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    if (!q || q.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query must be at least 2 characters",
+      });
+    }
+
+    const searchRegex = new RegExp(q, "i");
+
+    // Search in user's POI name, description, and tags
+    const pois = await POI.aggregate([
+      {
+        $match: {
+          user_id: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: "poitags",
+          localField: "_id",
+          foreignField: "poi_id",
+          as: "poiTags",
+        },
+      },
+      {
+        $lookup: {
+          from: "tags",
+          localField: "poiTags.tag_id",
+          foreignField: "_id",
+          as: "tags",
+        },
+      },
+      {
+        $lookup: {
+          from: "tripMaps",
+          localField: "map_id",
+          foreignField: "_id",
+          as: "map",
+        },
+      },
+      {
+        $unwind: {
+          path: "$map",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user_id",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$user",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "photos",
+          localField: "_id",
+          foreignField: "poi_id",
+          as: "photos",
+        },
+      },
+      {
+        $match: {
+          $or: [
+            { locationName: searchRegex },
+            { description: searchRegex },
+            { "tags.name": searchRegex },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          likesCount: { $size: { $ifNull: ["$likes", []] } },
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+    ]);
+
+    // Get total count for pagination
+    const total = await POI.aggregate([
+      {
+        $match: {
+          user_id: new mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        $lookup: {
+          from: "poitags",
+          localField: "_id",
+          foreignField: "poi_id",
+          as: "poiTags",
+        },
+      },
+      {
+        $lookup: {
+          from: "tags",
+          localField: "poiTags.tag_id",
+          foreignField: "_id",
+          as: "tags",
+        },
+      },
+      {
+        $match: {
+          $or: [
+            { locationName: searchRegex },
+            { description: searchRegex },
+            { "tags.name": searchRegex },
+          ],
+        },
+      },
+      {
+        $count: "total",
+      },
+    ]);
+
+    // Generate presigned URLs for photos
+    const poisWithUrls = await Promise.all(
+      pois.map(async (poi) => {
+        const photosWithUrls =
+          poi.photos && Array.isArray(poi.photos)
+            ? await generatePresignedUrlsForPhotos(poi.photos)
+            : [];
+
+        return {
+          ...poi,
+          photos: photosWithUrls,
+          isLiked: poi.likes && poi.likes.includes(userId.toString()),
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      data: poisWithUrls,
+      pagination: {
+        page,
+        limit,
+        total: total[0]?.total || 0,
+        pages: Math.ceil((total[0]?.total || 0) / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Error searching user POIs:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   createPOI,
   getPOI,
@@ -1351,4 +1527,5 @@ module.exports = {
   getPopularPOIs,
   togglePOILike,
   addPOIToMap,
+  searchUserPOIs,
 };

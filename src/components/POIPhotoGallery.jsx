@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, MapPin, X, Flag } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -13,10 +13,23 @@ const POIPhotoGallery = ({
   onFlagPhoto,
 }) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(initialPhotoIndex);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [zoomOrigin, setZoomOrigin] = useState({ x: 0, y: 0 });
+  const [hasDragged, setHasDragged] = useState(false);
+  const containerRef = useRef(null);
 
   // Reset photo index when POI changes
   React.useEffect(() => {
     setCurrentPhotoIndex(initialPhotoIndex);
+    // Reset zoom and drag state when photo changes
+    setIsZoomed(false);
+    setIsDragging(false);
+    setDragOffset({ x: 0, y: 0 });
+    setZoomOrigin({ x: 0, y: 0 });
+    setHasDragged(false);
   }, [poi?._id, initialPhotoIndex]);
 
   if (!isOpen || !poi || !poi.photos || poi.photos.length === 0) {
@@ -39,11 +52,87 @@ const POIPhotoGallery = ({
     onClose();
   };
 
-  const handleFlagPhoto = () => {
+  const handleFlagPhoto = (e) => {
     if (onFlagPhoto) {
-      onFlagPhoto(poi.photos[currentPhotoIndex], poi);
+      // Close the photo gallery modal first
+      onClose();
+      // Then open the flag modal
+      onFlagPhoto(e, poi.photos[currentPhotoIndex], poi);
     } else {
       toast.info("Flag functionality coming soon!");
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    if (!isZoomed) return;
+
+    e.preventDefault();
+    setIsDragging(true);
+    setHasDragged(false);
+    setDragStart({
+      x: e.clientX - dragOffset.x,
+      y: e.clientY - dragOffset.y,
+    });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isZoomed || !isDragging) return;
+
+    e.preventDefault();
+    const newOffset = {
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    };
+
+    // Check if we've moved enough to consider it a drag (threshold of 5px)
+    const distance = Math.sqrt(
+      Math.pow(e.clientX - (dragStart.x + dragOffset.x), 2) +
+        Math.pow(e.clientY - (dragStart.y + dragOffset.y), 2)
+    );
+
+    if (distance > 5) {
+      setHasDragged(true);
+    }
+
+    setDragOffset(newOffset);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    // Reset hasDragged after a short delay to allow click event to check it
+    setTimeout(() => {
+      setHasDragged(false);
+    }, 100);
+  };
+
+  const handleZoom = (e) => {
+    // Don't zoom if we just finished dragging
+    if (hasDragged) {
+      return;
+    }
+
+    const container = e.currentTarget;
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (!isZoomed) {
+      // Zoom in to clicked point
+      const scaleX = x / rect.width;
+      const scaleY = y / rect.height;
+
+      // Calculate the zoom origin point
+      const originX = scaleX * 100;
+      const originY = scaleY * 100;
+
+      setZoomOrigin({ x: originX, y: originY });
+      setIsZoomed(true);
+      setDragOffset({ x: 0, y: 0 });
+    } else {
+      // Zoom out
+      setIsZoomed(false);
+      setDragOffset({ x: 0, y: 0 });
+      setZoomOrigin({ x: 0, y: 0 });
     }
   };
 
@@ -79,46 +168,31 @@ const POIPhotoGallery = ({
           <div
             className="flex-1 relative bg-black overflow-hidden"
             style={{ height: "calc(100vh - 280px)" }}
+            ref={containerRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
           >
             <div
               className="w-full h-full flex items-center justify-center p-4 pb-8"
               style={{
-                transform: "scale(1)",
-                transformOrigin: "center center",
-                transition: "transform 0.3s ease-in-out",
+                transform: isZoomed
+                  ? `scale(2.5) translate(${dragOffset.x / 2.5}px, ${
+                      dragOffset.y / 2.5
+                    }px)`
+                  : "scale(1)",
+                transformOrigin: isZoomed
+                  ? `${zoomOrigin.x}% ${zoomOrigin.y}%`
+                  : "center center",
+                transition: isZoomed ? "none" : "transform 0.3s ease-in-out",
+                cursor: isZoomed
+                  ? isDragging
+                    ? "grabbing"
+                    : "grab"
+                  : "zoom-in",
               }}
-              ref={(el) => {
-                if (el) {
-                  el._zoomLevel = 1;
-                  el._isZoomed = false;
-                }
-              }}
-              onClick={(e) => {
-                const container = e.currentTarget;
-                const rect = container.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                if (!container._isZoomed) {
-                  // Zoom in to clicked point
-                  const scaleX = x / rect.width;
-                  const scaleY = y / rect.height;
-                  container.style.transformOrigin = `${scaleX * 100}% ${
-                    scaleY * 100
-                  }%`;
-                  container.style.transform = "scale(2.5)";
-                  container._zoomLevel = 2.5;
-                  container._isZoomed = true;
-                  container.style.cursor = "zoom-out";
-                } else {
-                  // Zoom out
-                  container.style.transform = "scale(1)";
-                  container.style.transformOrigin = "center center";
-                  container._zoomLevel = 1;
-                  container._isZoomed = false;
-                  container.style.cursor = "zoom-in";
-                }
-              }}
+              onClick={handleZoom}
             >
               <img
                 src={

@@ -1,0 +1,1617 @@
+openapi: 3.0.0
+info:
+  title: My Trip Maps API
+  description: API for the My Trip Maps application - a platform for creating and sharing travel maps with points of interest
+  version: 1.0.0
+  contact:
+    name: My Trip Maps Support
+servers:
+  - url: http://localhost:3001
+    description: Development server
+  - url: https://your-production-domain.com
+    description: Production server
+
+paths:
+  # ===== AUTHENTICATION ROUTES =====
+  /register:
+    post:
+      summary: Register a new user
+      description: Create a new user account with email and password
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+              properties:
+                username:
+                  type: string
+                  description: Unique username for the account
+                email:
+                  type: string
+                  format: email
+                  description: User's email address
+                password:
+                  type: string
+                  minLength: 6
+                  description: User's password (minimum 6 characters)
+      responses:
+        "201":
+          description: User registered successfully
+        "400":
+          description: Validation error or user already exists
+        "500":
+          description: Internal server error
+
+  /login:
+    post:
+      summary: Login user
+      description: Authenticate user with email and password
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Login successful
+        "401":
+          description: Invalid credentials
+        "500":
+          description: Internal server error
+
+  /logout:
+    post:
+      summary: Logout user
+      description: Logout the current user and clear session
+      tags: [Authentication]
+      responses:
+        "200":
+          description: Logout successful
+        "500":
+          description: Internal server error
+
+  /verifyUser:
+    get:
+      summary: Verify user authentication
+      description: Check if user is authenticated and return user data
+      tags: [Authentication]
+      responses:
+        "200":
+          description: User is authenticated
+        "401":
+          description: User is not authenticated
+
+  # ===== OAUTH ROUTES =====
+  /auth/google:
+    get:
+      summary: Google OAuth login
+      description: Initiate Google OAuth authentication flow
+      tags: [OAuth]
+      responses:
+        "302":
+          description: Redirect to Google OAuth
+
+  /auth/google/callback:
+    get:
+      summary: Google OAuth callback
+      description: Handle Google OAuth callback and authenticate user
+      tags: [OAuth]
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OAuth authentication successful
+        "400":
+          description: OAuth authentication failed
+
+  /auth/facebook:
+    get:
+      summary: Facebook OAuth login
+      description: Initiate Facebook OAuth authentication flow
+      tags: [OAuth]
+      responses:
+        "302":
+          description: Redirect to Facebook OAuth
+
+  /auth/facebook/callback:
+    get:
+      summary: Facebook OAuth callback
+      description: Handle Facebook OAuth callback and authenticate user
+      tags: [OAuth]
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OAuth authentication successful
+        "400":
+          description: OAuth authentication failed
+
+  # ===== USER ROUTES =====
+  /users/profile/{id}:
+    get:
+      summary: Get user profile
+      description: Retrieve public profile information for a user
+      tags: [Users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID
+      responses:
+        "200":
+          description: User profile retrieved successfully
+        "404":
+          description: User not found
+
+    put:
+      summary: Update user profile
+      description: Update user profile information (requires authentication)
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                bio:
+                  type: string
+      responses:
+        "200":
+          description: Profile updated successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+
+  /users/dashboard/{id}:
+    get:
+      summary: Get user dashboard
+      description: Retrieve dashboard data for authenticated user
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dashboard data retrieved successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+
+  /users/search:
+    get:
+      summary: Search users
+      description: Search for users by username or other criteria
+      tags: [Users]
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search query
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: Number of results per page
+      responses:
+        "200":
+          description: Search results
+
+  /users/top:
+    get:
+      summary: Get top users
+      description: Retrieve list of top users based on activity or popularity
+      tags: [Users]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Number of top users to return
+      responses:
+        "200":
+          description: Top users list
+
+  /users/{id}:
+    delete:
+      summary: Delete user account
+      description: Permanently delete user account (requires authentication)
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Account deleted successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+
+  # ===== PROFILE PICTURE ROUTES =====
+  /users/profile-picture:
+    post:
+      summary: Upload profile picture
+      description: Upload a new profile picture for the authenticated user
+      tags: [Profile Pictures]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                profilePicture:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Profile picture uploaded successfully
+        "401":
+          description: Unauthorized
+
+    delete:
+      summary: Delete profile picture
+      description: Remove the current profile picture
+      tags: [Profile Pictures]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Profile picture deleted successfully
+        "401":
+          description: Unauthorized
+
+  /users/{userId}/profile:
+    get:
+      summary: Get user profile (legacy)
+      description: Legacy endpoint for getting user profile
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User profile retrieved successfully
+
+  /users/profile:
+    put:
+      summary: Update user profile (legacy)
+      description: Legacy endpoint for updating user profile
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Profile updated successfully
+
+  # ===== MAP ROUTES =====
+  /maps:
+    post:
+      summary: Create new map
+      description: Create a new travel map
+      tags: [Maps]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - mapName
+              properties:
+                mapName:
+                  type: string
+                description:
+                  type: string
+                isPrivate:
+                  type: boolean
+                  default: false
+      responses:
+        "201":
+          description: Map created successfully
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+
+  /maps/search:
+    get:
+      summary: Search maps
+      description: Search for maps by name or other criteria
+      tags: [Maps]
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+          description: Search query
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Search results
+
+  /maps/popular:
+    get:
+      summary: Get popular maps
+      description: Retrieve list of popular maps
+      tags: [Maps]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Popular maps list
+
+  /maps/{id}:
+    get:
+      summary: Get map details
+      description: Retrieve detailed information about a specific map
+      tags: [Maps]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Map details retrieved successfully
+        "404":
+          description: Map not found
+
+    put:
+      summary: Update map
+      description: Update map information (requires ownership)
+      tags: [Maps]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Map updated successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Map not found
+
+    delete:
+      summary: Delete map
+      description: Delete a map (requires ownership)
+      tags: [Maps]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Map deleted successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Map not found
+
+  /maps/{id}/privacy:
+    patch:
+      summary: Toggle map privacy
+      description: Toggle between public and private map visibility
+      tags: [Maps]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Privacy toggled successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Map not found
+
+  /maps/{id}/like:
+    post:
+      summary: Toggle map like
+      description: Like or unlike a map
+      tags: [Maps]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Like toggled successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Map not found
+
+  /users/{userId}/maps:
+    get:
+      summary: Get user maps
+      description: Retrieve all maps created by a specific user
+      tags: [Maps]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: User maps retrieved successfully
+
+  # ===== POI ROUTES =====
+  /pois:
+    post:
+      summary: Create new POI
+      description: Create a new point of interest
+      tags: [POIs]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - locationName
+                - lat
+                - lng
+              properties:
+                locationName:
+                  type: string
+                description:
+                  type: string
+                lat:
+                  type: number
+                lng:
+                  type: number
+                date_visited:
+                  type: string
+                  format: date
+                isPrivate:
+                  type: boolean
+                  default: false
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "201":
+          description: POI created successfully
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+
+  /pois/user:
+    get:
+      summary: Get user POIs
+      description: Retrieve all POIs created by the authenticated user
+      tags: [POIs]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: User POIs retrieved successfully
+
+  /pois/search/location:
+    get:
+      summary: Search POIs by location
+      description: Search for POIs near a specific location
+      tags: [POIs]
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: lng
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: radius
+          in: query
+          schema:
+            type: number
+            default: 10
+          description: Search radius in kilometers
+      responses:
+        "200":
+          description: Location search results
+
+  /pois/search/name:
+    get:
+      summary: Search POIs by name
+      description: Search for POIs by location name
+      tags: [POIs]
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Name search results
+
+  /pois/search:
+    get:
+      summary: Comprehensive POI search
+      description: Search POIs with multiple criteria
+      tags: [POIs]
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+        - name: isPrivate
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Comprehensive search results
+
+  /pois/search/maps/{poiName}:
+    get:
+      summary: Search maps by POI name
+      description: Find maps that contain a specific POI
+      tags: [POIs]
+      parameters:
+        - name: poiName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Maps containing the POI
+
+  /pois/popular-locations:
+    get:
+      summary: Get popular locations
+      description: Retrieve list of popular locations
+      tags: [POIs]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Popular locations list
+
+  /pois/popular:
+    get:
+      summary: Get popular POIs
+      description: Retrieve list of popular points of interest
+      tags: [POIs]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Popular POIs list
+
+  /pois/{id}:
+    get:
+      summary: Get POI details
+      description: Retrieve detailed information about a specific POI
+      tags: [POIs]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: POI details retrieved successfully
+        "404":
+          description: POI not found
+
+    put:
+      summary: Update POI
+      description: Update POI information (requires ownership)
+      tags: [POIs]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: POI updated successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: POI not found
+
+    delete:
+      summary: Delete POI
+      description: Delete a POI (requires ownership)
+      tags: [POIs]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: POI deleted successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: POI not found
+
+  /pois/{id}/like:
+    post:
+      summary: Toggle POI like
+      description: Like or unlike a POI
+      tags: [POIs]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Like toggled successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: POI not found
+
+  /maps/{mapId}/pois:
+    get:
+      summary: Get POIs by map
+      description: Retrieve all POIs associated with a specific map
+      tags: [POIs]
+      parameters:
+        - name: mapId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Map POIs retrieved successfully
+        "404":
+          description: Map not found
+
+  /maps/{mapId}/pois/{poiId}:
+    post:
+      summary: Add POI to map
+      description: Add an existing POI to a map
+      tags: [POIs]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mapId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: poiId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: POI added to map successfully
+        "401":
+          description: Unauthorized
+        "403":
+          description: Not authorized to add POI to this map
+        "404":
+          description: Map or POI not found
+
+  # ===== TAG ROUTES =====
+  /tags:
+    get:
+      summary: Get all tags
+      description: Retrieve all available tags
+      tags: [Tags]
+      responses:
+        "200":
+          description: Tags retrieved successfully
+
+    post:
+      summary: Create new tag
+      description: Create a new tag
+      tags: [Tags]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+      responses:
+        "201":
+          description: Tag created successfully
+        "400":
+          description: Validation error
+        "401":
+          description: Unauthorized
+
+  # ===== SOCIAL ROUTES =====
+  /users/{userId}/follow:
+    post:
+      summary: Follow user
+      description: Follow another user
+      tags: [Social]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User followed successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+
+    delete:
+      summary: Unfollow user
+      description: Unfollow a user
+      tags: [Social]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User unfollowed successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: User not found
+
+  /users/{userId}/followers:
+    get:
+      summary: Get user followers
+      description: Retrieve list of users following a specific user
+      tags: [Social]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Followers list retrieved successfully
+
+  /users/{userId}/following:
+    get:
+      summary: Get user following
+      description: Retrieve list of users that a specific user is following
+      tags: [Social]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Following list retrieved successfully
+
+  /maps/{mapId}/bookmark:
+    post:
+      summary: Bookmark map
+      description: Add a map to user's bookmarks
+      tags: [Social]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mapId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Map bookmarked successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Map not found
+
+    delete:
+      summary: Remove bookmark
+      description: Remove a map from user's bookmarks
+      tags: [Social]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mapId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bookmark removed successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Map not found
+
+  /users/{userId}/bookmarks:
+    get:
+      summary: Get user bookmarks
+      description: Retrieve all bookmarked maps for a user
+      tags: [Social]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bookmarks retrieved successfully
+
+  /maps/{mapId}/comments:
+    post:
+      summary: Add comment to map
+      description: Add a comment to a map
+      tags: [Social]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: mapId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+      responses:
+        "201":
+          description: Comment added successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Map not found
+
+    get:
+      summary: Get map comments
+      description: Retrieve all comments for a map
+      tags: [Social]
+      parameters:
+        - name: mapId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Comments retrieved successfully
+
+  /comments/{commentId}:
+    delete:
+      summary: Delete comment
+      description: Delete a comment (requires ownership)
+      tags: [Social]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Comment deleted successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Comment not found
+
+  /comments/{commentId}/like:
+    post:
+      summary: Like comment
+      description: Like a comment
+      tags: [Social]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Comment liked successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Comment not found
+
+    delete:
+      summary: Unlike comment
+      description: Unlike a comment
+      tags: [Social]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Comment unliked successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Comment not found
+
+  # ===== STRIPE ROUTES =====
+  /stripe/create-checkout-session:
+    post:
+      summary: Create Stripe checkout session
+      description: Create a new Stripe checkout session for subscription
+      tags: [Stripe]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - priceId
+              properties:
+                priceId:
+                  type: string
+      responses:
+        "200":
+          description: Checkout session created successfully
+        "401":
+          description: Unauthorized
+
+  /stripe/webhook:
+    post:
+      summary: Stripe webhook handler
+      description: Handle Stripe webhook events
+      tags: [Stripe]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Webhook processed successfully
+
+  /stripe/subscription/{userId}:
+    get:
+      summary: Get subscription status
+      description: Get subscription status for a user
+      tags: [Stripe]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Subscription status retrieved successfully
+        "401":
+          description: Unauthorized
+
+  /stripe/cancel-subscription:
+    post:
+      summary: Cancel subscription
+      description: Cancel user's subscription
+      tags: [Stripe]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Subscription cancelled successfully
+        "401":
+          description: Unauthorized
+
+  # ===== PHOTO ROUTES =====
+  /pois/{poiId}/photos:
+    post:
+      summary: Upload photo to POI
+      description: Upload a photo to a specific POI
+      tags: [Photos]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: poiId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                date_visited:
+                  type: string
+                  format: date
+      responses:
+        "201":
+          description: Photo uploaded successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: POI not found
+
+    get:
+      summary: Get POI photos
+      description: Retrieve all photos for a specific POI
+      tags: [Photos]
+      parameters:
+        - name: poiId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: POI photos retrieved successfully
+        "404":
+          description: POI not found
+
+  /photos/{photoId}/primary:
+    patch:
+      summary: Set primary photo
+      description: Set a photo as the primary photo for a POI
+      tags: [Photos]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: photoId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Primary photo set successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Photo not found
+
+  /photos/{photoId}:
+    delete:
+      summary: Delete photo
+      description: Delete a photo (requires ownership)
+      tags: [Photos]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: photoId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Photo deleted successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Photo not found
+
+    put:
+      summary: Update photo
+      description: Update photo metadata (requires ownership)
+      tags: [Photos]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: photoId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Photo updated successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Photo not found
+
+  /users/{userId}/photos:
+    get:
+      summary: Get user photos
+      description: Retrieve all photos uploaded by a user
+      tags: [Photos]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: User photos retrieved successfully
+
+  # ===== FLAG ROUTES =====
+  /flags:
+    post:
+      summary: Create flag
+      description: Flag inappropriate content
+      tags: [Flags]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetType
+                - targetId
+                - reason
+              properties:
+                targetType:
+                  type: string
+                  enum: [photo, poi, map, comment]
+                targetId:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        "201":
+          description: Flag created successfully
+        "401":
+          description: Unauthorized
+
+    get:
+      summary: Get all flags (admin)
+      description: Retrieve all flags for admin review
+      tags: [Flags]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, reviewed, resolved]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Flags retrieved successfully
+        "401":
+          description: Unauthorized
+
+  /flags/{flagId}/status:
+    put:
+      summary: Update flag status
+      description: Update the status of a flag (admin only)
+      tags: [Flags]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: flagId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [pending, reviewed, resolved]
+      responses:
+        "200":
+          description: Flag status updated successfully
+        "401":
+          description: Unauthorized
+        "404":
+          description: Flag not found
+
+  /flags/user:
+    get:
+      summary: Get user flags
+      description: Retrieve flags created by the authenticated user
+      tags: [Flags]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User flags retrieved successfully
+
+  /flags/check/{photoId}:
+    get:
+      summary: Check user flag
+      description: Check if user has flagged a specific photo
+      tags: [Flags]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: photoId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Flag status checked successfully
+        "401":
+          description: Unauthorized
+
+  # ===== LEGACY ROUTES =====
+  /profile/{id}:
+    get:
+      summary: Get user profile (legacy)
+      description: Legacy endpoint for getting user profile
+      tags: [Legacy]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User profile retrieved successfully
+
+  /mapPrivacy/{id}/privacy:
+    patch:
+      summary: Toggle map privacy (legacy)
+      description: Legacy endpoint for toggling map privacy
+      tags: [Legacy]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Privacy toggled successfully
+
+  /dashboard/{id}:
+    get:
+      summary: Get user dashboard (legacy)
+      description: Legacy endpoint for getting user dashboard
+      tags: [Legacy]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Dashboard data retrieved successfully
+
+  /mymaps:
+    post:
+      summary: Create map (legacy)
+      description: Legacy endpoint for creating maps
+      tags: [Legacy]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Map created successfully
+
+  /map/{id}:
+    get:
+      summary: Get map (legacy)
+      description: Legacy endpoint for getting map details
+      tags: [Legacy]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Map details retrieved successfully
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: OAuth
+    description: OAuth authentication flows
+  - name: Users
+    description: User profile and account management
+  - name: Profile Pictures
+    description: Profile picture upload and management
+  - name: Maps
+    description: Travel map creation and management
+  - name: POIs
+    description: Points of interest management
+  - name: Tags
+    description: Tag management
+  - name: Social
+    description: Social features like following, bookmarks, and comments
+  - name: Stripe
+    description: Payment and subscription management
+  - name: Photos
+    description: Photo upload and management
+  - name: Flags
+    description: Content flagging and moderation
+  - name: Legacy
+    description: Legacy endpoints for backward compatibility

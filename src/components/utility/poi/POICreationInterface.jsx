@@ -152,12 +152,12 @@ const POICreationInterface = ({
     const files = Array.from(e.target.files);
 
     // Validate file sizes
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 15 * 1024 * 1024; // 15MB
     const invalidFiles = files.filter((file) => file.size > maxSize);
 
     if (invalidFiles.length > 0) {
       const fileNames = invalidFiles.map((file) => file.name).join(", ");
-      toast.error(`Files too large (max 10MB): ${fileNames}`);
+      toast.error(`Files too large (max 15MB): ${fileNames}`);
       e.target.value = "";
       return;
     }
@@ -394,7 +394,7 @@ const POICreationInterface = ({
       />
 
       {/* Dropdown Container */}
-      <div className="bg-base-200 rounded-xl shadow-lg border border-base-300 overflow-hidden">
+      <div className="bg-base-200 md:rounded-xl md:shadow-lg border border-base-300 overflow-hidden">
         {/* Trigger Button */}
         <div className="p-6">
           <button
@@ -443,7 +443,10 @@ const POICreationInterface = ({
                 <div className="flex flex-col xl:flex-row gap-8">
                   {/* Left Column: Map */}
                   <div className="xl:flex-[2] bg-base-100 p-6 rounded-xl shadow-lg border border-base-300">
-                    <div className="flex items-center justify-between mb-6">
+                    <div
+                      className="flex items-center justify-between mb-6"
+                      id="manual-location"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-info/10 rounded-lg">
                           <MapPin size={20} className="text-info" />
@@ -586,12 +589,17 @@ const POICreationInterface = ({
                     <div className="text-center">
                       <button
                         onClick={() => {
-                          // This will be handled by the parent component
-                          if (typeof onMapClick === "function") {
-                            // Trigger map click mode or show instructions
+                          // Scroll to the manual location section
+                          const manualLocationElement =
+                            document.getElementById("manual-location");
+                          if (manualLocationElement) {
+                            manualLocationElement.scrollIntoView({
+                              behavior: "smooth",
+                              block: "start",
+                            });
                           }
                         }}
-                        className="btn btn-outline btn-primary w-full"
+                        className="btn btn-soft btn-primary w-full"
                       >
                         <MapPin size={16} />
                         Add Location Manually

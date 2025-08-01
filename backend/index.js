@@ -57,8 +57,8 @@ const corsOptions = {
 app.use(require("cors")(corsOptions));
 
 // Body parsing middleware
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: false, limit: "10mb" }));
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: false, limit: "15mb" }));
 app.use(cookieParser());
 
 // Special handling for Stripe webhooks (raw body)

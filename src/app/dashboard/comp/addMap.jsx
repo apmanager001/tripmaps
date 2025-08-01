@@ -49,12 +49,12 @@ const AddMaps = () => {
     const files = Array.from(e.target.files);
 
     // Validate file sizes
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 15 * 1024 * 1024; // 15MB
     const invalidFiles = files.filter((file) => file.size > maxSize);
 
     if (invalidFiles.length > 0) {
       const fileNames = invalidFiles.map((file) => file.name).join(", ");
-      toast.error(`Files too large (max 10MB): ${fileNames}`);
+      toast.error(`Files too large (max 15MB): ${fileNames}`);
       e.target.value = "";
       return;
     }

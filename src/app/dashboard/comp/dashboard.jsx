@@ -214,7 +214,7 @@ const Dashboard = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col w-full">
         {/* Content Area */}
-        <div className="flex-1 flex justify-center md:px-6 md:py-8 p-4">
+        <div className="flex-1 flex justify-center md:px-6 md:py-8 ">
           <div className="w-full max-w-6xl">{renderContent()}</div>
         </div>
       </div>

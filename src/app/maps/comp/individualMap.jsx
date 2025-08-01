@@ -28,6 +28,8 @@ import {
   X,
   Flag,
   Plus,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { mapApi, poiApi, socialApi } from "@/lib/api";
 import { toast } from "react-hot-toast";
@@ -48,6 +50,10 @@ export default function IndividualMaps({ id }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [isBookmarked, setIsBookmarked] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // Photo gallery modal states
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
@@ -177,6 +183,9 @@ export default function IndividualMaps({ id }) {
       setLikeCount(map.likes || 0);
       setIsLiked(map.isLiked || false);
       setIsBookmarked(map.isBookmarked || false);
+
+      // Reset pagination to first page when POIs change
+      setCurrentPage(1);
 
       // Initialize POI likes state
       const poiLikesState = {};
@@ -315,6 +324,51 @@ export default function IndividualMaps({ id }) {
     // This would ideally use a timezone API, but for now we'll use a simple approach
     return `https://www.timeanddate.com/worldclock/@${lat},${lng}`;
   };
+
+  // Pagination functions
+  const totalPages = Math.ceil(pois.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPois = pois.slice(startIndex, endIndex);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    // Scroll to the top of the POI section
+    const poiSection = document.getElementById("poi-section");
+    if (poiSection) {
+      poiSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      // Scroll to the top of the POI section
+      const poiSection = document.getElementById("poi-section");
+      if (poiSection) {
+        poiSection.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      // Scroll to the top of the POI section
+      const poiSection = document.getElementById("poi-section");
+      if (poiSection) {
+        poiSection.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
+  // Scroll to POI section when page changes
+  useEffect(() => {
+    const poiSection = document.getElementById("poi-section");
+    if (poiSection) {
+      poiSection.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [currentPage]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "No date";
@@ -540,16 +594,33 @@ export default function IndividualMaps({ id }) {
           coordArray={coordArray}
         />
       </div>
-      <div className="bg-base-100 rounded-lg p-4 shadow-inner border border-base-300">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-primary">Map Locations</h2>
+      <div
+        id="poi-section"
+        className="bg-base-100 rounded-lg p-4 shadow-inner border border-base-300"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex-1">
+            <h2 className="text-xl font-bold text-primary mb-1">
+              Map Locations
+            </h2>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="px-2 py-1 bg-primary/10 text-primary rounded-full font-medium">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <span className="text-gray-500">
+                  {pois.length} locations total
+                </span>
+              </div>
+            )}
+          </div>
           {isAuthenticated &&
             currentUser &&
             mapUser &&
             currentUser._id === mapUser._id && (
               <button
                 onClick={() => setShowAddPOIModal(true)}
-                className="btn btn-sm btn-primary gap-2"
+                className="btn btn-primary gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 <Plus size={16} />
                 Add POI
@@ -561,19 +632,84 @@ export default function IndividualMaps({ id }) {
             <p>No locations added to this map yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {pois.map((poi) => (
-              <POICard
-                key={poi._id}
-                poi={poi}
-                showActions={false}
-                showLikeButton={true}
-                showFlagButton={true}
-                compact={true}
-                onViewPhotos={handleOpenPhotoGallery}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {currentPois.map((poi) => (
+                <POICard
+                  key={poi._id}
+                  poi={poi}
+                  showActions={true}
+                  showLikeButton={true}
+                  showFlagButton={true}
+                  compact={true}
+                  onViewPhotos={handleOpenPhotoGallery}
+                />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-8">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <button
+                    onClick={() => {
+                      if (currentPage > 1) {
+                        setCurrentPage(currentPage - 1);
+                      }
+                    }}
+                    disabled={currentPage === 1}
+                    className="btn btn-outline btn-sm gap-2 hover:btn-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft size={16} />
+                    Previous
+                  </button>
+
+                  <div className="flex items-center gap-1 bg-base-200 rounded-lg p-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                      (page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`btn btn-sm min-w-[40px] h-8 ${
+                            currentPage === page
+                              ? "btn-primary shadow-md"
+                              : "btn-ghost hover:bg-base-300"
+                          } transition-all duration-200`}
+                        >
+                          {page}
+                        </button>
+                      )
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (currentPage < totalPages) {
+                        setCurrentPage(currentPage + 1);
+                      }
+                    }}
+                    disabled={currentPage === totalPages}
+                    className="btn btn-outline btn-sm gap-2 hover:btn-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+
+                {/* Page Info */}
+                <div className="text-center">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-base-200 rounded-full text-sm text-gray-600">
+                    <span className="font-medium">
+                      Showing {startIndex + 1}-{Math.min(endIndex, pois.length)}
+                    </span>
+                    <span className="text-gray-400">of</span>
+                    <span className="font-medium">{pois.length}</span>
+                    <span className="text-gray-400">locations</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
