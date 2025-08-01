@@ -6,7 +6,6 @@ import {
   Camera,
   MapPin,
   Smartphone,
-  Monitor,
   AlertTriangle,
   CheckCircle,
   CircleX,
@@ -136,7 +135,7 @@ const PhotoUploadPage = () => {
                     <li>1. Open Settings → Privacy & Security</li>
                     <li>2. Tap Location Services</li>
                     <li>3. Enable Location Services</li>
-                    <li>4. Find Camera app and set to "While Using"</li>
+                    <li>4. Find Camera app and set to &quot;While Using&quot;</li>
                   </ol>
                 </div>
                 <div>
@@ -144,7 +143,7 @@ const PhotoUploadPage = () => {
                   <ol className="text-sm space-y-1">
                     <li>1. Open Camera app</li>
                     <li>2. Tap Settings (gear icon)</li>
-                    <li>3. Enable "Save location" or "GPS"</li>
+                    <li>3. Enable &quot;Save location&quot; or &quot;GPS&quot;</li>
                     <li>4. Grant location permission if prompted</li>
                   </ol>
                 </div>
@@ -168,14 +167,14 @@ const PhotoUploadPage = () => {
                       size={16}
                       className="text-success mt-1 flex-shrink-0"
                     />
-                    <span>Check your camera's menu for GPS settings</span>
+                    <span>Check your camera&apos;s menu for GPS settings</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle
                       size={16}
                       className="text-success mt-1 flex-shrink-0"
                     />
-                    <span>Enable "GPS" or "Location" in camera settings</span>
+                    <span>Enable &quot;GPS&quot; or &quot;Location&quot; in camera settings</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle
@@ -227,11 +226,11 @@ const PhotoUploadPage = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-success" />
-                    <span>Look for the "Drag and drop images here" area</span>
+                    <span>Look for the &quot;Drag and drop images here&quot; area</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-success" />
-                    <span>You can drag & drop or click to browse files</span>
+                    <span>You can drag &amp; drop or click to browse files</span>
                   </li>
                 </ul>
               </div>
@@ -328,10 +327,10 @@ const PhotoUploadPage = () => {
             <div className="space-y-4">
               <div>
                 <h4 className="font-semibold text-error mb-2">
-                  "No GPS data found" Error
+                  &quot;No GPS data found&quot; Error
                 </h4>
                 <p className="text-sm text-neutral-600 mb-2">
-                  This means your photo doesn't contain GPS coordinates.
+                  This means your photo doesn&apos;t contain GPS coordinates.
                 </p>
                 <ul className="text-sm space-y-1 ml-4">
                   <li>• Check if GPS was enabled when taking the photo</li>
@@ -339,14 +338,14 @@ const PhotoUploadPage = () => {
                     • Verify the photo was taken outdoors with good GPS signal
                   </li>
                   <li>
-                    • Ensure you're using the original photo file (not a copy)
+                    • Ensure you&apos;re using the original photo file (not a copy)
                   </li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold text-error mb-2">Upload Fails</h4>
                 <p className="text-sm text-neutral-600 mb-2">
-                  If photos won't upload, check these common issues:
+                  If photos won&apos;t upload, check these common issues:
                 </p>
                 <ul className="text-sm space-y-1 ml-4">
                   <li>• File size must be under 15MB</li>

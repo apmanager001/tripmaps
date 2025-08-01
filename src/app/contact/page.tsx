@@ -35,10 +35,11 @@ const ContactPage = () => {
     try {
       await contactApi.submitContact(formData);
       setIsSubmitted(true);
-      toast.success("Message sent successfully! We'll get back to you soon.");
-    } catch (error: any) {
+      toast.success("Message sent successfully! We&apos;ll get back to you soon.");
+    } catch (error: unknown) {
       console.error("Contact submission error:", error);
-      toast.error(error.message || "Failed to send message. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to send message. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -91,7 +92,7 @@ const ContactPage = () => {
                 Message Sent Successfully!
               </h2>
               <p className="text-base-content/80 leading-relaxed mb-6">
-                Thank you for reaching out to us. We've received your message
+                Thank you for reaching out to us. We&apos;ve received your message
                 and will get back to you as soon as possible.
               </p>
               <div className="bg-base-200 rounded-lg p-4 mb-6">
@@ -156,8 +157,8 @@ const ContactPage = () => {
               Send us a Message
             </h2>
             <p className="text-base-content/80 leading-relaxed">
-              Have a question, suggestion, or need help? We'd love to hear from
-              you. Fill out the form below and we'll get back to you as soon as
+              Have a question, suggestion, or need help? We&apos;d love to hear from
+              you. Fill out the form below and we&apos;ll get back to you as soon as
               possible.
             </p>
           </div>

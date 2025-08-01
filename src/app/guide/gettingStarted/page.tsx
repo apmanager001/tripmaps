@@ -32,7 +32,7 @@ const GettingStartedPage = () => {
             </div>
           </div>
           <p className="text-lg opacity-90">
-            Welcome to TripMaps! Let's get you set up to create your first
+            Welcome to TripMaps! Let&apos;s get you set up to create your first
             travel map.
           </p>
         </div>
@@ -99,7 +99,7 @@ const GettingStartedPage = () => {
               </div>
               <div className="ml-11">
                 <p className="text-base-content/80 mb-4">
-                  Start by creating your TripMaps account. You'll need:
+                  Start by creating your TripMaps account. You&apos;ll need:
                 </p>
                 <ul className="space-y-2 mb-4">
                   <li className="flex items-center gap-2">
@@ -213,7 +213,7 @@ const GettingStartedPage = () => {
               <ul className="space-y-2 text-sm">
                 <li>• Enable GPS on your camera/phone when taking photos</li>
                 <li>• Use high-quality images for better results</li>
-                <li>• Keep original photo files (don't compress them)</li>
+                                  <li>• Keep original photo files (don&apos;t compress them)</li>
                 <li>
                   • Use desktop/laptop for photo upload (mobile has limitations)
                 </li>
@@ -235,10 +235,10 @@ const GettingStartedPage = () => {
 
         {/* Next Steps */}
         <section className="mb-12">
-          <h2 className="text-2xl font-bold text-primary mb-6">What's Next?</h2>
+                      <h2 className="text-2xl font-bold text-primary mb-6">What&apos;s Next?</h2>
           <div className="bg-base-200 rounded-lg p-6">
             <p className="text-base-content/80 mb-6">
-              Now that you're set up, explore these guides to master TripMaps:
+                              Now that you&apos;re set up, explore these guides to master TripMaps:
             </p>
             <div className="grid md:grid-cols-2 gap-4">
               <Link

@@ -49,7 +49,7 @@ const TermsOfService = () => {
               Introduction
             </h2>
             <p className="text-base-content/80 leading-relaxed">
-              Welcome to TripMaps. These Terms of Service ("Terms") govern your
+              Welcome to TripMaps. These Terms of Service (&quot;Terms&quot;) govern your
               use of our trip mapping and location sharing service. By accessing
               or using TripMaps, you agree to be bound by these Terms. If you
               disagree with any part of these terms, you may not access our
@@ -121,7 +121,7 @@ const TermsOfService = () => {
               <li>Notify us immediately of any unauthorized use</li>
               <li>Keep your login credentials secure</li>
               <li>Not share your account with others</li>
-              <li>Not use another user's account</li>
+                              <li>Not use another user&apos;s account</li>
             </ul>
           </section>
 
@@ -167,7 +167,7 @@ const TermsOfService = () => {
               </li>
               <li>You are responsible for the content you upload</li>
               <li>
-                You must not upload content that infringes on others' rights
+                You must not upload content that infringes on others&apos; rights
               </li>
             </ul>
           </section>
@@ -339,7 +339,7 @@ const TermsOfService = () => {
 
             <h3 className="text-xl font-semibold mb-3">Our Liability</h3>
             <ul className="list-disc pl-6 mb-6 space-y-2">
-              <li>We provide the service "as is" without warranties</li>
+              <li>We provide the service &quot;as is&quot; without warranties</li>
               <li>We are not responsible for user-generated content</li>
               <li>We do not guarantee the accuracy of location data</li>
               <li>We are not liable for third-party actions or content</li>
@@ -398,7 +398,7 @@ const TermsOfService = () => {
             <p className="text-base-content/80 leading-relaxed mb-4">
               We reserve the right to modify these Terms at any time. We will
               notify users of significant changes by posting the updated Terms
-              on this page and updating the "Last updated" date. Your continued
+              on this page and updating the &quot;Last updated&quot; date. Your continued
               use of the service after such changes constitutes acceptance of
               the updated Terms.
             </p>

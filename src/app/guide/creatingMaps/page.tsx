@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Map,
-  Plus,
   Settings,
   Users,
   Eye,
@@ -54,7 +53,7 @@ const CreatingMapsPage = () => {
             <p className="text-base-content/80 mb-6">
               TripMaps are collections of locations (Points of Interest) that
               you organize together. Think of them as digital scrapbooks for
-              your travels, where each location represents a place you've
+              your travels, where each location represents a place you&apos;ve
               visited or want to visit.
             </p>
             <div className="grid md:grid-cols-3 gap-6">
@@ -114,11 +113,11 @@ const CreatingMapsPage = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-success" />
-                    <span>Click on "Dashboard" in the navigation</span>
+                    <span>Click on &quot;Dashboard&quot; in the navigation</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-success" />
-                    <span>Look for the "My Maps" section</span>
+                    <span>Look for the &quot;My Maps&quot; section</span>
                   </li>
                 </ul>
               </div>
@@ -134,7 +133,7 @@ const CreatingMapsPage = () => {
               </div>
               <div className="ml-11">
                 <p className="text-base-content/80 mb-4">
-                  Click the "Create New Map" button and fill in the details:
+                  Click the &quot;Create New Map&quot; button and fill in the details:
                 </p>
                 <div className="grid md:grid-cols-2 gap-4 mb-4">
                   <div className="bg-success/10 border border-success/20 rounded-lg p-4">
@@ -143,7 +142,7 @@ const CreatingMapsPage = () => {
                       Required Fields
                     </h4>
                     <ul className="text-sm space-y-1">
-                      <li>• Map Name (e.g., "Paris 2024")</li>
+                      <li>• Map Name (e.g., &quot;Paris 2024&quot;)</li>
                       <li>• Description (optional)</li>
                       <li>• Privacy Setting</li>
                     </ul>
@@ -227,10 +226,10 @@ const CreatingMapsPage = () => {
                 Organize maps by specific trips or time periods:
               </p>
               <ul className="space-y-2 text-sm">
-                <li>• "Europe Summer 2024"</li>
-                <li>• "Japan Spring 2023"</li>
-                <li>• "Weekend in NYC"</li>
-                <li>• "Honeymoon 2024"</li>
+                <li>• &quot;Europe Summer 2024&quot;</li>
+                <li>• &quot;Japan Spring 2023&quot;</li>
+                <li>• &quot;Weekend in NYC&quot;</li>
+                <li>• &quot;Honeymoon 2024&quot;</li>
               </ul>
             </div>
             <div className="bg-base-200 rounded-lg p-6">
@@ -242,10 +241,10 @@ const CreatingMapsPage = () => {
                 Group locations by type or interest:
               </p>
               <ul className="space-y-2 text-sm">
-                <li>• "Best Coffee Shops"</li>
-                <li>• "Historical Sites"</li>
-                <li>• "Photography Spots"</li>
-                <li>• "Restaurants to Try"</li>
+                <li>• &quot;Best Coffee Shops&quot;</li>
+                <li>• &quot;Historical Sites&quot;</li>
+                <li>• &quot;Photography Spots&quot;</li>
+                <li>• &quot;Restaurants to Try&quot;</li>
               </ul>
             </div>
             <div className="bg-base-200 rounded-lg p-6">
@@ -257,10 +256,10 @@ const CreatingMapsPage = () => {
                 Create maps for specific cities or regions:
               </p>
               <ul className="space-y-2 text-sm">
-                <li>• "Paris, France"</li>
-                <li>• "Tokyo, Japan"</li>
-                <li>• "New York City"</li>
-                <li>• "California Coast"</li>
+                <li>• &quot;Paris, France&quot;</li>
+                <li>• &quot;Tokyo, Japan&quot;</li>
+                <li>• &quot;New York City&quot;</li>
+                <li>• &quot;California Coast&quot;</li>
               </ul>
             </div>
             <div className="bg-base-200 rounded-lg p-6">
@@ -272,10 +271,10 @@ const CreatingMapsPage = () => {
                 Organize by travel purpose or audience:
               </p>
               <ul className="space-y-2 text-sm">
-                <li>• "Family Vacation Spots"</li>
-                <li>• "Business Travel"</li>
-                <li>• "Adventure Destinations"</li>
-                <li>• "Relaxation Retreats"</li>
+                <li>• &quot;Family Vacation Spots&quot;</li>
+                <li>• &quot;Business Travel&quot;</li>
+                <li>• &quot;Adventure Destinations&quot;</li>
+                <li>• &quot;Relaxation Retreats&quot;</li>
               </ul>
             </div>
           </div>

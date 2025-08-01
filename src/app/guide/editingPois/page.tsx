@@ -11,7 +11,6 @@ import {
   Save,
   X,
   CheckCircle,
-  AlertTriangle,
   Info,
   Smartphone,
   Monitor,
@@ -147,7 +146,7 @@ const EditingPoisPage = () => {
                 <ul className="space-y-2 mb-4">
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-success" />
-                    <span>Click the "Edit" button on the POI card</span>
+                    <span>Click the &quot;Edit&quot; button on the POI card</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-success" />
@@ -184,7 +183,7 @@ const EditingPoisPage = () => {
                   <ul className="text-sm space-y-1">
                     <li>• Make it descriptive and memorable</li>
                     <li>
-                      • Include key details (e.g., "Eiffel Tower - Paris")
+                      • Include key details (e.g., &quot;Eiffel Tower - Paris&quot;)
                     </li>
                     <li>• Use consistent naming conventions</li>
                     <li>• Keep it concise but informative</li>
@@ -298,10 +297,10 @@ const EditingPoisPage = () => {
                 <div>
                   <h4 className="font-semibold mb-2">Tag Examples</h4>
                   <ul className="text-sm space-y-1">
-                    <li>• "restaurant", "coffee", "museum"</li>
-                    <li>• "historical", "scenic", "family-friendly"</li>
-                    <li>• "photography", "architecture", "nature"</li>
-                    <li>• "budget", "luxury", "local-favorite"</li>
+                    <li>• &quot;restaurant&quot;, &quot;coffee&quot;, &quot;museum&quot;</li>
+                    <li>• &quot;historical&quot;, &quot;scenic&quot;, &quot;family-friendly&quot;</li>
+                    <li>• &quot;photography&quot;, &quot;architecture&quot;, &quot;nature&quot;</li>
+                    <li>• &quot;budget&quot;, &quot;luxury&quot;, &quot;local-favorite&quot;</li>
                   </ul>
                 </div>
               </div>
@@ -325,7 +324,7 @@ const EditingPoisPage = () => {
                   Save Changes
                 </h4>
                 <ul className="text-sm space-y-1">
-                  <li>• Click "Save" button</li>
+                  <li>• Click &quot;Save&quot; button</li>
                   <li>• Changes are applied immediately</li>
                   <li>• POI is updated across all maps</li>
                   <li>• No confirmation dialog needed</li>
@@ -337,7 +336,7 @@ const EditingPoisPage = () => {
                   Cancel Changes
                 </h4>
                 <ul className="text-sm space-y-1">
-                  <li>• Click "Cancel" button</li>
+                  <li>• Click &quot;Cancel&quot; button</li>
                   <li>• All changes are discarded</li>
                   <li>• Returns to original state</li>
                   <li>• No changes are saved</li>

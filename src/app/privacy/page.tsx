@@ -252,8 +252,8 @@ const PrivacyPolicy = () => {
               <p className="text-base-content/80 leading-relaxed">
                 Due to the free use license granted upon upload, deleting your
                 content from our platform does not guarantee removal from other
-                users' devices or third-party platforms where it may have been
-                shared or downloaded.
+                users&apos; devices or third-party platforms where it may have
+                been shared or downloaded.
               </p>
             </div>
           </section>
@@ -261,7 +261,7 @@ const PrivacyPolicy = () => {
           {/* Children's Privacy */}
           <section className="mb-12">
             <h2 className="text-2xl font-bold text-primary mb-4">
-              Children's Privacy
+              Children&apos;s Privacy
             </h2>
             <p className="text-base-content/80 leading-relaxed mb-4">
               Our service is not intended for children under 13 years of age. We
@@ -292,9 +292,9 @@ const PrivacyPolicy = () => {
             <p className="text-base-content/80 leading-relaxed mb-4">
               We may update this Privacy Policy from time to time. We will
               notify you of any changes by posting the new Privacy Policy on
-              this page and updating the "Last updated" date. Your continued use
-              of the service after such changes constitutes acceptance of the
-              updated policy.
+              this page and updating the &quot;Last updated&quot; date. Your
+              continued use of the service after such changes constitutes
+              acceptance of the updated policy.
             </p>
           </section>
 
@@ -310,13 +310,11 @@ const PrivacyPolicy = () => {
                 <li>
                   <strong>Email:</strong> privacy@tripmaps.com
                 </li>
-                <li>
-                  <strong>Address:</strong> [Your Business Address]
-                </li>
+
                 <li>
                   <strong>Website:</strong>{" "}
                   <Link href="/" className="link link-primary">
-                    tripmaps.com
+                    mytripmaps.com
                   </Link>
                 </li>
               </ul>
@@ -335,7 +333,8 @@ const PrivacyPolicy = () => {
               <li>Other users can view, download, and use your content</li>
               <li>We may use your content for promotional purposes</li>
               <li>
-                Deleting content doesn't guarantee removal from all platforms
+                Deleting content doesn&apos;t guarantee removal from all
+                platforms
               </li>
               <li>You are responsible for the content you upload</li>
             </ul>

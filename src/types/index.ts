@@ -328,3 +328,33 @@ export interface FlagCheckResponse {
   hasFlagged: boolean;
   flag: Flag | null;
 }
+
+// Contact related types
+export interface Contact {
+  _id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  category: string;
+  status: "pending" | "in-progress" | "resolved" | "closed";
+  priority: "low" | "medium" | "high";
+  assignedTo?: string | User;
+  notes?: Array<{
+    note: string;
+    addedBy: string | User;
+    addedAt: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContactStats {
+  total: number;
+  pending: number;
+  inProgress: number;
+  resolved: number;
+  closed: number;
+  byCategory: Record<string, number>;
+  byPriority: Record<string, number>;
+}

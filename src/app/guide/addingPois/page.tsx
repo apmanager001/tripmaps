@@ -6,11 +6,9 @@ import {
   MapPin,
   Camera,
   MousePointer,
-  Upload,
   CheckCircle,
   CircleX,
   Info,
-  AlertTriangle,
   Smartphone,
   Monitor,
 } from "lucide-react";
@@ -50,7 +48,7 @@ const AddingPoisPage = () => {
           <div className="bg-base-200 rounded-lg p-6">
             <p className="text-base-content/80 mb-6">
               Points of Interest (POIs) are the individual locations on your
-              map. Each POI represents a place you've visited or want to visit,
+                              map. Each POI represents a place you&apos;ve visited or want to visit,
               and can include photos, descriptions, and other details.
             </p>
             <div className="grid md:grid-cols-3 gap-6">
@@ -300,7 +298,7 @@ const AddingPoisPage = () => {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-success" />
-                    <span>Look for the "Add Location Manually" button</span>
+                    <span>Look for the &quot;Add Location Manually&quot; button</span>
                   </li>
                 </ul>
               </div>
@@ -321,7 +319,7 @@ const AddingPoisPage = () => {
                 <ul className="space-y-2 mb-4">
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-success" />
-                    <span>Click "Add Location Manually" button</span>
+                    <span>Click &quot;Add Location Manually&quot; button</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle size={16} className="text-success" />

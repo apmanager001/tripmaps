@@ -9,7 +9,6 @@ import {
   Eye,
   EyeOff,
   Settings,
-  Copy,
   Mail,
   MessageCircle,
   Globe,
@@ -54,7 +53,7 @@ const SharingMapsPage = () => {
           <div className="bg-base-200 rounded-lg p-6">
             <p className="text-base-content/80 mb-6">
               Sharing your TripMaps allows you to connect with others through
-              your travel experiences. Whether you're planning a trip together,
+                              your travel experiences. Whether you&apos;re planning a trip together,
               sharing memories, or inspiring others to explore, map sharing
               creates meaningful connections.
             </p>
@@ -160,7 +159,7 @@ const SharingMapsPage = () => {
                   <ul className="text-sm space-y-1">
                     <li>• Choose privacy level during creation</li>
                     <li>• Can be changed later</li>
-                    <li>• Default is usually "Private"</li>
+                    <li>• Default is usually &quot;Private&quot;</li>
                     <li>• Consider your audience</li>
                   </ul>
                 </div>
@@ -168,7 +167,7 @@ const SharingMapsPage = () => {
                   <h4 className="font-semibold mb-2">Changing Privacy Later</h4>
                   <ul className="text-sm space-y-1">
                     <li>• Go to map settings</li>
-                    <li>• Click "Privacy Settings"</li>
+                    <li>• Click &quot;Privacy Settings&quot;</li>
                     <li>• Select new privacy level</li>
                     <li>• Save changes</li>
                   </ul>
@@ -200,7 +199,7 @@ const SharingMapsPage = () => {
                   </h4>
                   <ul className="text-sm space-y-1">
                     <li>• Open your map</li>
-                    <li>• Click the "Share" button</li>
+                    <li>• Click the &quot;Share&quot; button</li>
                     <li>• Copy the generated link</li>
                     <li>• Link works for Public and Shared maps</li>
                   </ul>
@@ -267,10 +266,10 @@ const SharingMapsPage = () => {
                 <div>
                   <h4 className="font-semibold mb-2">Email Templates</h4>
                   <ul className="text-sm space-y-1">
-                    <li>• "Check out my trip to [destination]"</li>
-                    <li>• "Here are my recommendations for [city]"</li>
-                    <li>• "Planning our next adventure together"</li>
-                    <li>• "Sharing my travel memories with you"</li>
+                    <li>• &quot;Check out my trip to [destination]&quot;</li>
+                    <li>• &quot;Here are my recommendations for [city]&quot;</li>
+                    <li>• &quot;Planning our next adventure together&quot;</li>
+                    <li>• &quot;Sharing my travel memories with you&quot;</li>
                   </ul>
                 </div>
               </div>
@@ -295,7 +294,7 @@ const SharingMapsPage = () => {
               <ul className="text-sm space-y-1">
                 <li>• Map name and description</li>
                 <li>• All POI locations and names</li>
-                <li>• Photos you've uploaded</li>
+                <li>• Photos you&apos;ve uploaded</li>
                 <li>• Tags and categories</li>
                 <li>• Your username (if public)</li>
                 <li>• Map creation date</li>
@@ -312,7 +311,7 @@ const SharingMapsPage = () => {
               <ul className="text-sm space-y-1">
                 <li>• Map name and description</li>
                 <li>• All POI locations and names</li>
-                <li>• Photos you've uploaded</li>
+                <li>• Photos you&apos;ve uploaded</li>
                 <li>• Tags and categories</li>
                 <li>• Cannot see your profile</li>
                 <li>• Cannot share the link further</li>
@@ -363,7 +362,7 @@ const SharingMapsPage = () => {
               </h3>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="bg-success/10 border border-success/20 rounded-lg p-4">
-                  <h4 className="font-semibold text-success mb-2">Do's</h4>
+                  <h4 className="font-semibold text-success mb-2">Do&apos;s</h4>
                   <ul className="text-sm space-y-1">
                     <li>• Use descriptive map names</li>
                     <li>• Add helpful descriptions</li>
@@ -374,14 +373,14 @@ const SharingMapsPage = () => {
                   </ul>
                 </div>
                 <div className="bg-error/10 border border-error/20 rounded-lg p-4">
-                  <h4 className="font-semibold text-error mb-2">Don'ts</h4>
+                  <h4 className="font-semibold text-error mb-2">Don&apos;ts</h4>
                   <ul className="text-sm space-y-1">
-                    <li>• Don't share private home locations</li>
-                    <li>• Don't include personal contact info</li>
-                    <li>• Don't share inappropriate content</li>
-                    <li>• Don't forget to review before sharing</li>
-                    <li>• Don't share without permission</li>
-                    <li>• Don't ignore privacy settings</li>
+                    <li>• Don&apos;t share private home locations</li>
+                    <li>• Don&apos;t include personal contact info</li>
+                    <li>• Don&apos;t share inappropriate content</li>
+                    <li>• Don&apos;t forget to review before sharing</li>
+                    <li>• Don&apos;t share without permission</li>
+                    <li>• Don&apos;t ignore privacy settings</li>
                   </ul>
                 </div>
               </div>
@@ -469,7 +468,7 @@ const SharingMapsPage = () => {
                   <ul className="text-sm space-y-1">
                     <li>• Check if map is still public/shared</li>
                     <li>• Verify the link is copied correctly</li>
-                    <li>• Ensure map hasn't been deleted</li>
+                    <li>• Ensure map hasn&apos;t been deleted</li>
                     <li>• Try generating a new link</li>
                   </ul>
                 </div>

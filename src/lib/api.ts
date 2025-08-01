@@ -18,6 +18,8 @@ import {
   Flag,
   FlagResponse,
   FlagCheckResponse,
+  Contact,
+  ContactStats,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
@@ -790,7 +792,7 @@ export const contactApi = {
     search?: string;
     sortBy?: string;
     sortOrder?: string;
-  }): Promise<ApiResponse<any>> => {
+  }): Promise<ApiResponse<Contact[]>> => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.append("page", params.page.toString());
     if (params?.limit) searchParams.append("limit", params.limit.toString());
@@ -801,20 +803,20 @@ export const contactApi = {
     if (params?.sortBy) searchParams.append("sortBy", params.sortBy);
     if (params?.sortOrder) searchParams.append("sortOrder", params.sortOrder);
 
-    return apiRequest<ApiResponse<any>>(
+    return apiRequest<ApiResponse<Contact[]>>(
       `/admin/contacts?${searchParams.toString()}`
     );
   },
 
-  getContactById: async (id: string): Promise<ApiResponse<any>> => {
-    return apiRequest<ApiResponse<any>>(`/admin/contacts/${id}`);
+  getContactById: async (id: string): Promise<ApiResponse<Contact>> => {
+    return apiRequest<ApiResponse<Contact>>(`/admin/contacts/${id}`);
   },
 
   updateContactStatus: async (
     id: string,
     data: { status?: string; assignedTo?: string }
-  ): Promise<ApiResponse<any>> => {
-    return apiRequest<ApiResponse<any>>(`/admin/contacts/${id}/status`, {
+  ): Promise<ApiResponse<Contact>> => {
+    return apiRequest<ApiResponse<Contact>>(`/admin/contacts/${id}/status`, {
       method: "PUT",
       body: JSON.stringify(data),
     });
@@ -823,8 +825,8 @@ export const contactApi = {
   addContactNote: async (
     id: string,
     data: { note: string }
-  ): Promise<ApiResponse<any>> => {
-    return apiRequest<ApiResponse<any>>(`/admin/contacts/${id}/notes`, {
+  ): Promise<ApiResponse<Contact>> => {
+    return apiRequest<ApiResponse<Contact>>(`/admin/contacts/${id}/notes`, {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -836,8 +838,8 @@ export const contactApi = {
     });
   },
 
-  getContactStats: async (): Promise<ApiResponse<any>> => {
-    return apiRequest<ApiResponse<any>>("/admin/contacts/stats");
+  getContactStats: async (): Promise<ApiResponse<ContactStats>> => {
+    return apiRequest<ApiResponse<ContactStats>>("/admin/contacts/stats");
   },
 };
 

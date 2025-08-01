@@ -33,7 +33,7 @@ const MobileLimitationsPage = () => {
             </div>
           </div>
           <p className="text-lg opacity-90">
-            Understanding why GPS photo extraction doesn't work on mobile
+            Understanding why GPS photo extraction doesn&apos;t work on mobile
             devices.
           </p>
         </div>
@@ -66,7 +66,7 @@ const MobileLimitationsPage = () => {
         {/* What Works vs What Doesn't */}
         <section className="mb-12">
           <h2 className="text-2xl font-bold text-primary mb-6">
-            What Works vs What Doesn't
+            What Works vs What Doesn&apos;t
           </h2>
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-success/10 border border-success/20 rounded-lg p-6">
@@ -101,7 +101,7 @@ const MobileLimitationsPage = () => {
         {/* Why This Happens */}
         <section className="mb-12">
           <h2 className="text-2xl font-bold text-primary mb-6">
-            Why Mobile Browsers Can't Extract GPS Data
+            Why Mobile Browsers Can&apos;t Extract GPS Data
           </h2>
           <div className="bg-base-200 rounded-lg p-6">
             <p className="text-base-content/80 mb-6">
@@ -172,8 +172,8 @@ const MobileLimitationsPage = () => {
                 manually:
               </p>
               <ol className="space-y-2 text-sm ml-4">
-                <li>1. Upload your photos (they'll appear without GPS data)</li>
-                <li>2. Click "Add Location Manually" button</li>
+                                  <li>1. Upload your photos (they&apos;ll appear without GPS data)</li>
+                <li>2. Click &quot;Add Location Manually&quot; button</li>
                 <li>3. Click on the map where you took the photo</li>
                 <li>4. Add the photo and details to that location</li>
               </ol>

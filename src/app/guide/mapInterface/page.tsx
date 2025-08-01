@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   Map,
   ZoomIn,
-  ZoomOut,
   Navigation,
   MousePointer,
   Smartphone,
@@ -194,7 +193,7 @@ const MapInterfacePage = () => {
                 Clicking on POI Markers
               </h3>
               <p className="text-base-content/80 mb-4">
-                POI markers represent your locations on the map. Here's how to
+                POI markers represent your locations on the map. Here&apos;s how to
                 interact with them:
               </p>
               <div className="grid md:grid-cols-2 gap-6">
