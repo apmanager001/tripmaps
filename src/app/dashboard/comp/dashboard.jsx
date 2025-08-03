@@ -152,70 +152,117 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex w-full min-h-screen">
-      {/* Desktop Sidebar */}
+    <div className="flex w-full min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200">
+      {/* Enhanced Desktop Sidebar */}
       <div
-        className={`bg-base-200 md:transition-all duration-300 ease-in-out md:overflow-hidden 
-        ${collapsed ? "w-16" : "md:w-40"} 
-        hidden md:flex md:flex-col md:items-center md:py-4 md:gap-2 md:shadow-md`}
+        className={`bg-base-100/80 backdrop-blur-sm border-r border-base-300 md:transition-all duration-300 ease-in-out md:overflow-hidden 
+        ${collapsed ? "w-20" : "md:w-48"} 
+        hidden md:flex md:flex-col md:items-center md:py-6 md:gap-3 md:shadow-xl`}
       >
-        {/* Collapse Toggle — only visible from md and up */}
+        {/* Enhanced Collapse Toggle */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="mb-6 hover:bg-base-300 rounded p-2 transition cursor-pointer"
+          className="mb-8 hover:bg-primary/10 hover:text-primary rounded-xl p-3 transition-all duration-200 cursor-pointer group"
           title="Toggle Sidebar"
         >
-          {collapsed ? <ArrowRightToLine /> : <ArrowLeftToLine />}
+          <div className="group-hover:scale-110 transition-transform duration-200">
+            {collapsed ? (
+              <ArrowRightToLine size={20} />
+            ) : (
+              <ArrowLeftToLine size={20} />
+            )}
+          </div>
         </button>
 
-        {tabs.map((tab) => (
+        {/* Navigation Tabs */}
+        <div className="flex flex-col gap-2 w-full px-3">
+          {tabs.map((tab) => (
+            <button
+              key={tab.name}
+              onClick={() => handleTabClick(tab.name)}
+              className={`flex items-center w-full px-4 py-3 text-left rounded-xl transition-all duration-200 cursor-pointer group ${
+                activeTab === tab.name
+                  ? "bg-primary text-primary-content shadow-lg shadow-primary/25 font-semibold"
+                  : "hover:bg-base-200 hover:text-primary hover:shadow-md"
+              }`}
+            >
+              {/* Icon with enhanced styling */}
+              <span
+                className={`mr-3 transition-all duration-200 ${
+                  activeTab === tab.name
+                    ? "text-primary-content"
+                    : "text-base-content group-hover:text-primary"
+                }`}
+              >
+                {tab.icon}
+              </span>
+              {/* Labels with smooth fade */}
+              {!collapsed && showLabels && (
+                <span
+                  className={`inline font-medium transition-all duration-200 ${
+                    activeTab === tab.name
+                      ? "text-primary-content"
+                      : "text-base-content"
+                  }`}
+                >
+                  {tab.name}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Enhanced Divider */}
+        <div className="w-full h-px bg-gradient-to-r from-transparent via-base-300 to-transparent my-4"></div>
+
+        {/* Enhanced Logout Button */}
+        <div className="w-full px-3">
           <button
-            key={tab.name}
-            onClick={() => handleTabClick(tab.name)}
-            className={`flex items-center w-full px-4 py-2 text-left hover:bg-base-300 transition cursor-pointer ${
-              activeTab === tab.name ? "bg-base-300 font-bold" : ""
+            onClick={handleLogout}
+            disabled={logoutMutation.isPending}
+            className={`flex items-center w-full px-4 py-3 text-left rounded-xl transition-all duration-200 cursor-pointer group ${
+              logoutMutation.isPending
+                ? "opacity-50 cursor-not-allowed bg-base-200"
+                : "hover:bg-error/10 hover:text-error hover:shadow-md"
             }`}
+            title="Logout"
           >
-            {/* Always show icons */}
-            <span className="mr-2">{tab.icon}</span>
+            <span className="mr-3">
+              {logoutMutation.isPending ? (
+                <div className="loading loading-spinner loading-xs"></div>
+              ) : (
+                <LogOut
+                  size={20}
+                  className="group-hover:scale-110 transition-transform duration-200"
+                />
+              )}
+            </span>
             {/* Only show labels when not collapsed */}
             {!collapsed && showLabels && (
-              <span className="inline">{tab.name}</span>
+              <span className="inline font-medium text-error">Logout</span>
             )}
           </button>
-        ))}
-
-        {/* Divider */}
-        <div className="w-full h-px bg-base-300 my-2"></div>
-
-        {/* Logout Button */}
-        <button
-          onClick={handleLogout}
-          disabled={logoutMutation.isPending}
-          className={`flex items-center w-full px-4 py-2 text-left hover:bg-error/10 hover:text-error transition cursor-pointer ${
-            logoutMutation.isPending ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-          title="Logout"
-        >
-          <span className="mr-2">
-            {logoutMutation.isPending ? (
-              <div className="loading loading-spinner loading-xs"></div>
-            ) : (
-              <LogOut size={20} />
-            )}
-          </span>
-          {/* Only show labels when not collapsed */}
-          {!collapsed && showLabels && (
-            <span className="inline text-error">Logout</span>
-          )}
-        </button>
+        </div>
       </div>
 
-      {/* Main Content */}
+      {/* Enhanced Main Content */}
       <div className="flex-1 flex flex-col w-full">
-        {/* Content Area */}
-        <div className="flex-1 flex justify-center md:px-6 md:py-8 ">
-          <div className="w-full max-w-6xl">{renderContent()}</div>
+        {/* Content Area with improved styling */}
+        <div className="flex-1 flex justify-center md:px-8 md:py-10">
+          <div className="w-full max-w-7xl">
+            {/* Content Header */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-primary mb-2">
+                {activeTab}
+              </h1>
+              <div className="w-20 h-1 bg-gradient-to-r from-primary to-accent rounded-full"></div>
+            </div>
+
+            {/* Content Container */}
+            <div className="bg-base-100/50 backdrop-blur-sm rounded-2xl shadow-xl border border-base-300 p-6">
+              {renderContent()}
+            </div>
+          </div>
         </div>
       </div>
     </div>

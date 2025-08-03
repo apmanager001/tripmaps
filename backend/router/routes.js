@@ -110,12 +110,13 @@ const {
   getContactStats,
 } = require("../controllers/contactController");
 
-const { jwtAuth } = require("../helpers/jwtAuth");
+const { jwtAuth, optionalJwtAuth } = require("../helpers/jwtAuth");
 const {
   validateRegistration,
   validateLogin,
   validateMapData,
 } = require("../middleware/validation");
+const { checkPOILimit, checkMapLimit } = require("../middleware/limits");
 const { upload } = require("../services/s3Service");
 const { upload: profileUpload } = require("../services/profilePictureService");
 
@@ -132,7 +133,7 @@ router.get("/auth/facebook", facebookAuth);
 router.get("/auth/facebook/callback", facebookCallback);
 
 // ===== USER ROUTES =====
-router.get("/users/profile/:id", getUserProfile);
+router.get("/users/profile/:id", optionalJwtAuth, getUserProfile);
 router.put("/users/profile/:id", jwtAuth, updateUserProfile);
 router.get("/users/dashboard/:id", jwtAuth, getUserDashboard);
 router.get("/users/search", searchUsers);
@@ -151,18 +152,18 @@ router.get("/users/:userId/profile", getProfile);
 router.put("/users/profile", jwtAuth, updateProfile);
 
 // ===== MAP ROUTES =====
-router.post("/maps", jwtAuth, validateMapData, createMap);
-router.get("/maps/search", searchMaps);
-router.get("/maps/popular", getPopularMaps);
-router.get("/maps/:id", getMap);
-router.get("/users/:userId/maps", getUserMaps);
+router.post("/maps", jwtAuth, checkMapLimit, validateMapData, createMap);
+router.get("/maps/search", optionalJwtAuth, searchMaps);
+router.get("/maps/popular", optionalJwtAuth, getPopularMaps);
+router.get("/maps/:id", optionalJwtAuth, getMap);
+router.get("/users/:userId/maps", optionalJwtAuth, getUserMaps);
 router.put("/maps/:id", jwtAuth, updateMap);
 router.delete("/maps/:id", jwtAuth, deleteMap);
 router.patch("/maps/:id/privacy", jwtAuth, toggleMapPrivacy);
 router.post("/maps/:id/like", jwtAuth, toggleMapLike);
 
 // ===== POI ROUTES =====
-router.post("/pois", jwtAuth, createPOI);
+router.post("/pois", jwtAuth, checkPOILimit, createPOI);
 router.get("/pois/user", jwtAuth, getUserPOIs);
 router.get("/pois/user/search", jwtAuth, searchUserPOIs);
 router.get("/pois/search/location", searchPOIsByLocation);

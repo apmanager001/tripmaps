@@ -1,5 +1,5 @@
 "use client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   MapPin,
@@ -12,10 +12,14 @@ import {
   User,
   Globe,
   Clock,
+  UserPlus,
+  UserMinus,
 } from "lucide-react";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import MapCard from "@/components/MapCard";
-import { userApi, mapApi } from "@/lib/api";
+import { userApi, mapApi, socialApi } from "@/lib/api";
+import { useAuthStore } from "@/store/useAuthStore";
+import { toast } from "react-hot-toast";
 
 async function fetchProfileData(id) {
   try {
@@ -39,12 +43,73 @@ async function fetchProfileData(id) {
 
 export default function Profile({ id }) {
   const queryClient = useQueryClient();
+  const currentUser = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["profileData", id],
     queryFn: () => fetchProfileData(id),
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
+  });
+
+  // Check if current user is following the profile user
+  const { data: followingData } = useQuery({
+    queryKey: ["followingStatus", currentUser?._id, data?.data?.user?._id],
+    queryFn: async () => {
+      if (
+        !currentUser?._id ||
+        !data?.data?.user?._id ||
+        currentUser._id === data.data.user._id
+      )
+        return { isFollowing: false };
+
+      try {
+        // Get the current user's following list and check if profile user is in it
+        const response = await socialApi.getFollowing(currentUser._id, 1, 100);
+        const isFollowing = response.data.following.some(
+          (follow) => follow.followed_user_id._id === data.data.user._id
+        );
+        return { isFollowing };
+      } catch (error) {
+        console.error("Error checking following status:", error);
+        return { isFollowing: false };
+      }
+    },
+    enabled:
+      !!currentUser?._id &&
+      !!data?.data?.user?._id &&
+      currentUser._id !== data.data.user._id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  // Follow/Unfollow mutation
+  const followMutation = useMutation({
+    mutationFn: async () => {
+      if (followingData?.isFollowing) {
+        return await socialApi.unfollowUser(data.data.user._id);
+      } else {
+        return await socialApi.followUser(data.data.user._id);
+      }
+    },
+    onSuccess: () => {
+      // Invalidate and refetch following status
+      queryClient.invalidateQueries([
+        "followingStatus",
+        currentUser?._id,
+        data?.data?.user?._id,
+      ]);
+      queryClient.invalidateQueries(["profileData", id]);
+
+      const action = followingData?.isFollowing ? "unfollowed" : "followed";
+      toast.success(
+        `Successfully ${action} ${data?.data?.user?.username || "user"}`
+      );
+    },
+    onError: (error) => {
+      const action = followingData?.isFollowing ? "unfollow" : "follow";
+      toast.error(`Failed to ${action} user: ${error.message}`);
+    },
   });
 
   if (isLoading)
@@ -122,6 +187,34 @@ export default function Profile({ id }) {
                   <Award size={16} className="mr-1" />
                   {getBadge(mapCount)}
                 </div>
+
+                {/* Follow Button - Only show if user is logged in and not viewing their own profile */}
+                {isAuthenticated &&
+                  currentUser?._id !== data?.data?.user?._id && (
+                    <button
+                      onClick={() => followMutation.mutate()}
+                      disabled={followMutation.isPending}
+                      className={`btn btn-lg ${
+                        followingData?.isFollowing
+                          ? "btn-outline btn-error"
+                          : "btn-primary"
+                      } gap-2`}
+                    >
+                      {followMutation.isPending ? (
+                        <div className="loading loading-spinner loading-sm"></div>
+                      ) : followingData?.isFollowing ? (
+                        <>
+                          <UserMinus size={20} />
+                          Unfollow
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus size={20} />
+                          Follow
+                        </>
+                      )}
+                    </button>
+                  )}
               </div>
 
               {/* Stats Row */}

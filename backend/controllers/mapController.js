@@ -330,12 +330,32 @@ const getUserMaps = async (req, res) => {
       })
     );
 
+    // Check bookmark status for current user
+    let mapsWithBookmarks = mapsWithPOIs;
+    if (currentUserId) {
+      const bookmarks = await Bookmark.find({
+        user_id: currentUserId,
+        map_id: { $in: maps.map((m) => m._id) },
+      });
+      const bookmarkedMapIds = bookmarks.map((b) => b.map_id.toString());
+
+      mapsWithBookmarks = mapsWithPOIs.map((map) => ({
+        ...map,
+        isBookmarked: bookmarkedMapIds.includes(map._id.toString()),
+      }));
+    } else {
+      mapsWithBookmarks = mapsWithPOIs.map((map) => ({
+        ...map,
+        isBookmarked: false,
+      }));
+    }
+
     const total = await Map.countDocuments(query);
 
     res.json({
       success: true,
       data: {
-        maps: mapsWithPOIs,
+        maps: mapsWithBookmarks,
         pagination: {
           page,
           limit,
@@ -495,6 +515,7 @@ const searchMaps = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const currentUserId = req.user?._id;
 
     if (!q || q.trim().length < 2) {
       return res.status(400).json({
@@ -513,6 +534,26 @@ const searchMaps = async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 });
 
+    // Check bookmark status for current user
+    let mapsWithBookmarks = maps;
+    if (currentUserId) {
+      const bookmarks = await Bookmark.find({
+        user_id: currentUserId,
+        map_id: { $in: maps.map((m) => m._id) },
+      });
+      const bookmarkedMapIds = bookmarks.map((b) => b.map_id.toString());
+
+      mapsWithBookmarks = maps.map((map) => ({
+        ...map.toObject(),
+        isBookmarked: bookmarkedMapIds.includes(map._id.toString()),
+      }));
+    } else {
+      mapsWithBookmarks = maps.map((map) => ({
+        ...map.toObject(),
+        isBookmarked: false,
+      }));
+    }
+
     const total = await Map.countDocuments({
       mapName: searchRegex,
       isPrivate: false,
@@ -521,7 +562,7 @@ const searchMaps = async (req, res) => {
     res.json({
       success: true,
       data: {
-        maps,
+        maps: mapsWithBookmarks,
         pagination: {
           page,
           limit,
@@ -542,6 +583,8 @@ const searchMaps = async (req, res) => {
 // Get popular maps
 const getPopularMaps = async (req, res) => {
   try {
+    const currentUserId = req.user?._id;
+
     // Fetch public maps sorted by likes (descending) and limit to 6
     const popularMaps = await Map.find({ isPrivate: false })
       .populate("user_id", "username email")
@@ -551,6 +594,19 @@ const getPopularMaps = async (req, res) => {
     // Populate POIs with photos for each map
     const mapsWithPOIs = await Promise.all(
       popularMaps.map(async (map) => {
+        // Get total POI count for this map
+        const totalPOICount = await POI.countDocuments({ map_id: map._id });
+
+        // Get total photo count for this map by counting photos in Photo collection
+        const Photo = require("../model/photo");
+        const poiIds = await POI.find({ map_id: map._id }).distinct("_id");
+        const totalPhotoCount =
+          poiIds.length > 0
+            ? await Photo.countDocuments({
+                poi_id: { $in: poiIds },
+              })
+            : 0;
+
         const pois = await POI.find({ map_id: map._id })
           .populate({
             path: "photos",
@@ -577,13 +633,35 @@ const getPopularMaps = async (req, res) => {
         return {
           ...map.toObject(),
           pois: poisWithPresignedUrls,
+          totalPOICount,
+          totalPhotoCount,
         };
       })
     );
 
+    // Check bookmark status for current user
+    let mapsWithBookmarks = mapsWithPOIs;
+    if (currentUserId) {
+      const bookmarks = await Bookmark.find({
+        user_id: currentUserId,
+        map_id: { $in: popularMaps.map((m) => m._id) },
+      });
+      const bookmarkedMapIds = bookmarks.map((b) => b.map_id.toString());
+
+      mapsWithBookmarks = mapsWithPOIs.map((map) => ({
+        ...map,
+        isBookmarked: bookmarkedMapIds.includes(map._id.toString()),
+      }));
+    } else {
+      mapsWithBookmarks = mapsWithPOIs.map((map) => ({
+        ...map,
+        isBookmarked: false,
+      }));
+    }
+
     return res.json({
       success: true,
-      data: mapsWithPOIs,
+      data: mapsWithBookmarks,
     });
   } catch (error) {
     console.error("Error fetching popular maps:", error);

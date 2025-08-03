@@ -397,14 +397,7 @@ const AddMaps = () => {
                         }
                       />
 
-                      {/* Description Preview Overlay */}
-                      {poi.description && (
-                        <div className="absolute bottom-2 left-2 right-2 bg-black/70 backdrop-blur-sm rounded-lg p-2">
-                          <p className="text-xs text-white line-clamp-1 opacity-90">
-                            {poi.description}
-                          </p>
-                        </div>
-                      )}
+                     
                     </div>
                   ))}
                 </div>

@@ -202,6 +202,7 @@ export default function NewMap({
                       <td>
                         <div className="space-y-1">
                           <input
+                            id={`locationNameInput-${index}`}
                             type="text"
                             value={displayData.locationName || ""}
                             onChange={(e) =>

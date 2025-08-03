@@ -54,6 +54,28 @@ const getUserProfile = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(10);
 
+    // Add bookmark status to maps (for the current user viewing the profile)
+    const currentUserId = req.user?._id;
+    let mapsWithBookmarkStatus = maps;
+
+    if (currentUserId) {
+      const bookmarks = await Bookmark.find({
+        user_id: currentUserId,
+        map_id: { $in: maps.map((m) => m._id) },
+      });
+      const bookmarkedMapIds = bookmarks.map((b) => b.map_id.toString());
+
+      mapsWithBookmarkStatus = maps.map((map) => ({
+        ...map.toObject(),
+        isBookmarked: bookmarkedMapIds.includes(map._id.toString()),
+      }));
+    } else {
+      mapsWithBookmarkStatus = maps.map((map) => ({
+        ...map.toObject(),
+        isBookmarked: false,
+      }));
+    }
+
     // Get follower/following counts
     const followers = await Friend.countDocuments({
       followed_user_id: user._id,
@@ -79,7 +101,7 @@ const getUserProfile = async (req, res) => {
       success: true,
       data: {
         user: userObject,
-        maps,
+        maps: mapsWithBookmarkStatus,
         stats: {
           followers,
           following,
@@ -159,6 +181,12 @@ const getUserDashboard = async (req, res) => {
     // Get user's maps (both private and public)
     const maps = await Map.find({ user_id: id }).sort({ createdAt: -1 });
 
+    // Add bookmark status to maps (user's own maps are not bookmarked by default)
+    const mapsWithBookmarkStatus = maps.map((map) => ({
+      ...map.toObject(),
+      isBookmarked: false, // User's own maps are not bookmarked by default
+    }));
+
     // Get friends/following
     const friends = await Friend.find({ following_user_id: id })
       .populate("followed_user_id", "username email bio")
@@ -181,7 +209,7 @@ const getUserDashboard = async (req, res) => {
     res.json({
       success: true,
       user,
-      maps,
+      maps: mapsWithBookmarkStatus,
       friends,
       bookmarks,
     });

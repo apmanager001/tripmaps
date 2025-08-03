@@ -30,3 +30,35 @@ exports.jwtAuth = (req, res, next) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 };
+
+// Optional authentication middleware that doesn't fail if no token
+exports.optionalJwtAuth = (req, res, next) => {
+  const { tripMaps: token } = req.cookies;
+
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+        res.clearCookie("tripMaps");
+        req.user = null;
+        return next();
+      }
+
+      // Ensure user object has _id for consistency
+      if (user.id) {
+        user._id = user.id;
+      }
+
+      req.user = user; // Attach user data to the request object
+      next(); // Proceed to the next middleware or route handler
+    });
+  } catch (err) {
+    res.clearCookie("tripMaps");
+    req.user = null;
+    return next();
+  }
+};

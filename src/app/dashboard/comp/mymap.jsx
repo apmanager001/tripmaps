@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuthStore } from "../../../store/useAuthStore";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import { useVerifyUser } from "@/components/utility/tanstack/verifyUser";
@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
   Bookmark,
+  UserMinus,
 } from "lucide-react";
 import SharedButtons from "./maps/shareButtons";
 import Link from "next/link";
@@ -170,6 +171,21 @@ export default function Dashsection3() {
 
   const bookmarkedMaps = bookmarkedMapsData || [];
 
+  // Unfollow mutation
+  const unfollowMutation = useMutation({
+    mutationFn: async (friendId) => {
+      return await socialApi.unfollowUser(friendId);
+    },
+    onSuccess: (data, friendId) => {
+      toast.success("Successfully unfollowed user");
+      // Refresh dashboard data to update friends list
+      queryClient.invalidateQueries(["dashboardData", userId]);
+    },
+    onError: (error) => {
+      toast.error(`Failed to unfollow user: ${error.message}`);
+    },
+  });
+
   // Transform POIs to coordinate array for the map
   const lifetimeMapCoords = allPOIs.map((poi) => ({
     lat: poi.lat,
@@ -318,23 +334,44 @@ export default function Dashsection3() {
             </div>
           ) : (
             friends.map((friend) => (
-              <Link
+              <div
                 key={friend._id}
-                href={`/profile/${
-                  friend.followed_user_id?.username || friend.username
-                }`}
-                className="flex items-center gap-3 hover:bg-base-200 rounded p-2 transition"
+                className="flex items-center gap-3 hover:bg-base-200 rounded p-2 transition group"
               >
-                <CircleUser size={32} className="text-secondary" />
-                <div>
-                  <p className="font-medium text-base-content">
-                    {friend.followed_user_id?.username || friend.username}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {friend.followed_user_id?.email || friend.email}
-                  </p>
-                </div>
-              </Link>
+                <Link
+                  href={`/profile/${
+                    friend.followed_user_id?.username || friend.username
+                  }`}
+                  className="flex items-center gap-3 flex-1"
+                >
+                  <CircleUser size={32} className="text-secondary" />
+                  <div>
+                    <p className="font-medium text-base-content">
+                      {friend.followed_user_id?.username || friend.username}
+                    </p>
+                  </div>
+                </Link>
+
+                {/* Unfollow Button */}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    unfollowMutation.mutate(
+                      friend.followed_user_id?._id || friend.followed_user_id
+                    );
+                  }}
+                  disabled={unfollowMutation.isPending}
+                  className="btn btn-soft btn-error btn-xs text-error hover:text-white "
+                  title="Unfollow"
+                >
+                  {unfollowMutation.isPending ? (
+                    <div className="loading loading-spinner loading-xs"></div>
+                  ) : (
+                    <UserMinus size={16} />
+                  )}
+                </button>
+              </div>
             ))
           )}
         </div>
@@ -384,7 +421,7 @@ export default function Dashsection3() {
         ) : maps.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-neutral-500 mb-4">No maps created yet.</p>
-            <Link href="/dashboard" className="btn btn-primary">
+            <Link href="/dashboard?tab=Add%20Map" className="btn btn-primary">
               Create Your First Map
             </Link>
           </div>

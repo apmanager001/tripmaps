@@ -416,7 +416,7 @@ export default function IndividualMaps({ id }) {
   }
 
   return (
-    <div className="p-4 flex flex-col gap-6 bg-base-200 rounded-box shadow-lg">
+    <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200">
       {/* Structured Data for Map */}
       {mapData && (
         <script
@@ -466,371 +466,428 @@ export default function IndividualMaps({ id }) {
         />
       )}
 
-      {/* Mobile-friendly layout */}
-      <div className="space-y-4">
-        {/* Map title and user info - full width on mobile */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-          <div className="text-lg font-bold text-primary flex flex-col items-start sm:items-end overflow-x-hidden">
-            <span className="break-words">
-              {mapName ? mapName.toUpperCase() : "Unnamed Map"}
-            </span>
-            {mapUser && (
-              <Link
-                href={`/profile/${mapUser.username}`}
-                className="badge badge-soft badge-sm text-sm hover:badge-primary transition-colors mt-1"
-              >
-                {mapUser.username}
-              </Link>
-            )}
+      <div className="container mx-auto p-4 lg:p-6 space-y-6">
+        {/* Enhanced Map Container with Map Info */}
+        <div className="bg-base-100 rounded-2xl overflow-hidden shadow-xl border border-base-300">
+          <div className="p-6 border-b border-base-300 bg-gradient-to-r from-primary/5 to-accent/5">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+              {/* Left side - Map title and user info */}
+              <div className="flex-1">
+                <h1 className="text-2xl lg:text-3xl font-bold text-primary mb-3 leading-tight flex items-center gap-3">
+                  <MapPin className="w-6 h-6" />
+                  {mapName ? mapName.toUpperCase() : "Unnamed Map"}
+                </h1>
+                {mapUser && (
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 ml-8">
+                    <Link
+                      href={`/profile/${mapUser.username}`}
+                      className="badge badge-primary badge-md hover:badge-primary-focus transition-all duration-200 inline-flex items-center gap-2"
+                    >
+                      <User className="w-4 h-4" />
+                      {mapUser.username}
+                    </Link>
+                    {mapData?.createdAt && (
+                      <span className="text-sm text-gray-600 flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        Created {formatDate(mapData.createdAt)}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Right side - Share Buttons spanning both rows */}
+              <div className="flex items-center gap-2 lg:self-center">
+                <SharedButtons id={id} name={mapName} />
+                <InstagramShare mapName={mapName} pois={pois} />
+              </div>
+            </div>
           </div>
-
-          {/* Share buttons - always visible */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <SharedButtons id={id} name={mapName} />
-            <InstagramShare mapName={mapName} pois={pois} />
-          </div>
-        </div>
-
-        {/* Action buttons - responsive grid on mobile */}
-        <div className="grid grid-cols-3 sm:flex sm:items-center sm:gap-4 gap-2">
-          {/* Bookmark Button */}
-          {mapUser && currentUser && mapUser._id !== currentUser._id && (
-            <button
-              onClick={handleBookmark}
-              disabled={bookmarkMutation.isPending || !isAuthenticated}
-              className={`btn btn-sm gap-1 sm:gap-2 ${
-                !isAuthenticated
-                  ? "btn-disabled opacity-50"
-                  : isBookmarked
-                  ? "btn-accent"
-                  : "btn-ghost hover:btn-accent"
-              } transition-all duration-200`}
-              title={
-                !isAuthenticated
-                  ? "Please log in to bookmark maps"
-                  : isBookmarked
-                  ? "Remove from bookmarks"
-                  : "Add to bookmarks"
-              }
-            >
-              <Bookmark
-                className={`w-4 h-4 ${
-                  isBookmarked ? "fill-current text-accent" : "text-accent"
-                }`}
-              />
-              <span className="hidden sm:inline">Bookmark</span>
-              {bookmarkMutation.isPending && (
-                <div className="loading loading-spinner loading-xs"></div>
-              )}
-            </button>
-          )}
-
-          {/* Comments Button */}
-          <button
-            onClick={() => setIsCommentsOpen(true)}
-            className="btn btn-sm btn-ghost gap-1 sm:gap-2"
-            title="View comments"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span className="hidden sm:inline">Comments</span>
-            <span className="sm:hidden">{comments.length}</span>
-          </button>
-
-          {/* Like Button */}
-          <button
-            onClick={handleLike}
-            disabled={likeMutation.isPending || !isAuthenticated}
-            className={`btn btn-sm gap-1 sm:gap-2 ${
-              !isAuthenticated
-                ? "btn-disabled opacity-50"
-                : isLiked
-                ? "btn-error"
-                : "btn-ghost hover:btn-error"
-            } transition-all duration-200`}
-            title={!isAuthenticated ? "Please log in to like maps" : ""}
-          >
-            <Heart
-              className={`w-4 h-4 ${
-                isLiked ? "fill-current text-red-500" : "text-red-500"
-              }`}
+          <div className="h-96 lg:h-[500px]" data-map-container="true">
+            <Maps
+              key="individualMap-map"
+              mapKey="individualMap-map"
+              coordArray={coordArray}
+              navigateToCoordinates={navigateToCoordinates}
             />
-            <span className="hidden sm:inline">Like</span>
-            <span className="sm:hidden">{likeCount}</span>
-            {likeMutation.isPending && (
-              <div className="loading loading-spinner loading-xs"></div>
-            )}
-          </button>
+          </div>
         </div>
-      </div>
 
-      {/* Map Statistics */}
-      <div className="bg-base-100 rounded-lg p-4 shadow-inner border border-base-300">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center justify-center gap-6">
-            <div className="flex items-center gap-2">
-              <Heart className="w-4 h-4 text-red-500" />
-              <span className="text-sm font-medium">{likeCount} likes</span>
-            </div>
-            {mapData?.views && (
-              <div className="flex items-center gap-2">
-                <Eye className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">
-                  {mapData.views} views
+        {/* Combined Social Bar - Stats, Actions, and Social Features */}
+        <div className="bg-gradient-to-br from-base-100 to-base-200 rounded-2xl p-6 shadow-xl border border-base-300">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            {/* Left side - Statistics */}
+            <div className="flex flex-wrap items-center gap-6">
+              {/* Likes Stat */}
+              <div className="flex items-center gap-2 group hover:scale-105 transition-transform duration-200">
+                <Heart className="w-5 h-5 text-red-500 group-hover:scale-110 transition-transform" />
+                <span className="text-lg font-bold text-primary">
+                  {likeCount}
                 </span>
+                <span className="text-sm text-gray-600 font-medium">Likes</span>
               </div>
-            )}
-            <div className="flex items-center gap-2">
-              <Pin className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium">
-                {pois.length} locations
-              </span>
-            </div>
-          </div>
 
-          {mapData?.createdAt && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Calendar className="w-3 h-3" />
-              <span>Created: {formatDate(mapData.createdAt)}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div
-        className="rounded overflow-hidden border border-base-300"
-        data-map-container="true"
-      >
-        <Maps
-          key="individualMap-map"
-          mapKey="individualMap-map"
-          coordArray={coordArray}
-          navigateToCoordinates={navigateToCoordinates}
-        />
-      </div>
-      <div
-        id="poi-section"
-        className="bg-base-100 rounded-lg p-4 shadow-inner border border-base-300"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex-1">
-            <h2 className="text-xl font-bold text-primary mb-1">
-              Map Locations
-            </h2>
-            {totalPages > 1 && (
-              <div className="flex items-center gap-2 text-sm">
-                <span className="px-2 py-1 bg-primary/10 text-primary rounded-full font-medium">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <span className="text-gray-500">
-                  {pois.length} locations total
-                </span>
-              </div>
-            )}
-          </div>
-          {isAuthenticated &&
-            currentUser &&
-            mapUser &&
-            currentUser._id === mapUser._id && (
-              <button
-                onClick={() => setShowAddPOIModal(true)}
-                className="btn btn-primary gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                <Plus size={16} />
-                Add POI
-              </button>
-            )}
-        </div>
-        {pois.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No locations added to this map yet.</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {currentPois.map((poi) => (
-                <POICard
-                  key={poi._id}
-                  poi={poi}
-                  showActions={true}
-                  showLikeButton={true}
-                  showFlagButton={true}
-                  compact={true}
-                  onViewPhotos={handleOpenPhotoGallery}
-                  mapLocation={true}
-                  onNavigateToMap={handleNavigateToMap}
-                />
-              ))}
-            </div>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="mt-8">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <button
-                    onClick={() => {
-                      if (currentPage > 1) {
-                        setCurrentPage(currentPage - 1);
-                      }
-                    }}
-                    disabled={currentPage === 1}
-                    className="btn btn-outline btn-sm gap-2 hover:btn-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <ChevronLeft size={16} />
-                    Previous
-                  </button>
-
-                  <div className="flex items-center gap-1 bg-base-200 rounded-lg p-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                      (page) => (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          className={`btn btn-sm min-w-[40px] h-8 ${
-                            currentPage === page
-                              ? "btn-primary shadow-md"
-                              : "btn-ghost hover:bg-base-300"
-                          } transition-all duration-200`}
-                        >
-                          {page}
-                        </button>
-                      )
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      if (currentPage < totalPages) {
-                        setCurrentPage(currentPage + 1);
-                      }
-                    }}
-                    disabled={currentPage === totalPages}
-                    className="btn btn-outline btn-sm gap-2 hover:btn-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                    <ChevronRight size={16} />
-                  </button>
+              {/* Views Stat */}
+              {mapData?.views && (
+                <div className="flex items-center gap-2 group hover:scale-105 transition-transform duration-200">
+                  <Eye className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+                  <span className="text-lg font-bold text-primary">
+                    {mapData.views}
+                  </span>
+                  <span className="text-sm text-gray-600 font-medium">
+                    Views
+                  </span>
                 </div>
+              )}
 
-                {/* Page Info */}
-                <div className="text-center">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-base-200 rounded-full text-sm text-gray-600">
-                    <span className="font-medium">
-                      Showing {startIndex + 1}-{Math.min(endIndex, pois.length)}
-                    </span>
-                    <span className="text-gray-400">of</span>
-                    <span className="font-medium">{pois.length}</span>
-                    <span className="text-gray-400">locations</span>
-                  </div>
-                </div>
+              {/* Locations Stat */}
+              <div className="flex items-center gap-2 group hover:scale-105 transition-transform duration-200">
+                <Pin className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
+                <span className="text-lg font-bold text-primary">
+                  {pois.length}
+                </span>
+                <span className="text-sm text-gray-600 font-medium">
+                  Locations
+                </span>
               </div>
-            )}
-          </>
-        )}
-      </div>
 
-      {/* Comments Drawer */}
-      <div className="drawer drawer-end">
-        <input
-          id="comments-drawer"
-          type="checkbox"
-          className="drawer-toggle"
-          checked={isCommentsOpen}
-          onChange={(e) => setIsCommentsOpen(e.target.checked)}
-        />
-
-        <div className="drawer-content">{/* This is the main content */}</div>
-
-        <div className="drawer-side z-50">
-          <label
-            htmlFor="comments-drawer"
-            aria-label="close sidebar"
-            className="drawer-overlay"
-          ></label>
-
-          <div className="min-h-full w-80 bg-base-200 text-base-content p-4 overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Comments</h3>
-              <button
-                onClick={() => setIsCommentsOpen(false)}
-                className="btn btn-sm btn-ghost"
-              >
-                ✕
-              </button>
+              {/* Comments Stat */}
+              <div className="flex items-center gap-2 group hover:scale-105 transition-transform duration-200">
+                <MessageCircle className="w-5 h-5 text-info group-hover:scale-110 transition-transform" />
+                <span className="text-lg font-bold text-primary">
+                  {comments.length}
+                </span>
+                <span className="text-sm text-gray-600 font-medium">
+                  Comments
+                </span>
+              </div>
             </div>
 
-            {/* Add Comment Section */}
-            {isAuthenticated && (
-              <div className="mb-6 p-4 bg-base-100 rounded-lg">
-                <div className="flex gap-2">
-                  <textarea
-                    id="comment-input"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onKeyDown={handleCommentKeyDown}
-                    placeholder="Add a comment..."
-                    className="textarea textarea-bordered flex-1"
-                    rows={3}
-                    disabled={addCommentMutation.isPending}
+            {/* Center - Social Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Bookmark Button */}
+              {mapUser && currentUser && mapUser._id !== currentUser._id && (
+                <button
+                  onClick={handleBookmark}
+                  disabled={bookmarkMutation.isPending || !isAuthenticated}
+                  className={`btn btn-sm btn-soft btn-accent rounded-full gap-2 ${
+                    !isAuthenticated
+                      ? "btn-disabled opacity-50"
+                      : isBookmarked
+                      ? "btn-accent shadow-md"
+                      : "btn-outline btn-accent hover:btn-accent hover:shadow-md"
+                  } transition-all duration-200`}
+                  title={
+                    !isAuthenticated
+                      ? "Please log in to bookmark maps"
+                      : isBookmarked
+                      ? "Remove from bookmarks"
+                      : "Add to Travel Journal"
+                  }
+                >
+                  <Bookmark
+                    className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`}
                   />
-                </div>
-                <div className="flex justify-end mt-2">
-                  <button
-                    onClick={handleAddComment}
-                    disabled={
-                      addCommentMutation.isPending || !newComment.trim()
-                    }
-                    className="btn btn-sm btn-primary gap-2"
-                  >
-                    {addCommentMutation.isPending ? (
-                      <div className="loading loading-spinner loading-xs"></div>
-                    ) : (
-                      <Send className="w-3 h-3" />
-                    )}
-                    Comment
-                  </button>
-                </div>
-              </div>
-            )}
+                  <span className="font-medium">
+                    {isBookmarked ? "Bookmarked" : "Bookmark"}
+                  </span>
+                  {bookmarkMutation.isPending && (
+                    <div className="loading loading-spinner loading-xs"></div>
+                  )}
+                </button>
+              )}
 
-            {/* Comments List */}
-            <div className="space-y-4">
-              {comments.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p>No comments yet</p>
-                  {!isAuthenticated && (
-                    <p className="text-sm mt-2">
-                      Log in to add the first comment!
-                    </p>
+              {/* Like Button */}
+              <button
+                onClick={handleLike}
+                disabled={likeMutation.isPending || !isAuthenticated}
+                className={`btn btn-sm btn-soft btn-error rounded-full gap-2 ${
+                  !isAuthenticated
+                    ? "btn-disabled opacity-50"
+                    : isLiked
+                    ? "btn-error shadow-md"
+                    : "btn-outline btn-error hover:btn-error hover:shadow-md"
+                } transition-all duration-200`}
+                title={
+                  !isAuthenticated
+                    ? "Please log in to like maps"
+                    : "Like this Map"
+                }
+              >
+                <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
+                <span className="font-medium">
+                  {isLiked ? "Liked" : "Like"}
+                </span>
+                {likeMutation.isPending && (
+                  <div className="loading loading-spinner loading-xs"></div>
+                )}
+              </button>
+
+              {/* Comments Button */}
+              <button
+                onClick={() => setIsCommentsOpen(true)}
+                className="btn btn-sm btn-soft btn-primary rounded-full gap-2 hover:shadow-md transition-all duration-200"
+                title="View and Add Comments"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span className="font-medium">Comments</span>
+              </button>
+            </div>
+
+            {/* Right side - Owner Actions and Share */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Owner Actions */}
+              {isAuthenticated &&
+                currentUser &&
+                mapUser &&
+                currentUser._id === mapUser._id && (
+                  <button
+                    onClick={() => setShowAddPOIModal(true)}
+                    className="btn btn-primary btn-sm gap-2 shadow-md hover:shadow-lg transition-all duration-200"
+                  >
+                    <Plus size={16} />
+                    Add Location
+                  </button>
+                )}
+            </div>
+          </div>
+        </div>
+        {/* Enhanced POI Section */}
+        <div
+          id="poi-section"
+          className="bg-base-100 rounded-2xl shadow-xl border border-base-300"
+        >
+          <div className="p-6 border-b border-base-300 bg-gradient-to-r from-accent/5 to-primary/5">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex-1">
+                <h2 className="text-2xl font-bold text-primary mb-2 flex items-center gap-3">
+                  <Pin className="w-6 h-6" />
+                  Map Locations
+                </h2>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 bg-primary rounded-full"></span>
+                    {pois.length} locations total
+                  </span>
+                  {totalPages > 1 && (
+                    <span className="flex items-center gap-1">
+                      <span className="w-2 h-2 bg-accent rounded-full"></span>
+                      Page {currentPage} of {totalPages}
+                    </span>
                   )}
                 </div>
-              ) : (
-                comments.map((comment) => (
-                  <div
-                    key={comment._id}
-                    className="bg-base-100 p-4 rounded-lg shadow-sm"
+              </div>
+              {isAuthenticated &&
+                currentUser &&
+                mapUser &&
+                currentUser._id === mapUser._id && (
+                  <button
+                    onClick={() => setShowAddPOIModal(true)}
+                    className="btn btn-primary gap-3 shadow-lg hover:shadow-xl transition-all duration-200"
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="avatar placeholder">
-                        <div className="bg-primary text-primary-content rounded-full w-8">
-                          <User className="w-4 h-4" />
-                        </div>
+                    <Plus size={20} />
+                    Add Location
+                  </button>
+                )}
+            </div>
+          </div>
+
+          <div className="p-6">
+            {pois.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>No locations added to this map yet.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {currentPois.map((poi) => (
+                    <POICard
+                      key={poi._id}
+                      poi={poi}
+                      showActions={true}
+                      showLikeButton={true}
+                      showFlagButton={true}
+                      compact={true}
+                      onViewPhotos={handleOpenPhotoGallery}
+                      mapLocation={true}
+                      onNavigateToMap={handleNavigateToMap}
+                    />
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="mt-8">
+                    <div className="flex items-center justify-center gap-3 mb-4">
+                      <button
+                        onClick={() => {
+                          if (currentPage > 1) {
+                            setCurrentPage(currentPage - 1);
+                          }
+                        }}
+                        disabled={currentPage === 1}
+                        className="btn btn-outline btn-sm gap-2 hover:btn-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronLeft size={16} />
+                        Previous
+                      </button>
+
+                      <div className="flex items-center gap-1 bg-base-200 rounded-lg p-1">
+                        {Array.from(
+                          { length: totalPages },
+                          (_, i) => i + 1
+                        ).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`btn btn-sm min-w-[40px] h-8 ${
+                              currentPage === page
+                                ? "btn-primary shadow-md"
+                                : "btn-ghost hover:bg-base-300"
+                            } transition-all duration-200`}
+                          >
+                            {page}
+                          </button>
+                        ))}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-sm">
-                            {comment.user_id?.username || "Unknown User"}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {formatDate(comment.createdAt)}
-                          </span>
-                        </div>
-                        <p className="text-sm">{comment.comment}</p>
+
+                      <button
+                        onClick={() => {
+                          if (currentPage < totalPages) {
+                            setCurrentPage(currentPage + 1);
+                          }
+                        }}
+                        disabled={currentPage === totalPages}
+                        className="btn btn-outline btn-sm gap-2 hover:btn-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Next
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+
+                    {/* Page Info */}
+                    <div className="text-center">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-base-200 rounded-full text-sm text-gray-600">
+                        <span className="font-medium">
+                          Showing {startIndex + 1}-
+                          {Math.min(endIndex, pois.length)}
+                        </span>
+                        <span className="text-gray-400">of</span>
+                        <span className="font-medium">{pois.length}</span>
+                        <span className="text-gray-400">locations</span>
                       </div>
                     </div>
                   </div>
-                ))
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Comments Drawer */}
+        <div className="drawer drawer-end">
+          <input
+            id="comments-drawer"
+            type="checkbox"
+            className="drawer-toggle"
+            checked={isCommentsOpen}
+            onChange={(e) => setIsCommentsOpen(e.target.checked)}
+          />
+
+          <div className="drawer-content">{/* This is the main content */}</div>
+
+          <div className="drawer-side z-50">
+            <label
+              htmlFor="comments-drawer"
+              aria-label="close sidebar"
+              className="drawer-overlay"
+            ></label>
+
+            <div className="min-h-full w-80 bg-base-200 text-base-content p-4 overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Comments</h3>
+                <button
+                  onClick={() => setIsCommentsOpen(false)}
+                  className="btn btn-sm btn-ghost"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Add Comment Section */}
+              {isAuthenticated && (
+                <div className="mb-6 p-4 bg-base-100 rounded-lg">
+                  <div className="flex gap-2">
+                    <textarea
+                      id="comment-input"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyDown={handleCommentKeyDown}
+                      placeholder="Add a comment..."
+                      className="textarea textarea-bordered flex-1"
+                      rows={3}
+                      disabled={addCommentMutation.isPending}
+                    />
+                  </div>
+                  <div className="flex justify-end mt-2">
+                    <button
+                      onClick={handleAddComment}
+                      disabled={
+                        addCommentMutation.isPending || !newComment.trim()
+                      }
+                      className="btn btn-sm btn-primary gap-2"
+                    >
+                      {addCommentMutation.isPending ? (
+                        <div className="loading loading-spinner loading-xs"></div>
+                      ) : (
+                        <Send className="w-3 h-3" />
+                      )}
+                      Comment
+                    </button>
+                  </div>
+                </div>
               )}
+
+              {/* Comments List */}
+              <div className="space-y-4">
+                {comments.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <MessageCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                    <p>No comments yet</p>
+                    {!isAuthenticated && (
+                      <p className="text-sm mt-2">
+                        Log in to add the first comment!
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  comments.map((comment) => (
+                    <div
+                      key={comment._id}
+                      className="bg-base-100 p-4 rounded-lg shadow-sm"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="avatar placeholder">
+                          <div className="bg-primary text-primary-content rounded-full w-8">
+                            <User className="w-4 h-4" />
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm">
+                              {comment.user_id?.username || "Unknown User"}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {formatDate(comment.createdAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm">{comment.comment}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>

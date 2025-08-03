@@ -1,8 +1,35 @@
 "use client";
 import Link from "next/link";
-import { MapPin, Clock, Eye, Heart } from "lucide-react";
+import toast from "react-hot-toast";
+import {
+  MapPin,
+  Clock,
+  Eye,
+  Heart,
+  Bookmark as BookmarkIcon,
+  Notebook,
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { socialApi } from "@/lib/api";
+import { useAuthStore } from "@/store/useAuthStore";
 
-const MapCard = ({ map, showActions = true, className = "", onClick }) => {
+const MapCard = ({
+  map,
+  showActions = true,
+  showBookmark = true,
+  className = "",
+  onClick,
+}) => {
+  const { isAuthenticated } = useAuthStore();
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isBookmarking, setIsBookmarking] = useState(false);
+
+  // Initialize bookmark status on component mount and when map changes
+  useEffect(() => {
+    if (map.isBookmarked !== undefined) {
+      setIsBookmarked(map.isBookmarked);
+    }
+  }, [map.isBookmarked, map._id]);
   // Get up to 4 POI images for thumbnail gallery
   const getThumbnailImages = () => {
     // Check different possible data structures
@@ -11,7 +38,6 @@ const MapCard = ({ map, showActions = true, className = "", onClick }) => {
     if (!pois || pois.length === 0) {
       return [];
     }
-
     const images = [];
     pois.forEach((poi, index) => {
       if (poi.photos && poi.photos.length > 0) {
@@ -36,16 +62,45 @@ const MapCard = ({ map, showActions = true, className = "", onClick }) => {
   };
 
   const thumbnailImages = getThumbnailImages();
-  const totalPOIs = (map?.pois || map?.poi_ids || []).length;
+  // Use total counts from backend if available, otherwise calculate from POI array
+  const totalPOIs =
+    map?.totalPOICount || (map?.pois || map?.poi_ids || []).length;
   const totalPhotos =
+    map?.totalPhotoCount ||
     (map?.pois || map?.poi_ids || []).reduce(
       (total, poi) => total + (poi.photos?.length || 0),
       0
-    ) || 0;
+    ) ||
+    0;
 
   const handleCardClick = (e) => {
     if (onClick) {
       onClick(map);
+    }
+  };
+
+  const handleBookmarkClick = async (e) => {
+    e.stopPropagation(); // Prevent card click
+    if (isBookmarking) return;
+
+    setIsBookmarking(true);
+    try {
+      if (isBookmarked) {
+        await socialApi.removeBookmark(map._id);
+        setIsBookmarked(false);
+        toast.success("Map removed from Travel Journal");
+      } else {
+        await socialApi.bookmarkMap(map._id);
+        setIsBookmarked(true);
+        toast.success("Map added to Travel Journal");
+      }
+    } catch (error) {
+      console.error("Error toggling bookmark:", error);
+      // Revert state on error
+      setIsBookmarked(!isBookmarked);
+      toast.error("Failed to update bookmark");
+    } finally {
+      setIsBookmarking(false);
     }
   };
 
@@ -71,6 +126,31 @@ const MapCard = ({ map, showActions = true, className = "", onClick }) => {
 
       {/* Gradient Overlay for Readability */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
+
+      {/* Bookmark Button */}
+      {showBookmark && isAuthenticated && (
+        <div className="absolute top-3 right-3 z-20 flex flex-col">
+          <button
+            onClick={handleBookmarkClick}
+            disabled={isBookmarking}
+            className="p-2 rounded-full bg-black/40 hover:bg-black/60 transition-all duration-200 backdrop-blur-sm border border-white/20 hover:border-white/40 group/bookmark self-end relative"
+          >
+            <Notebook
+              size={18}
+              className={`transition-all duration-200 ${
+                isBookmarked
+                  ? "fill-yellow-400 text-gray-700 group-hover/bookmark:scale-110"
+                  : "text-white/80 group-hover/bookmark:text-white group-hover/bookmark:scale-110"
+              }`}
+            />
+            <div className="absolute top-full right-1 mt-1 px-2 py-1 rounded-md bg-black/80 backdrop-blur-sm border border-white/20 text-xs text-white font-medium whitespace-nowrap opacity-0 group-hover/bookmark:opacity-100 transition-opacity duration-200 pointer-events-none">
+              {isBookmarked
+                ? "Remove from Travel Journal"
+                : "Add to Travel Journal"}
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* Content Overlay */}
       <div className="relative z-10 p-4 sm:p-6 h-full flex flex-col justify-between">
@@ -121,7 +201,7 @@ const MapCard = ({ map, showActions = true, className = "", onClick }) => {
             </div>
 
             {/* POI and Photo counts */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-white/80">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-white/80 bg-black/60 p-2 rounded-md w-fit">
               <div className="flex items-center gap-1">
                 <MapPin size={14} className="text-white/70" />
                 <span className="drop-shadow-sm">
