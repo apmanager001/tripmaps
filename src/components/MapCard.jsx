@@ -135,11 +135,11 @@ const MapCard = ({
             disabled={isBookmarking}
             className="p-2 rounded-full bg-black/40 hover:bg-black/60 transition-all duration-200 backdrop-blur-sm border border-white/20 hover:border-white/40 group/bookmark self-end relative"
           >
-            <Notebook
+            <BookmarkIcon
               size={18}
               className={`transition-all duration-200 ${
                 isBookmarked
-                  ? "fill-yellow-400 text-gray-700 group-hover/bookmark:scale-110"
+                  ? "fill-accent text-white/80 group-hover/bookmark:scale-110"
                   : "text-white/80 group-hover/bookmark:text-white group-hover/bookmark:scale-110"
               }`}
             />

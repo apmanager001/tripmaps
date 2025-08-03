@@ -11,6 +11,7 @@ const ProfilePictureUpload = ({
   size = "md", // sm, md, lg
   showUserInfo = false,
   className = "",
+  compact = false, // New prop for compact mode
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -170,7 +171,11 @@ const ProfilePictureUpload = ({
   }
 
   return (
-    <div className={`flex items-center gap-4 ${className} min-w-24`}>
+    <div
+      className={`flex items-center ${
+        compact ? "gap-2" : "gap-4"
+      } ${className} ${compact ? "" : "min-w-24"}`}
+    >
       {/* Profile Picture Display/Upload */}
       <div className="relative group">
         {imageUrl ? (

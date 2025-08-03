@@ -7,6 +7,7 @@ import InstagramShare from "@/components/utility/InstagramShare";
 import POICard from "@/components/POICard";
 import POIPhotoGallery from "@/components/POIPhotoGallery";
 import AddPOIToMapModal from "@/components/AddPOIToMapModal";
+import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import Link from "next/link";
 import {
   Heart,
@@ -503,7 +504,7 @@ export default function IndividualMaps({ id }) {
               </div>
             </div>
           </div>
-          <div className="h-96 lg:h-[500px]" data-map-container="true">
+          <div className="h-96 " data-map-container="true">
             <Maps
               key="individualMap-map"
               mapKey="individualMap-map"
@@ -513,53 +514,53 @@ export default function IndividualMaps({ id }) {
           </div>
         </div>
 
-        {/* Combined Social Bar - Stats, Actions, and Social Features */}
+        {/* Combined Social Bar - Stats, Actions */}
         <div className="bg-gradient-to-br from-base-100 to-base-200 rounded-2xl p-6 shadow-xl border border-base-300">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div className="flex items-center justify-between ">
             {/* Left side - Statistics */}
-            <div className="flex flex-wrap items-center gap-6">
+            <div className="flex flex-wrap items-center gap-2 md:gap-6">
               {/* Likes Stat */}
               <div className="flex items-center gap-2 group hover:scale-105 transition-transform duration-200">
-                <Heart className="w-5 h-5 text-red-500 group-hover:scale-110 transition-transform" />
-                <span className="text-lg font-bold text-primary">
+                <Heart className="w-4 h-4 md:w-5 md:h-5 text-red-500 group-hover:scale-110 transition-transform" />
+                <span className="text-sm md:text-lg font-bold text-primary">
                   {likeCount}
                 </span>
-                <span className="text-sm text-gray-600 font-medium">Likes</span>
+                {/* <span className="text-sm text-gray-600 font-medium">Likes</span> */}
               </div>
 
               {/* Views Stat */}
               {mapData?.views && (
                 <div className="flex items-center gap-2 group hover:scale-105 transition-transform duration-200">
-                  <Eye className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
-                  <span className="text-lg font-bold text-primary">
+                  <Eye className="w-4 h-4 md:w-5 md:h-5 text-primary group-hover:scale-110 transition-transform" />
+                  <span className="text-sm md:text-lg font-bold text-primary">
                     {mapData.views}
                   </span>
-                  <span className="text-sm text-gray-600 font-medium">
+                  {/* <span className="text-sm text-gray-600 font-medium">
                     Views
-                  </span>
+                  </span> */}
                 </div>
               )}
 
               {/* Locations Stat */}
               <div className="flex items-center gap-2 group hover:scale-105 transition-transform duration-200">
-                <Pin className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
-                <span className="text-lg font-bold text-primary">
+                <Pin className="w-4 h-4 md:w-5 md:h-5 text-accent group-hover:scale-110 transition-transform" />
+                <span className="text-sm md:text-lg font-bold text-primary">
                   {pois.length}
                 </span>
-                <span className="text-sm text-gray-600 font-medium">
+                {/* <span className="text-sm text-gray-600 font-medium">
                   Locations
-                </span>
+                </span> */}
               </div>
 
               {/* Comments Stat */}
               <div className="flex items-center gap-2 group hover:scale-105 transition-transform duration-200">
-                <MessageCircle className="w-5 h-5 text-info group-hover:scale-110 transition-transform" />
-                <span className="text-lg font-bold text-primary">
+                <MessageCircle className="w-4 h-4 md:w-5 md:h-5 text-info group-hover:scale-110 transition-transform" />
+                <span className="text-sm md:text-lg font-bold text-primary">
                   {comments.length}
                 </span>
-                <span className="text-sm text-gray-600 font-medium">
+                {/* <span className="text-sm text-gray-600 font-medium">
                   Comments
-                </span>
+                </span> */}
               </div>
             </div>
 
@@ -570,7 +571,7 @@ export default function IndividualMaps({ id }) {
                 <button
                   onClick={handleBookmark}
                   disabled={bookmarkMutation.isPending || !isAuthenticated}
-                  className={`btn btn-sm btn-soft btn-accent rounded-full gap-2 ${
+                  className={`btn btn-xs md:btn-sm btn-soft btn-accent rounded-full gap-2 ${
                     !isAuthenticated
                       ? "btn-disabled opacity-50"
                       : isBookmarked
@@ -588,9 +589,9 @@ export default function IndividualMaps({ id }) {
                   <Bookmark
                     className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`}
                   />
-                  <span className="font-medium">
+                  {/* <span className="font-medium">
                     {isBookmarked ? "Bookmarked" : "Bookmark"}
-                  </span>
+                  </span> */}
                   {bookmarkMutation.isPending && (
                     <div className="loading loading-spinner loading-xs"></div>
                   )}
@@ -601,7 +602,7 @@ export default function IndividualMaps({ id }) {
               <button
                 onClick={handleLike}
                 disabled={likeMutation.isPending || !isAuthenticated}
-                className={`btn btn-sm btn-soft btn-error rounded-full gap-2 ${
+                className={`btn btn-xs md:btn-sm btn-soft btn-error rounded-full gap-2 ${
                   !isAuthenticated
                     ? "btn-disabled opacity-50"
                     : isLiked
@@ -615,9 +616,9 @@ export default function IndividualMaps({ id }) {
                 }
               >
                 <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
-                <span className="font-medium">
+                {/* <span className="font-medium">
                   {isLiked ? "Liked" : "Like"}
-                </span>
+                </span> */}
                 {likeMutation.isPending && (
                   <div className="loading loading-spinner loading-xs"></div>
                 )}
@@ -626,30 +627,30 @@ export default function IndividualMaps({ id }) {
               {/* Comments Button */}
               <button
                 onClick={() => setIsCommentsOpen(true)}
-                className="btn btn-sm btn-soft btn-primary rounded-full gap-2 hover:shadow-md transition-all duration-200"
+                className="btn btn-xs md:btn-sm btn-soft btn-primary rounded-full gap-2 hover:shadow-md transition-all duration-200"
                 title="View and Add Comments"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span className="font-medium">Comments</span>
+                {/* <span className="font-medium">Comments</span> */}
               </button>
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Owner Actions */}
+                {isAuthenticated &&
+                  currentUser &&
+                  mapUser &&
+                  currentUser._id === mapUser._id && (
+                    <button
+                      onClick={() => setShowAddPOIModal(true)}
+                      className="btn btn-primary btn-sm gap-2 shadow-md hover:shadow-lg transition-all duration-200"
+                    >
+                      <Plus size={16} />
+                      Add Location
+                    </button>
+                  )}
+              </div>
             </div>
 
             {/* Right side - Owner Actions and Share */}
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Owner Actions */}
-              {isAuthenticated &&
-                currentUser &&
-                mapUser &&
-                currentUser._id === mapUser._id && (
-                  <button
-                    onClick={() => setShowAddPOIModal(true)}
-                    className="btn btn-primary btn-sm gap-2 shadow-md hover:shadow-lg transition-all duration-200"
-                  >
-                    <Plus size={16} />
-                    Add Location
-                  </button>
-                )}
-            </div>
           </div>
         </div>
         {/* Enhanced POI Section */}
@@ -867,16 +868,21 @@ export default function IndividualMaps({ id }) {
                       className="bg-base-100 p-4 rounded-lg shadow-sm"
                     >
                       <div className="flex items-start gap-3">
-                        <div className="avatar placeholder">
-                          <div className="bg-primary text-primary-content rounded-full w-8">
-                            <User className="w-4 h-4" />
-                          </div>
-                        </div>
+                        <ProfilePictureUpload
+                          currentUser={comment.user_id}
+                          size="sm"
+                          showUserInfo={false}
+                          compact={true}
+                          className="flex-shrink-0"
+                        />
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-sm">
+                            <Link
+                              href={`/profile/${comment.user_id.username}`}
+                              className="font-semibold text-sm"
+                            >
                               {comment.user_id?.username || "Unknown User"}
-                            </span>
+                            </Link>
                             <span className="text-xs text-gray-500">
                               {formatDate(comment.createdAt)}
                             </span>
