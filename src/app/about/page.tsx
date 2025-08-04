@@ -12,6 +12,7 @@ import {
   TrendingUp,
   Award,
 } from "lucide-react";
+import Statistics from "@/components/homepage/statistics";
 import { generateMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = generateMetadata({
@@ -192,31 +193,7 @@ export default function AboutPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 px-6">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-primary mb-12">
-            Our Community
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-            <div className="p-6 bg-base-100 rounded-lg shadow-sm">
-              <div className="text-3xl font-bold text-primary mb-2">1000+</div>
-              <div className="text-base-content/70">Active Travelers</div>
-            </div>
-            <div className="p-6 bg-base-100 rounded-lg shadow-sm">
-              <div className="text-3xl font-bold text-secondary mb-2">500+</div>
-              <div className="text-base-content/70">Travel Maps</div>
-            </div>
-            <div className="p-6 bg-base-100 rounded-lg shadow-sm">
-              <div className="text-3xl font-bold text-accent mb-2">50+</div>
-              <div className="text-base-content/70">Countries</div>
-            </div>
-            <div className="p-6 bg-base-100 rounded-lg shadow-sm">
-              <div className="text-3xl font-bold text-info mb-2">10K+</div>
-              <div className="text-base-content/70">Locations Marked</div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Statistics />
 
       {/* CTA Section */}
       <section className="py-16 px-6 bg-gradient-to-r from-primary/10 to-secondary/10">

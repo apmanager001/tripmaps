@@ -197,7 +197,7 @@ const POICard = ({
             {showActions && (
               <div className="flex items-center gap-2 flex-shrink-0">
                 {showFlagButton && hasImage && (
-                  <div className="tooltip tooltip-bottom" data-tip="Flag photo">
+                  <div className="tooltip tooltip-bottom tooltip-secondary" data-tip="Flag photo">
                     <button
                       onClick={(e) => handleFlagPhoto(e, poi.photos[0], poi)}
                       className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-red-600/80 text-white backdrop-blur-sm transition-all duration-200"
@@ -239,10 +239,7 @@ const POICard = ({
               {/* Description Icon Button */}
               {poi.description && (
                 <div className="relative flex-shrink-0">
-                  <div
-                    className="tooltip tooltip-bottom"
-                    data-tip="View description"
-                  >
+                  
                     <button
                       onClick={handleDescriptionToggle}
                       onMouseEnter={() => setShowDescriptionTooltip(true)}
@@ -251,7 +248,6 @@ const POICard = ({
                     >
                       <Info size={16} />
                     </button>
-                  </div>
 
                   {/* Description Tooltip */}
                   {showDescriptionTooltip && (
@@ -324,7 +320,7 @@ const POICard = ({
               <div className="flex items-center gap-2">
                 {showLikeButton && (
                   <div
-                    className="tooltip tooltip-top"
+                    className="tooltip tooltip-top tooltip-secondary"
                     data-tip={
                       !isAuthenticated
                         ? "Please log in to like POIs"
@@ -370,7 +366,7 @@ const POICard = ({
 
                 {/* View Photos Button */}
                 {hasImage && (
-                  <div className="tooltip tooltip-top" data-tip="View photos">
+                  <div className="tooltip tooltip-top tooltip-secondary" data-tip="View photos">
                     <button
                       onClick={handleViewPhotos}
                       className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"

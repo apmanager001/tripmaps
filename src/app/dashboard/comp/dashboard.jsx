@@ -10,12 +10,14 @@ import {
   ArrowRightToLine,
   LogOut,
   LocateFixed,
+  Shield,
 } from "lucide-react";
 import MyMaps from "./mymap";
 import AddMaps from "./addMap";
 import AddPOI from "./addPOI";
 import Search from "./search";
 import SettingsPage from "./settings";
+import Admin from "./admin";
 import { useAuthStore } from "@/store/useAuthStore";
 import { authApi } from "@/lib/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -123,6 +125,10 @@ const Dashboard = () => {
     { name: "Add Map", icon: <MapPinned size={20} /> },
     { name: "Search", icon: <Searched size={20} /> },
     { name: "Settings", icon: <Settings size={20} /> },
+    // Admin tab - only show if user has admin role
+    ...(user?.role === "admin"
+      ? [{ name: "Admin", icon: <Shield size={20} /> }]
+      : []),
   ];
 
   const renderContent = () => {
@@ -137,6 +143,8 @@ const Dashboard = () => {
         return <Search />;
       case "Settings":
         return <SettingsPage />;
+      case "Admin":
+        return <Admin />;
       default:
         return null;
     }

@@ -36,25 +36,25 @@ const Hero = () => {
           with ease.
         </p>
         <div className="flex flex-col gap-4 justify-center mb-6">
-          <Link href="/register" className="btn btn-primary btn-lg">
+          <Link href="/register" className="btn btn-primary btn-lg rounded-3xl">
             Get Started
           </Link>
           <div className="flex gap-2 justify-center">
             <button
               onClick={() => scrollToSection("popular-maps")}
-              className="btn btn-soft btn-sm border-white hover:bg-white hover:text-black transition-colors"
+              className="btn btn-soft btn-sm border-white hover:bg-white hover:text-black transition-colors rounded-3xl"
             >
               Popular Maps
             </button>
             <button
               onClick={() => scrollToSection("popular-locations")}
-              className="btn btn-soft btn-sm  border-white hover:bg-white hover:text-black transition-colors"
+              className="btn btn-soft btn-sm  border-white hover:bg-white hover:text-black transition-colors rounded-3xl"
             >
               Popular Locations
             </button>
             <button
               onClick={() => scrollToSection("top-users")}
-              className="btn btn-soft btn-sm border-white hover:bg-white hover:text-black transition-colors"
+              className="btn btn-soft btn-sm border-white hover:bg-white hover:text-black transition-colors rounded-3xl"
             >
               Top Users
             </button>

@@ -1,6 +1,7 @@
 "use client";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   MapPin,
   Users,
@@ -45,6 +46,7 @@ export default function Profile({ id }) {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const router = useRouter();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["profileData", id],
@@ -118,18 +120,11 @@ export default function Profile({ id }) {
         <div className="loading loading-spinner loading-lg text-primary"></div>
       </div>
     );
-  if (error)
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-pink-100">
-        <div className="text-center">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-red-500 mb-2">
-            Error Loading Profile
-          </h2>
-          <p className="text-gray-600">{error.message}</p>
-        </div>
-      </div>
-    );
+  if (error) {
+    // Redirect to not-found page instead of showing error
+    router.push("/not-found");
+    return null;
+  }
 
   const { user, maps, stats } = data.data;
   const mapCount = maps.length;

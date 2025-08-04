@@ -31,6 +31,7 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
+  ArrowUpDown,
 } from "lucide-react";
 import { mapApi, poiApi, socialApi } from "@/lib/api";
 import { toast } from "react-hot-toast";
@@ -67,6 +68,10 @@ export default function IndividualMaps({ id }) {
 
   // Navigation state
   const [navigateToCoordinates, setNavigateToCoordinates] = useState(null);
+
+  // Sort state
+  const [sortBy, setSortBy] = useState("date_visited"); // 'date_visited' or 'locationName'
+  const [sortOrder, setSortOrder] = useState("desc"); // 'asc' or 'desc'
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["individualMap", id],
@@ -338,11 +343,46 @@ export default function IndividualMaps({ id }) {
     return `https://www.timeanddate.com/worldclock/@${lat},${lng}`;
   };
 
+  // Sort POIs
+  const sortedPois = [...pois].sort((a, b) => {
+    if (sortBy === "date_visited") {
+      const aDate =
+        a.photos && a.photos.length > 0
+          ? new Date(a.photos[0].date_visited)
+          : null;
+      const bDate =
+        b.photos && b.photos.length > 0
+          ? new Date(b.photos[0].date_visited)
+          : null;
+
+      // If both have dates, compare them
+      if (aDate && bDate) {
+        return sortOrder === "desc" ? aDate - bDate : bDate - aDate;
+      }
+
+      // If only one has a date, the one with date comes first (or last depending on order)
+      if (aDate && !bDate) {
+        return sortOrder === "desc" ? -1 : 1;
+      }
+      if (!aDate && bDate) {
+        return sortOrder === "desc" ? 1 : -1;
+      }
+
+      // If neither has a date, sort by location name
+      return a.locationName.localeCompare(b.locationName);
+    } else {
+      // Sort by location name
+      return sortOrder === "desc"
+        ? b.locationName.localeCompare(a.locationName)
+        : a.locationName.localeCompare(b.locationName);
+    }
+  });
+
   // Pagination functions
-  const totalPages = Math.ceil(pois.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedPois.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentPois = pois.slice(startIndex, endIndex);
+  const currentPois = sortedPois.slice(startIndex, endIndex);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -372,6 +412,21 @@ export default function IndividualMaps({ id }) {
       if (poiSection) {
         poiSection.scrollIntoView({ behavior: "smooth" });
       }
+    }
+  };
+
+  const handleSortChange = (newSortBy, newSortOrder) => {
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+    // Reset to first page when sorting changes
+    setCurrentPage(1);
+  };
+
+  const getSortButtonText = () => {
+    if (sortBy === "date_visited") {
+      return sortOrder === "desc" ? "Date Visited ↓" : "Date Visited ↑";
+    } else {
+      return sortOrder === "desc" ? "Location Name ↓" : "Location Name ↑";
     }
   };
 
@@ -633,21 +688,6 @@ export default function IndividualMaps({ id }) {
                 <MessageCircle className="w-4 h-4" />
                 {/* <span className="font-medium">Comments</span> */}
               </button>
-              <div className="flex flex-wrap items-center gap-3">
-                {/* Owner Actions */}
-                {isAuthenticated &&
-                  currentUser &&
-                  mapUser &&
-                  currentUser._id === mapUser._id && (
-                    <button
-                      onClick={() => setShowAddPOIModal(true)}
-                      className="btn btn-primary btn-sm gap-2 shadow-md hover:shadow-lg transition-all duration-200"
-                    >
-                      <Plus size={16} />
-                      Add Location
-                    </button>
-                  )}
-              </div>
             </div>
 
             {/* Right side - Owner Actions and Share */}
@@ -690,6 +730,79 @@ export default function IndividualMaps({ id }) {
                     Add Location
                   </button>
                 )}
+              <div className="flex items-center gap-2">
+                <div className="dropdown dropdown-end">
+                  <button
+                    className="btn btn-primary btn-soft btn-md gap-2 hover:btn-primary transition-all duration-200"
+                    tabIndex={0}
+                  >
+                    <ArrowUpDown size={16} />
+                    {getSortButtonText()}
+                  </button>
+                  <ul className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50">
+                    <li>
+                      <button
+                        onClick={() => handleSortChange("date_visited", "desc")}
+                        className={`flex items-center justify-between ${
+                          sortBy === "date_visited" && sortOrder === "desc"
+                            ? "bg-primary text-primary-content"
+                            : ""
+                        }`}
+                      >
+                        <span>Date Visited ↓</span>
+                        {sortBy === "date_visited" && sortOrder === "desc" && (
+                          <span className="text-xs">✓</span>
+                        )}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => handleSortChange("date_visited", "asc")}
+                        className={`flex items-center justify-between ${
+                          sortBy === "date_visited" && sortOrder === "asc"
+                            ? "bg-primary text-primary-content"
+                            : ""
+                        }`}
+                      >
+                        <span>Date Visited ↑</span>
+                        {sortBy === "date_visited" && sortOrder === "asc" && (
+                          <span className="text-xs">✓</span>
+                        )}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => handleSortChange("locationName", "asc")}
+                        className={`flex items-center justify-between ${
+                          sortBy === "locationName" && sortOrder === "asc"
+                            ? "bg-primary text-primary-content"
+                            : ""
+                        }`}
+                      >
+                        <span>Location Name ↑</span>
+                        {sortBy === "locationName" && sortOrder === "asc" && (
+                          <span className="text-xs">✓</span>
+                        )}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => handleSortChange("locationName", "desc")}
+                        className={`flex items-center justify-between ${
+                          sortBy === "locationName" && sortOrder === "desc"
+                            ? "bg-primary text-primary-content"
+                            : ""
+                        }`}
+                      >
+                        <span>Location Name ↓</span>
+                        {sortBy === "locationName" && sortOrder === "desc" && (
+                          <span className="text-xs">✓</span>
+                        )}
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
 

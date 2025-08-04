@@ -58,9 +58,9 @@ export default function PopularLocations() {
           <POICard
             key={poi._id}
             poi={poi}
-            showActions={false}
+            showActions={true}
             showLikeButton={true}
-            showFlagButton={false}
+            showFlagButton={true}
             mapLocation={false}
             compact={true}
             className="cursor-pointer"

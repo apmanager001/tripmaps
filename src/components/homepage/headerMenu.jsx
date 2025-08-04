@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   House,
+  Shield,
 } from "lucide-react";
 import UserStatus from "./userHeader";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -32,6 +33,9 @@ const NavigationMenu = () => {
     { name: "Add Map", value: "Add Map", icon: <MapPinned size={16} /> },
     { name: "Search", value: "Search", icon: <Search size={16} /> },
     { name: "Settings", value: "Settings", icon: <Settings size={16} /> },
+    ...(user?.role === "admin"
+      ? [{ name: "Admin", value: "Admin", icon: <Shield size={16} /> }]
+      : []),
   ];
 
   const fullMenu = (

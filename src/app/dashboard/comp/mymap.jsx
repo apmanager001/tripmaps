@@ -276,9 +276,9 @@ export default function Dashsection3() {
       </div>
 
       {/* Top Section: Profile + Friends Side-by-Side */}
-      <div className="flex flex-col md:flex-row gap-4 ">
+      <div className="flex flex-col md:flex-row gap-4">
         {/* Profile Info */}
-        <div className="flex-1 bg-base-200 md:shadow-sm md:rounded-lg overflow-auto">
+        <div className="flex-1 bg-base-200 md:shadow-sm md:rounded-lg overflow-auto md:w-60 min-w-60">
           <div className="flex flex-col">
             <div className="flex items-center p-6 gap-4 border-b border-base-300 flex-wrap">
               {/* <CircleUser size={48} className="text-primary" /> */}
@@ -324,7 +324,7 @@ export default function Dashsection3() {
         </div>
 
         {/* Friends Panel */}
-        <div className="md:w-72 bg-base-200 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96">
+        <div className="md:w-52 bg-base-200 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96">
           <h2 className="text-lg font-semibold text-primary border-b border-base-300 pb-2">
             Friends
           </h2>
@@ -342,7 +342,7 @@ export default function Dashsection3() {
                   href={`/profile/${
                     friend.followed_user_id?.username || friend.username
                   }`}
-                  className="flex items-center gap-3 flex-1"
+                  className="flex items-center gap-3 flex-1 truncate"
                 >
                   <CircleUser size={32} className="text-secondary" />
                   <div>
@@ -377,7 +377,7 @@ export default function Dashsection3() {
         </div>
 
         {/* Bookmarked Maps Panel */}
-        <div className="md:w-72 bg-base-200 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96">
+        <div className="md:w-60 bg-base-200 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96 min-w-60">
           <h2 className="text-lg font-semibold text-primary border-b border-base-300 pb-2">
             Bookmarked Maps
           </h2>

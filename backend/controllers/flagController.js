@@ -8,7 +8,7 @@ const User = require("../model/user");
 const createFlag = async (req, res) => {
   try {
     const { photoId, reason, details } = req.body;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     // Validate required fields
     if (!photoId) {
@@ -19,7 +19,7 @@ const createFlag = async (req, res) => {
     }
 
     // Get photo details
-    const photo = await Photo.findById(photoId).populate("poi");
+    const photo = await Photo.findById(photoId).populate("poi_id");
     if (!photo) {
       return res.status(404).json({
         success: false,
@@ -28,7 +28,7 @@ const createFlag = async (req, res) => {
     }
 
     // Get POI details
-    const poi = await POI.findById(photo.poi).populate("map");
+    const poi = await POI.findById(photo.poi_id).populate("map_id");
     if (!poi) {
       return res.status(404).json({
         success: false,
@@ -53,9 +53,9 @@ const createFlag = async (req, res) => {
     const flag = new Flag({
       photoId,
       flaggedBy: userId,
-      photoOwner: photo.user,
-      poiId: photo.poi,
-      mapId: poi.map,
+      photoOwner: photo.user_id,
+      poiId: photo.poi_id,
+      mapId: poi.map_id,
       reason: reason || "other",
       details: details || "",
     });
@@ -81,13 +81,13 @@ const getAllFlags = async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
 
-    // Check if user is admin (you'll need to implement admin check)
-    // if (!req.user.isAdmin) {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: "Access denied",
-    //   });
-    // }
+    // Admin check is handled by adminAuth middleware
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Admin access required",
+      });
+    }
 
     const query = {};
     if (status) {
@@ -95,11 +95,11 @@ const getAllFlags = async (req, res) => {
     }
 
     const flags = await Flag.find(query)
-      .populate("photoId", "s3Url thumbnailUrl")
+      .populate("photoId", "s3Url s3Key")
       .populate("flaggedBy", "username email")
       .populate("photoOwner", "username email")
       .populate("poiId", "locationName")
-      .populate("mapId", "title")
+      .populate("mapId", "mapName")
       .populate("reviewedBy", "username")
       .sort({ createdAt: -1 })
       .limit(limit * 1)
@@ -129,15 +129,15 @@ const updateFlagStatus = async (req, res) => {
   try {
     const { flagId } = req.params;
     const { status, adminNotes } = req.body;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
-    // Check if user is admin (you'll need to implement admin check)
-    // if (!req.user.isAdmin) {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: "Access denied",
-    //   });
-    // }
+    // Admin check is handled by adminAuth middleware
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Admin access required",
+      });
+    }
 
     const flag = await Flag.findById(flagId);
     if (!flag) {
@@ -171,14 +171,14 @@ const updateFlagStatus = async (req, res) => {
 // Get flags by user
 const getFlagsByUser = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id;
     const { page = 1, limit = 20 } = req.query;
 
     const flags = await Flag.find({ flaggedBy: userId })
-      .populate("photoId", "s3Url thumbnailUrl")
+      .populate("photoId", "s3Url s3Key")
       .populate("photoOwner", "username")
       .populate("poiId", "locationName")
-      .populate("mapId", "title")
+      .populate("mapId", "mapName")
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit)
@@ -206,7 +206,7 @@ const getFlagsByUser = async (req, res) => {
 const checkUserFlag = async (req, res) => {
   try {
     const { photoId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     const flag = await Flag.findOne({
       photoId,

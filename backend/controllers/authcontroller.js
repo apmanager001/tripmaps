@@ -143,7 +143,7 @@ const verifyUser = async (req, res) => {
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded._id).select(
-      "username email profilePicture"
+      "username email profilePicture role"
     ); // Use _id
 
     if (!user) {

@@ -100,6 +100,8 @@ const {
   checkUserFlag,
 } = require("../controllers/flagController");
 
+const { proxyImage, getImageUrl } = require("../controllers/imageController");
+
 const {
   submitContact,
   getAllContacts,
@@ -111,6 +113,7 @@ const {
 } = require("../controllers/contactController");
 
 const { jwtAuth, optionalJwtAuth } = require("../helpers/jwtAuth");
+const { adminAuth } = require("../middleware/adminAuth");
 const {
   validateRegistration,
   validateLogin,
@@ -225,10 +228,14 @@ router.put("/photos/:photoId", jwtAuth, updatePhoto);
 
 // ===== FLAG ROUTES =====
 router.post("/flags", jwtAuth, createFlag);
-router.get("/flags", jwtAuth, getAllFlags);
-router.put("/flags/:flagId/status", jwtAuth, updateFlagStatus);
+router.get("/flags", jwtAuth, adminAuth, getAllFlags);
+router.put("/flags/:flagId/status", jwtAuth, adminAuth, updateFlagStatus);
 router.get("/flags/user", jwtAuth, getFlagsByUser);
 router.get("/flags/check/:photoId", jwtAuth, checkUserFlag);
+
+// ===== IMAGE PROXY ROUTES =====
+router.get("/images/:key(*)", proxyImage); // Proxy images with CORS headers
+router.get("/images/url/:key(*)", getImageUrl); // Get presigned URLs
 
 // ===== CONTACT ROUTES =====
 // Public contact form submission

@@ -133,7 +133,7 @@ const MapCard = ({
           <button
             onClick={handleBookmarkClick}
             disabled={isBookmarking}
-            className="p-2 rounded-full bg-black/40 hover:bg-black/60 transition-all duration-200 backdrop-blur-sm border border-white/20 hover:border-white/40 group/bookmark self-end relative"
+            className="cursor-pointer p-2 rounded-full bg-black/40 hover:bg-black/60 transition-all duration-200 backdrop-blur-sm border border-white/20 hover:border-white/40 group/bookmark self-end relative"
           >
             <BookmarkIcon
               size={18}
@@ -242,11 +242,11 @@ const MapCard = ({
           <div className="flex-shrink-0 self-start sm:self-center mt-4">
             <Link
               href={`/maps/${map._id}`}
-              className="btn btn-primary btn-sm group-hover:btn-secondary transition-all duration-300 w-full sm:w-auto bg-white/20 hover:bg-white/30 text-white border-white/30 hover:border-white/50 backdrop-blur-sm"
+              className="btn bg-black/40 btn-soft rounded-3xl btn-sm transition-all duration-300 w-full sm:w-auto border-white/30 hover:border-white/50 text-white/60"
               onClick={(e) => e.stopPropagation()}
             >
-              <MapPin size={16} className="mr-2" />
-              Explore
+              <MapPin size={16}  />
+              View Map
             </Link>
           </div>
         )}

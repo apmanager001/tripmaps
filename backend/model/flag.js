@@ -33,7 +33,7 @@ const flagSchema = new mongoose.Schema(
     // Map the POI belongs to
     mapId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "TripMaps",
+      ref: "Map",
       required: true,
     },
 
