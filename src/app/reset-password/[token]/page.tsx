@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -39,7 +40,7 @@ export default function ResetPasswordPage() {
     },
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!password.trim()) {
