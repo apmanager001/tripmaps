@@ -40,6 +40,49 @@ const userSchema = new Schema({
   bio: {
     type: String,
   },
+  // Social media links
+  socialMedia: {
+    facebook: {
+      type: String,
+      default: null,
+    },
+    instagram: {
+      type: String,
+      default: null,
+    },
+    tiktok: {
+      type: String,
+      default: null,
+    },
+    youtube: {
+      type: String,
+      default: null,
+    },
+    twitter: {
+      type: String,
+      default: null,
+    },
+    linkedin: {
+      type: String,
+      default: null,
+    },
+    website: {
+      type: String,
+      default: null,
+    },
+    twitch: {
+      type: String,
+      default: null,
+    },
+    discord: {
+      type: String,
+      default: null,
+    },
+    linktree: {
+      type: String,
+      default: null,
+    },
+  },
   // Profile picture fields
   profilePicture: {
     s3Key: {
@@ -78,6 +121,28 @@ const userSchema = new Schema({
     default: null,
   },
   lastPaymentDate: {
+    type: Date,
+    default: null,
+  },
+  // Password reset fields
+  resetPasswordToken: {
+    type: String,
+    default: null,
+  },
+  resetPasswordExpires: {
+    type: Date,
+    default: null,
+  },
+  // Email verification fields
+  emailVerified: {
+    type: Boolean,
+    default: false,
+  },
+  emailVerificationToken: {
+    type: String,
+    default: null,
+  },
+  emailVerificationExpires: {
     type: Date,
     default: null,
   },

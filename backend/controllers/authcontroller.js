@@ -2,6 +2,7 @@ const User = require("../model/user.js");
 const dotenv = require("dotenv").config();
 const { hashPassword, comparePassword } = require("../helpers/auth.js");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const {
   generateProfilePresignedUrl,
 } = require("../services/profilePictureService");
@@ -44,6 +45,16 @@ const registerUser = async (req, res) => {
       date.getMonth() + 1
     }-${date.getDate()}-${date.getFullYear()}`;
 
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const emailVerificationToken = crypto
+      .createHash("sha256")
+      .update(verificationToken)
+      .digest("hex");
+
+    // Set token expiration (24 hours from now)
+    const emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
     // Create user
     const user = await User.create({
       username,
@@ -51,9 +62,57 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
       role: "member",
       createdDate: todaysDate,
+      emailVerificationToken,
+      emailVerificationExpires,
     });
 
-    return res.status(201).json({ success: true, user });
+    // Send verification email
+    try {
+      const nodemailer = require("nodemailer");
+      const transporter = nodemailer.createTransporter({
+        host: "smtp.zoho.com",
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
+
+      const verificationUrl = `${process.env.FRONTEND_URL}/verify-email/${verificationToken}`;
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Verify Your Email - TripMaps",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #2563eb;">Welcome to TripMaps!</h2>
+            <p>Hello ${username},</p>
+            <p>Thank you for registering with TripMaps! Please verify your email address to complete your registration.</p>
+            <p>Click the button below to verify your email:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Verify Email</a>
+            </div>
+            <p>This link will expire in 24 hours.</p>
+            <p>If you didn't create an account with TripMaps, please ignore this email.</p>
+            <p>Best regards,<br>The TripMaps Team</p>
+          </div>
+        `,
+      };
+
+      await transporter.sendMail(mailOptions);
+    } catch (emailError) {
+      console.error("Error sending verification email:", emailError);
+      // Don't fail registration if email fails, just log it
+    }
+
+    return res.status(201).json({
+      success: true,
+      user,
+      message:
+        "Registration successful! Please check your email to verify your account.",
+    });
   } catch (err) {
     console.error("Error during registration:", err);
     return res.status(500).json({
@@ -143,7 +202,7 @@ const verifyUser = async (req, res) => {
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded._id).select(
-      "username email profilePicture role"
+      "username email profilePicture role emailVerified"
     ); // Use _id
 
     if (!user) {
@@ -421,6 +480,109 @@ const facebookCallback = async (req, res) => {
   }
 };
 
+// Verify email
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Verification token is required",
+      });
+    }
+
+    // Hash the token to compare with stored token
+    const emailVerificationToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    // Find user with valid token and not expired
+    const user = await User.findOne({
+      emailVerificationToken,
+      emailVerificationExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired verification token",
+      });
+    }
+
+    // Mark email as verified and clear verification token
+    user.emailVerified = true;
+    user.emailVerificationToken = null;
+    user.emailVerificationExpires = null;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Email verified successfully",
+    });
+  } catch (error) {
+    console.error("Error in email verification:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error verifying email",
+    });
+  }
+};
+
+// Reset password
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Token and password are required",
+      });
+    }
+
+    // Hash the token to compare with stored token
+    const resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    // Find user with valid token and not expired
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset token",
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await hashPassword(password);
+
+    // Update user password and clear reset token
+    user.password = hashedPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully",
+    });
+  } catch (error) {
+    console.error("Error in reset password:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error resetting password",
+    });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -430,4 +592,6 @@ module.exports = {
   googleCallback,
   facebookAuth,
   facebookCallback,
+  resetPassword,
+  verifyEmail,
 };

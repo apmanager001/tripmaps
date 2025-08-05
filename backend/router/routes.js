@@ -11,7 +11,14 @@ const {
   googleCallback,
   facebookAuth,
   facebookCallback,
+  resetPassword,
+  verifyEmail,
 } = require("../controllers/authcontroller");
+
+const {
+  sendPasswordResetEmail,
+  sendEmailVerification,
+} = require("../controllers/mailcontroller");
 
 const {
   getUserProfile,
@@ -128,6 +135,10 @@ router.post("/register", validateRegistration, registerUser);
 router.post("/login", validateLogin, loginUser);
 router.post("/logout", logoutUser);
 router.get("/verifyUser", verifyUser);
+router.post("/forgot-password", sendPasswordResetEmail);
+router.post("/reset-password", resetPassword);
+router.post("/send-verification-email", sendEmailVerification);
+router.get("/verify-email/:token", verifyEmail);
 
 // ===== OAUTH ROUTES =====
 router.get("/auth/google", googleAuth);

@@ -12,7 +12,9 @@ import {
   Clock,
   Crown,
   Check,
+  Globe,
 } from "lucide-react";
+import { SocialIcon } from "react-social-icons";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/store/useAuthStore";
 import { userApi, authApi, stripeApi } from "@/lib/api";
@@ -28,11 +30,27 @@ export default function Settings() {
   const [emailPrivate, setEmailPrivate] = useState(false);
   const [isEditingEmail, setIsEditingEmail] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
   const [createdDate, setCreatedDate] = useState("");
   const [updatedDate, setUpdatedDate] = useState("");
   const [subscriptionStatus, setSubscriptionStatus] = useState("inactive");
   const [currentPeriodEnd, setCurrentPeriodEnd] = useState(null);
   const [isUpgrading, setIsUpgrading] = useState(false);
+
+  // Social media states
+  const [socialMedia, setSocialMedia] = useState({
+    facebook: "",
+    instagram: "",
+    tiktok: "",
+    youtube: "",
+    twitter: "",
+    linkedin: "",
+    website: "",
+    twitch: "",
+    discord: "",
+    linktree: "",
+  });
+  const [isEditingSocial, setIsEditingSocial] = useState(false);
 
   // Fetch user data
   const { data: userData, isLoading } = useQuery({
@@ -63,6 +81,7 @@ export default function Settings() {
       queryClient.invalidateQueries(["userProfile", currentUser._id]);
       setIsEditingEmail(false);
       setIsEditingBio(false);
+      setIsEditingSocial(false);
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update profile");
@@ -111,8 +130,23 @@ export default function Settings() {
       setNewEmail(user.email || "");
       setBio(user.bio || "");
       setEmailPrivate(user.emailPrivate || false);
+      setEmailVerified(user.emailVerified || false);
       setCreatedDate(user.createdDate || "");
       setUpdatedDate(user.updated_at || "");
+
+      // Initialize social media data
+      setSocialMedia({
+        facebook: user.socialMedia?.facebook || "",
+        instagram: user.socialMedia?.instagram || "",
+        tiktok: user.socialMedia?.tiktok || "",
+        youtube: user.socialMedia?.youtube || "",
+        twitter: user.socialMedia?.twitter || "",
+        linkedin: user.socialMedia?.linkedin || "",
+        website: user.socialMedia?.website || "",
+        twitch: user.socialMedia?.twitch || "",
+        discord: user.socialMedia?.discord || "",
+        linktree: user.socialMedia?.linktree || "",
+      });
     }
   }, [userData]);
 
@@ -146,8 +180,45 @@ export default function Settings() {
     updateProfileMutation.mutate({ emailPrivate: !emailPrivate });
   };
 
+  const handleSocialMediaUpdate = () => {
+    updateProfileMutation.mutate({ socialMedia });
+  };
+
   const handleLogout = () => {
     logoutMutation.mutate();
+  };
+
+  // Resend verification email mutation
+  const resendVerificationMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND}/send-verification-email`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, isResend: true }),
+          credentials: "include",
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok || data.success === false) {
+        throw new Error(data.message || "Failed to send verification email");
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Verification email sent successfully!");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to send verification email");
+    },
+  });
+
+  const handleResendVerification = () => {
+    resendVerificationMutation.mutate();
   };
 
   const handleUpgrade = async () => {
@@ -192,10 +263,6 @@ export default function Settings() {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold text-primary text-center mb-8">
-        Settings
-      </h1>
-
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column */}
@@ -269,7 +336,63 @@ export default function Settings() {
                       placeholder="Enter new email"
                     />
                   ) : (
-                    <p className="font-semibold">{email}</p>
+                    <div>
+                      <p className="font-semibold">{email}</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-2">
+                          {emailVerified ? (
+                            <div className="flex items-center gap-1 badge badge-success">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                              <span className="text-sm">Email verified</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 badge badge-warning">
+                              <svg
+                                className="w-4 h-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                                />
+                              </svg>
+                              <span className="text-sm">
+                                Email not verified
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {!emailVerified && (
+                          <button
+                            onClick={handleResendVerification}
+                            disabled={resendVerificationMutation.isPending}
+                            className="btn btn-sm  rounded-full btn-warning"
+                          >
+                            {resendVerificationMutation.isPending ? (
+                              <div className="loading loading-spinner loading-xs"></div>
+                            ) : (
+                              "Resend"
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
 
@@ -324,6 +447,26 @@ export default function Settings() {
                     <p className="font-semibold">{bio || "No bio added yet"}</p>
                   )}
                 </div>
+
+                {/* Change Password Button */}
+                <div className="p-3 bg-base-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">
+                        Password
+                      </label>
+                      <p className="text-sm text-gray-500">
+                        Change your account password
+                      </p>
+                    </div>
+                    <a
+                      href="/forgot-password"
+                      className="btn btn-sm rounded-full btn-error btn-soft"
+                    >
+                      Change Password
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -351,6 +494,397 @@ export default function Settings() {
                   onChange={handleEmailPrivacyToggle}
                   disabled={updateProfileMutation.isPending}
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Social Media Links */}
+          <div className="card bg-base-100 shadow-lg">
+            <div className="card-body">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="card-title text-xl">Social Media Links</h2>
+                {!isEditingSocial ? (
+                  <button
+                    onClick={() => setIsEditingSocial(true)}
+                    className="btn btn-sm btn-ghost"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <div className="flex gap-1">
+                    <button
+                      onClick={handleSocialMediaUpdate}
+                      disabled={updateProfileMutation.isPending}
+                      className="btn btn-sm btn-primary"
+                    >
+                      {updateProfileMutation.isPending ? (
+                        <div className="loading loading-spinner loading-xs"></div>
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingSocial(false);
+                        // Reset to original values
+                        if (userData?.data?.user) {
+                          const user = userData.data.user;
+                          setSocialMedia({
+                            facebook: user.socialMedia?.facebook || "",
+                            instagram: user.socialMedia?.instagram || "",
+                            tiktok: user.socialMedia?.tiktok || "",
+                            youtube: user.socialMedia?.youtube || "",
+                            twitter: user.socialMedia?.twitter || "",
+                            linkedin: user.socialMedia?.linkedin || "",
+                            website: user.socialMedia?.website || "",
+                            twitch: user.socialMedia?.twitch || "",
+                            discord: user.socialMedia?.discord || "",
+                            linktree: user.socialMedia?.linktree || "",
+                          });
+                        }
+                      }}
+                      className="btn btn-sm btn-ghost"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                {/* Facebook */}
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <SocialIcon
+                    network="facebook"
+                    fgColor="white"
+                    bgColor="#1877f2"
+                    style={{ width: 20, height: 20 }}
+                    as="div"
+                  />
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-600">
+                      Facebook
+                    </label>
+                    {isEditingSocial ? (
+                      <input
+                        type="url"
+                        value={socialMedia.facebook}
+                        onChange={(e) =>
+                          setSocialMedia((prev) => ({
+                            ...prev,
+                            facebook: e.target.value,
+                          }))
+                        }
+                        className="input input-bordered input-sm w-full mt-1"
+                        placeholder="https://facebook.com/yourprofile"
+                      />
+                    ) : (
+                      <p className="font-semibold text-sm">
+                        {socialMedia.facebook || "Not added"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Instagram */}
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <SocialIcon
+                    network="instagram"
+                    fgColor="white"
+                    bgColor="#e4405f"
+                    style={{ width: 20, height: 20 }}
+                    as="div"
+                  />
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-600">
+                      Instagram
+                    </label>
+                    {isEditingSocial ? (
+                      <input
+                        type="url"
+                        value={socialMedia.instagram}
+                        onChange={(e) =>
+                          setSocialMedia((prev) => ({
+                            ...prev,
+                            instagram: e.target.value,
+                          }))
+                        }
+                        className="input input-bordered input-sm w-full mt-1"
+                        placeholder="https://instagram.com/yourprofile"
+                      />
+                    ) : (
+                      <p className="font-semibold text-sm">
+                        {socialMedia.instagram || "Not added"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* TikTok */}
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <SocialIcon
+                    network="tiktok"
+                    fgColor="white"
+                    bgColor="#000000"
+                    style={{ width: 20, height: 20 }}
+                    as="div"
+                  />
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-600">
+                      TikTok
+                    </label>
+                    {isEditingSocial ? (
+                      <input
+                        type="url"
+                        value={socialMedia.tiktok}
+                        onChange={(e) =>
+                          setSocialMedia((prev) => ({
+                            ...prev,
+                            tiktok: e.target.value,
+                          }))
+                        }
+                        className="input input-bordered input-sm w-full mt-1"
+                        placeholder="https://tiktok.com/@yourprofile"
+                      />
+                    ) : (
+                      <p className="font-semibold text-sm">
+                        {socialMedia.tiktok || "Not added"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* YouTube */}
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <SocialIcon
+                    network="youtube"
+                    fgColor="white"
+                    bgColor="#ff0000"
+                    style={{ width: 20, height: 20 }}
+                    as="div"
+                  />
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-600">
+                      YouTube
+                    </label>
+                    {isEditingSocial ? (
+                      <input
+                        type="url"
+                        value={socialMedia.youtube}
+                        onChange={(e) =>
+                          setSocialMedia((prev) => ({
+                            ...prev,
+                            youtube: e.target.value,
+                          }))
+                        }
+                        className="input input-bordered input-sm w-full mt-1"
+                        placeholder="https://youtube.com/@yourchannel"
+                      />
+                    ) : (
+                      <p className="font-semibold text-sm">
+                        {socialMedia.youtube || "Not added"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Twitter/X */}
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <SocialIcon
+                    network="twitter"
+                    fgColor="white"
+                    bgColor="#1da1f2"
+                    style={{ width: 20, height: 20 }}
+                    as="div"
+                  />
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-600">
+                      Twitter/X
+                    </label>
+                    {isEditingSocial ? (
+                      <input
+                        type="url"
+                        value={socialMedia.twitter}
+                        onChange={(e) =>
+                          setSocialMedia((prev) => ({
+                            ...prev,
+                            twitter: e.target.value,
+                          }))
+                        }
+                        className="input input-bordered input-sm w-full mt-1"
+                        placeholder="https://twitter.com/yourprofile"
+                      />
+                    ) : (
+                      <p className="font-semibold text-sm">
+                        {socialMedia.twitter || "Not added"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* LinkedIn */}
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <SocialIcon
+                    network="linkedin"
+                    fgColor="white"
+                    bgColor="#0077b5"
+                    style={{ width: 20, height: 20 }}
+                    as="div"
+                  />
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-600">
+                      LinkedIn
+                    </label>
+                    {isEditingSocial ? (
+                      <input
+                        type="url"
+                        value={socialMedia.linkedin}
+                        onChange={(e) =>
+                          setSocialMedia((prev) => ({
+                            ...prev,
+                            linkedin: e.target.value,
+                          }))
+                        }
+                        className="input input-bordered input-sm w-full mt-1"
+                        placeholder="https://linkedin.com/in/yourprofile"
+                      />
+                    ) : (
+                      <p className="font-semibold text-sm">
+                        {socialMedia.linkedin || "Not added"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Website */}
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <Globe className="w-5 h-5 text-green-600" />
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-600">
+                      Website
+                    </label>
+                    {isEditingSocial ? (
+                      <input
+                        type="url"
+                        value={socialMedia.website}
+                        onChange={(e) =>
+                          setSocialMedia((prev) => ({
+                            ...prev,
+                            website: e.target.value,
+                          }))
+                        }
+                        className="input input-bordered input-sm w-full mt-1"
+                        placeholder="https://yourwebsite.com"
+                      />
+                    ) : (
+                      <p className="font-semibold text-sm">
+                        {socialMedia.website || "Not added"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Twitch */}
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <SocialIcon
+                    network="twitch"
+                    fgColor="white"
+                    bgColor="#9146ff"
+                    style={{ width: 20, height: 20 }}
+                    as="div"
+                  />
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-600">
+                      Twitch
+                    </label>
+                    {isEditingSocial ? (
+                      <input
+                        type="url"
+                        value={socialMedia.twitch}
+                        onChange={(e) =>
+                          setSocialMedia((prev) => ({
+                            ...prev,
+                            twitch: e.target.value,
+                          }))
+                        }
+                        className="input input-bordered input-sm w-full mt-1"
+                        placeholder="https://twitch.tv/yourchannel"
+                      />
+                    ) : (
+                      <p className="font-semibold text-sm">
+                        {socialMedia.twitch || "Not added"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Discord */}
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <SocialIcon
+                    network="discord"
+                    fgColor="white"
+                    bgColor="#5865f2"
+                    style={{ width: 20, height: 20 }}
+                    as="div"
+                  />
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-600">
+                      Discord
+                    </label>
+                    {isEditingSocial ? (
+                      <input
+                        type="text"
+                        value={socialMedia.discord}
+                        onChange={(e) =>
+                          setSocialMedia((prev) => ({
+                            ...prev,
+                            discord: e.target.value,
+                          }))
+                        }
+                        className="input input-bordered input-sm w-full mt-1"
+                        placeholder="YourDiscord#1234"
+                      />
+                    ) : (
+                      <p className="font-semibold text-sm">
+                        {socialMedia.discord || "Not added"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Linktree */}
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <SocialIcon
+                    network="linktree"
+                    fgColor="white"
+                    bgColor="#39e09b"
+                    style={{ width: 20, height: 20 }}
+                    as="div"
+                  />
+                  <div className="flex-1">
+                    <label className="text-sm font-medium text-gray-600">
+                      Linktree
+                    </label>
+                    {isEditingSocial ? (
+                      <input
+                        type="url"
+                        value={socialMedia.linktree}
+                        onChange={(e) =>
+                          setSocialMedia((prev) => ({
+                            ...prev,
+                            linktree: e.target.value,
+                          }))
+                        }
+                        className="input input-bordered input-sm w-full mt-1"
+                        placeholder="https://linktr.ee/yourprofile"
+                      />
+                    ) : (
+                      <p className="font-semibold text-sm">
+                        {socialMedia.linktree || "Not added"}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

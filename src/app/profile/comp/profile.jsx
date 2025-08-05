@@ -15,7 +15,9 @@ import {
   Clock,
   UserPlus,
   UserMinus,
+  ExternalLink,
 } from "lucide-react";
+import { SocialIcon } from "react-social-icons";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import MapCard from "@/components/MapCard";
 import { userApi, mapApi, socialApi } from "@/lib/api";
@@ -41,7 +43,6 @@ async function fetchProfileData(id) {
     throw error;
   }
 }
-
 export default function Profile({ id }) {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
@@ -153,6 +154,54 @@ export default function Profile({ id }) {
         },
       };
     });
+  };
+
+  // Helper function to get social media network and styling
+  const getSocialMediaInfo = (platform) => {
+    const socialInfo = {
+      facebook: {
+        network: "facebook",
+        bgColor: "bg-blue-50",
+        iconBg: "#1877f2",
+      },
+      instagram: {
+        network: "instagram",
+        bgColor: "bg-pink-50",
+        iconBg: "#e4405f",
+      },
+      tiktok: { network: "tiktok", bgColor: "bg-black", iconBg: "#000000" },
+      youtube: { network: "youtube", bgColor: "bg-red-50", iconBg: "#ff0000" },
+      twitter: { network: "twitter", bgColor: "bg-blue-50", iconBg: "#1da1f2" },
+      linkedin: {
+        network: "linkedin",
+        bgColor: "bg-blue-50",
+        iconBg: "#0077b5",
+      },
+      website: {
+        network: "linktree",
+        bgColor: "bg-green-50",
+        iconBg: "#10b981",
+        customIcon: true,
+      },
+      twitch: { network: "twitch", bgColor: "bg-purple-50", iconBg: "#9146ff" },
+      discord: {
+        network: "discord",
+        bgColor: "bg-indigo-50",
+        iconBg: "#5865f2",
+      },
+      linktree: {
+        network: "linktree",
+        bgColor: "bg-green-50",
+        iconBg: "#39e09b",
+      },
+    };
+    return (
+      socialInfo[platform] || {
+        network: "website",
+        bgColor: "bg-gray-50",
+        iconBg: "#6b7280",
+      }
+    );
   };
 
   return (
@@ -298,6 +347,80 @@ export default function Profile({ id }) {
                 </div>
               </div>
             </div>
+
+            {/* Social Media Links */}
+            {user.socialMedia &&
+              Object.values(user.socialMedia).some((link) => link) && (
+                <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <Globe size={20} className="text-blue-600" />
+                    Social Media
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(user.socialMedia).map(
+                      ([platform, link]) => {
+                        if (!link) return null;
+
+                        const { network, bgColor, iconBg, customIcon } =
+                          getSocialMediaInfo(platform);
+                        const platformName =
+                          platform.charAt(0).toUpperCase() + platform.slice(1);
+
+                        return (
+                          <a
+                            key={platform}
+                            href={
+                              platform === "discord"
+                                ? `https://discord.com/users/${link}`
+                                : link
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:shadow-md transition-all duration-200 ${bgColor} hover:scale-105`}
+                          >
+                            <div className="flex-shrink-0">
+                              {customIcon ? (
+                                <div
+                                  className="w-5 h-5 rounded flex items-center justify-center"
+                                  // style={{ backgroundColor: iconBg }}
+                                >
+                                  <Globe
+                                    size={16}
+                                    className="w-5 h-5 text-green-600"
+                                  />
+                                </div>
+                              ) : (
+                                <SocialIcon
+                                  network={network}
+                                  fgColor="white"
+                                  bgColor={iconBg}
+                                  style={{ width: 20, height: 20 }}
+                                  as="div"
+                                />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm text-gray-800 truncate">
+                                {platformName}
+                              </p>
+                              <p className="text-xs text-gray-500 truncate">
+                                {platform === "discord"
+                                  ? link
+                                  : new URL(link).hostname}
+                              </p>
+                            </div>
+                            <ExternalLink
+                              size={16}
+                              className="text-gray-400 flex-shrink-0"
+                            />
+                          </a>
+                        );
+                      }
+                    )}
+                  </div>
+                </div>
+              )}
           </div>
 
           {/* Right Column - Maps */}

@@ -122,7 +122,7 @@ const getUserProfile = async (req, res) => {
 const updateUserProfile = async (req, res) => {
   try {
     const { id } = req.params;
-    const { username, bio, emailPrivate } = req.body;
+    const { username, bio, emailPrivate, email, socialMedia } = req.body;
 
     // Check if user exists and is authorized
     if (req.user._id.toString() !== id) {
@@ -136,6 +136,8 @@ const updateUserProfile = async (req, res) => {
     if (username) updateData.username = username;
     if (bio !== undefined) updateData.bio = bio;
     if (emailPrivate !== undefined) updateData.emailPrivate = emailPrivate;
+    if (email) updateData.email = email;
+    if (socialMedia) updateData.socialMedia = socialMedia;
 
     const updatedUser = await User.findByIdAndUpdate(
       id,
