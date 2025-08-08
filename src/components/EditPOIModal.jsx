@@ -1,9 +1,10 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import { X, Trash2, Star } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useRef } from "react";
+import { X, Upload, Star } from "lucide-react";
 import { poiApi } from "@/lib/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
+import AddTags from "@/app/dashboard/comp/comps/addTags";
 import { createPortal } from "react-dom";
 import EXIF from "exif-js";
 
@@ -436,58 +437,16 @@ const EditPOIModal = ({ isOpen, onClose, poi, availableTags = [] }) => {
             <label className="label">
               <span className="label-text font-semibold">Tags</span>
             </label>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {editFormData.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="badge badge-primary badge-outline gap-2"
-                >
-                  {tag}
-                  <button
-                    onClick={() => handleRemoveTagFromEdit(tag)}
-                    className="btn btn-ghost btn-xs p-0"
-                    disabled={updatePOIMutation.isPending}
-                  >
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <select
-                id="editTagSelect"
-                onChange={(e) => {
-                  if (e.target.value) {
-                    handleAddTagToEdit(e.target.value);
-                    e.target.value = "";
-                  }
-                }}
-                className="select select-bordered flex-1"
-                disabled={updatePOIMutation.isPending}
-              >
-                <option value="">Add existing tag...</option>
-                {availableTags
-                  .filter((tag) => !editFormData.tags.includes(tag.name))
-                  .map((tag) => (
-                    <option key={tag._id} value={tag.name}>
-                      {tag.name}
-                    </option>
-                  ))}
-              </select>
-              <input
-                id="editNewTag"
-                type="text"
-                placeholder="Add new tag..."
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && e.target.value.trim()) {
-                    handleAddTagToEdit(e.target.value.trim());
-                    e.target.value = "";
-                  }
-                }}
-                className="input input-bordered flex-1"
-                disabled={updatePOIMutation.isPending}
-              />
-            </div>
+            <AddTags
+              existingTags={editFormData.tags}
+              onTagAdd={(tagName) => handleAddTagToEdit(tagName)}
+              onTagRemove={(tagToRemove) =>
+                handleRemoveTagFromEdit(tagToRemove)
+              }
+              placeholder="Search or create tags..."
+              className="w-full"
+              disabled={updatePOIMutation.isPending}
+            />
           </div>
 
           {/* Photo Upload Section */}
@@ -596,7 +555,7 @@ const EditPOIModal = ({ isOpen, onClose, poi, availableTags = [] }) => {
                         disabled={deletePhotoMutation.isPending}
                         title="Delete photo"
                       >
-                        <Trash2 size={14} />
+                        <X size={14} />
                       </button>
                     </div>
                     {photo?.isPrimary && (

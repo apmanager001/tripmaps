@@ -1,12 +1,14 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, X, User, Camera } from "lucide-react";
 import { userApi } from "@/lib/api";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useQuery } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 const ProfilePictureUpload = ({
   currentUser,
+  userId, // New prop for when we only have user ID
   onUpdate,
   size = "md", // sm, md, lg
   showUserInfo = false,
@@ -19,8 +21,22 @@ const ProfilePictureUpload = ({
   const fileInputRef = useRef(null);
   const { user, setUser } = useAuthStore();
 
+  // Determine which user data to use
+  const targetUserId = currentUser?._id || userId;
+
+  // Fetch user profile data if we only have userId
+  const { data: fetchedUserData } = useQuery({
+    queryKey: ["userProfile", targetUserId],
+    queryFn: () => userApi.getProfile(targetUserId),
+    enabled: !!targetUserId && !currentUser?.profilePicture, // Only fetch if we don't have currentUser with profile picture
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  // Use currentUser if available, otherwise use fetched data
+  const userData = currentUser || fetchedUserData?.data?.user;
+
   // Check if current user is viewing their own profile
-  const isOwnProfile = user?._id === currentUser?._id;
+  const isOwnProfile = user?._id === userData?._id;
 
   // Size classes
   const sizeClasses = {
@@ -146,12 +162,12 @@ const ProfilePictureUpload = ({
   };
 
   const imageUrl =
-    currentUser?.profilePicture?.s3Url ||
-    currentUser?.profilePicture?.thumbnailUrl ||
-    currentUser?.profilePicture?.url; // Add fallback for different URL structures
+    userData?.profilePicture?.s3Url ||
+    userData?.profilePicture?.thumbnailUrl ||
+    userData?.profilePicture?.url; // Add fallback for different URL structures
 
-  // Safety check for currentUser
-  if (!currentUser) {
+  // Safety check for userData
+  if (!userData) {
     return (
       <div className={`flex items-center gap-4 ${className}`}>
         <div className="relative group">
@@ -182,7 +198,7 @@ const ProfilePictureUpload = ({
           <div className="relative">
             <img
               src={imageUrl}
-              alt={`${currentUser?.username || "User"}'s profile picture`}
+              alt={`${userData?.username || "User"}'s profile picture`}
               className={`${sizeClasses[size]} rounded-full object-cover border-2 border-primary`}
             />
             {/* Overlay with upload/delete options - only show for own profile */}
@@ -191,18 +207,18 @@ const ProfilePictureUpload = ({
                 <div className="flex gap-2">
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-1 bg-primary text-white rounded-full hover:bg-primary-focus transition-colors"
+                    className="p-1 bg-primary text-white rounded-full hover:bg-primary-focus transition-colors cursor-pointer"
                     title="Change photo"
                   >
-                    <Camera size={16} />
+                    <Camera size={compact ? 12 : 16} />
                   </button>
                   <button
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="p-1 bg-error text-white rounded-full hover:bg-error-focus transition-colors"
+                    className="p-1 bg-error text-white rounded-full hover:bg-error-focus transition-colors cursor-pointer"
                     title="Delete photo"
                   >
-                    <X size={16} />
+                    <X size={compact ? 12 : 16} />
                   </button>
                 </div>
               </div>
@@ -235,12 +251,10 @@ const ProfilePictureUpload = ({
       {showUserInfo && (
         <div className="flex-1">
           <h1 className="text-3xl font-bold text-primary">
-            {currentUser?.username}
+            {userData?.username}
           </h1>
-          {!currentUser?.emailPrivate && (
-            <p className="text-sm text-base-content mb-2">
-              {currentUser?.email}
-            </p>
+          {!userData?.emailPrivate && (
+            <p className="text-sm text-base-content mb-2">{userData?.email}</p>
           )}
         </div>
       )}

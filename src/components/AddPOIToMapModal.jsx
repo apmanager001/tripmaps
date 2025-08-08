@@ -41,8 +41,8 @@ const AddPOIToMapModal = ({ isOpen, onClose, mapId, mapName }) => {
 
     setIsSearching(true);
     try {
-      // Get all POIs and filter on frontend for now
-      const response = await poiApi.getUserPOIs(1, 50);
+      // Get all POIs with a much higher limit to ensure we get all POIs
+      const response = await poiApi.getUserPOIs(1, 200);
 
       if (response.success && (response.pois || response.data)) {
         const allPOIs = response.pois || response.data || [];
@@ -120,8 +120,11 @@ const AddPOIToMapModal = ({ isOpen, onClose, mapId, mapName }) => {
       setSearchQuery("");
       setSearchResults([]);
       setAddedPOIs(new Set());
+    } else {
+      // Invalidate POI queries when modal opens to ensure fresh data
+      queryClient.invalidateQueries(["userPOIs"]);
     }
-  }, [isOpen]);
+  }, [isOpen, queryClient]);
 
   if (!isOpen) return null;
 
@@ -167,7 +170,7 @@ const AddPOIToMapModal = ({ isOpen, onClose, mapId, mapName }) => {
               onClick={async () => {
                 setIsSearching(true);
                 try {
-                  const response = await poiApi.getUserPOIs(1, 50);
+                  const response = await poiApi.getUserPOIs(1, 200);
 
                   if (response.success && (response.pois || response.data)) {
                     const pois = response.pois || response.data || [];
@@ -193,7 +196,7 @@ const AddPOIToMapModal = ({ isOpen, onClose, mapId, mapName }) => {
               className="btn btn-primary btn-soft"
               disabled={isSearching}
             >
-              Search POIs
+              Show All POIs
             </button>
           </div>
         </div>

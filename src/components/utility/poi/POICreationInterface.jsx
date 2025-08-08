@@ -14,6 +14,7 @@ import { toast } from "react-hot-toast";
 import { poiApi, tagApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import Script from "next/script";
+import AddTags from "@/app/dashboard/comp/comps/addTags";
 
 const POICreationInterface = ({
   availableTags = [],
@@ -28,11 +29,6 @@ const POICreationInterface = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const fileInputRef = useRef(null);
-
-  // Modal state for creating new tags
-  const [showTagModal, setShowTagModal] = useState(false);
-  const [newTagName, setNewTagName] = useState("");
-  const [pendingTagIndex, setPendingTagIndex] = useState(null);
 
   // Fetch available tags if not provided
   const { data: fetchedTags = [], refetch: refetchTags } = useQuery({
@@ -50,64 +46,6 @@ const POICreationInterface = ({
   });
 
   const tagsToUse = availableTags.length > 0 ? availableTags : fetchedTags;
-
-  // Create new tag function
-  const createNewTag = async (tagName) => {
-    try {
-      const response = await tagApi.createTag(tagName);
-      if (response.success) {
-        toast.success(`Tag "${tagName}" created successfully!`);
-        // Refetch tags to include the new one
-        refetchTags();
-        return response.data;
-      } else {
-        toast.error(response.message || "Failed to create tag");
-        return null;
-      }
-    } catch (error) {
-      console.error("Error creating tag:", error);
-      toast.error(`Failed to create tag: ${error.message}`);
-      return null;
-    }
-  };
-
-  // Modal handlers for creating new tags
-  const openTagModal = (index) => {
-    setPendingTagIndex(index);
-    setNewTagName("");
-    setShowTagModal(true);
-  };
-
-  const closeTagModal = () => {
-    setShowTagModal(false);
-    setNewTagName("");
-    setPendingTagIndex(null);
-  };
-
-  const handleCreateTag = async () => {
-    if (!newTagName.trim()) {
-      toast.error("Please enter a tag name");
-      return;
-    }
-
-    const newTag = await createNewTag(newTagName.trim());
-    if (newTag && pendingTagIndex !== null) {
-      const updatedPOIs = [...poiArray];
-      if (!updatedPOIs[pendingTagIndex].tags.includes(newTag.name)) {
-        updatedPOIs[pendingTagIndex].tags.push(newTag.name);
-        setPoiArray(updatedPOIs);
-      }
-    }
-    closeTagModal();
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleCreateTag();
-    } else if (e.key === "Escape") {
-      closeTagModal();
-    }
-  };
 
   // Toggle dropdown
   const toggleDropdown = () => {
@@ -675,9 +613,9 @@ const POICreationInterface = ({
                               <th>Actions</th>
                             </tr>
                           </thead>
-                          <tbody>
+                          <tbody >
                             {poiArray.map((poi, index) => (
-                              <tr key={index}>
+                              <tr key={index} className="h-44">
                                 <td>
                                   {poi.image ? (
                                     <img
@@ -773,89 +711,32 @@ const POICreationInterface = ({
                                     className="textarea textarea-bordered textarea-sm w-full h-20 resize-none"
                                   />
                                 </td>
-                                <td>
-                                  <div className="space-y-2">
-                                    {/* Existing Tags */}
-                                    <div className="flex flex-wrap gap-1 max-w-32">
-                                      {poi.tags.map((tag, tagIndex) => (
-                                        <span
-                                          key={tagIndex}
-                                          className="badge badge-primary badge-soft badge-xs flex items-center gap-1"
-                                        >
-                                          {tag}
-                                          <button
-                                            onClick={() => {
-                                              const updatedPOIs = [...poiArray];
-                                              updatedPOIs[index].tags =
-                                                updatedPOIs[index].tags.filter(
-                                                  (_, i) => i !== tagIndex
-                                                );
-                                              setPoiArray(updatedPOIs);
-                                            }}
-                                            className="text-xs hover:text-error"
-                                          >
-                                            ×
-                                          </button>
-                                        </span>
-                                      ))}
-                                    </div>
-
-                                    {/* Add Tag Section */}
-                                    <div className="flex gap-1">
-                                      <select
-                                        id={`poi-tag-select-${index}`}
-                                        className="select select-bordered select-xs w-40"
-                                        onChange={async (e) => {
-                                          if (e.target.value) {
-                                            if (
-                                              e.target.value === "create-new"
-                                            ) {
-                                              // Show input for new tag
-                                              openTagModal(index);
-                                            } else {
-                                              // Add existing tag
-                                              const updatedPOIs = [...poiArray];
-                                              if (
-                                                !updatedPOIs[
-                                                  index
-                                                ].tags.includes(e.target.value)
-                                              ) {
-                                                updatedPOIs[index].tags.push(
-                                                  e.target.value
-                                                );
-                                                setPoiArray(updatedPOIs);
-                                              }
-                                            }
-                                            e.target.value = "";
-                                          }
-                                        }}
-                                      >
-                                        <option value="">Add tag...</option>
-                                        {tagsToUse.map((tag) => (
-                                          <option
-                                            key={tag._id}
-                                            value={tag.name}
-                                          >
-                                            {tag.name}
-                                          </option>
-                                        ))}
-                                        <option
-                                          value="create-new"
-                                          className="font-semibold text-primary bg-primary/10"
-                                        >
-                                          ➕ Create new tag...
-                                        </option>
-                                      </select>
-                                      <button
-                                        id={`create-new-tag-button-${index}`}
-                                        onClick={() => openTagModal(index)}
-                                        className="btn btn-xs btn-primary btn-outline"
-                                        title="Create new tag"
-                                      >
-                                        <Plus size={12} />
-                                      </button>
-                                    </div>
-                                  </div>
+                                <td className="flex flex-col gap-2">
+                                  <AddTags
+                                    existingTags={poi.tags}
+                                    onTagAdd={(newTag) => {
+                                      const updatedPOIs = [...poiArray];
+                                      if (
+                                        !updatedPOIs[index].tags.includes(
+                                          newTag
+                                        )
+                                      ) {
+                                        updatedPOIs[index].tags.push(newTag);
+                                        setPoiArray(updatedPOIs);
+                                      }
+                                    }}
+                                    onTagRemove={(tagToRemove) => {
+                                      const updatedPOIs = [...poiArray];
+                                      updatedPOIs[index].tags = updatedPOIs[
+                                        index
+                                      ].tags.filter(
+                                        (tag) => tag !== tagToRemove
+                                      );
+                                      setPoiArray(updatedPOIs);
+                                    }}
+                                    placeholder="Search or create tags..."
+                                    className="w-full"
+                                  />
                                 </td>
                                 <td>
                                   <button
@@ -881,46 +762,6 @@ const POICreationInterface = ({
           </div>
         )}
       </div>
-
-      {/* Tag Creation Modal */}
-      {showTagModal && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-          onClick={closeTagModal}
-        >
-          <div
-            className="bg-base-100 rounded-lg p-6 shadow-xl w-full max-w-md"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold text-primary mb-4">
-              Create New Tag
-            </h3>
-            <input
-              type="text"
-              value={newTagName}
-              onChange={(e) => setNewTagName(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="input input-bordered input-sm w-full mb-4"
-              placeholder="Enter tag name"
-              autoFocus
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={closeTagModal}
-                className="btn btn-sm btn-outline"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateTag}
-                className="btn btn-sm btn-primary"
-              >
-                Create Tag
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

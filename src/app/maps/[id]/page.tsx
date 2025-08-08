@@ -20,7 +20,11 @@ export async function generateMetadata({
     if (res.ok) {
       const data = await res.json();
       if (data.success && data.data?.map) {
-        return generateMapMetadata(data.data.map);
+        // Pass both map and pois data to the SEO function
+        return generateMapMetadata({
+          ...data.data.map,
+          pois: data.data.pois || [],
+        });
       }
     }
   } catch (error) {

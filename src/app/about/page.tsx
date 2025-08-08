@@ -16,9 +16,9 @@ import Statistics from "@/components/homepage/statistics";
 import { generateMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = generateMetadata({
-  title: "About TripMaps - Your Travel Companion",
+  title: "About My Trip Maps - Your Travel Companion",
   description:
-    "Learn more about TripMaps - the platform that connects travelers worldwide through shared experiences and community-curated maps.",
+    "Learn more about My Trip Maps - the platform that connects travelers worldwide through shared experiences and community-curated maps.",
 });
 
 export default function AboutPage() {
@@ -28,7 +28,7 @@ export default function AboutPage() {
       <section className="py-16 px-6 bg-gradient-to-r from-primary/10 to-secondary/10">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-primary mb-6">
-            About TripMaps
+            About My Trip Maps
           </h1>
           <p className="text-xl text-base-content/80 leading-relaxed">
             We&apos;re building the world&apos;s most connected travel
@@ -47,7 +47,7 @@ export default function AboutPage() {
                 Our Mission
               </h2>
               <p className="text-lg text-base-content/80 mb-6 leading-relaxed">
-                TripMaps was born from a simple idea: travel is better when
+                My Trip Maps was born from a simple idea: travel is better when
                 shared. We believe that every traveler has unique experiences
                 and insights that can inspire others to explore the world in new
                 and exciting ways.
@@ -203,7 +203,7 @@ export default function AboutPage() {
           </h2>
           <p className="text-lg text-base-content/80 mb-8">
             Join thousands of travelers who are already sharing their adventures
-            and discovering new destinations on TripMaps.
+            and discovering new destinations on My Trip Maps.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/register" className="btn btn-primary btn-lg">

@@ -31,7 +31,10 @@
 }
 .maplibregl-marker {
   position: absolute;
-  transform: translate(-50%, -100%); /* Center the marker horizontally and align it vertically */
+  transform: translate(
+    -50%,
+    -100%
+  ); /* Center the marker horizontally and align it vertically */
   pointer-events: auto; /* Allow interactions with the marker */
   z-index: 2; /* Ensure the marker is above the map canvas */
 }
@@ -61,4 +64,175 @@
   height: 100%;
   pointer-events: none; /* Allow interactions with the map underneath */
   z-index: 1; /* Ensure it's above the map canvas */
+}
+
+/* Enhanced marker animations */
+@keyframes markerPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes markerGlow {
+  0% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+  }
+}
+
+/* Tooltip animations */
+@keyframes tooltipSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes tooltipSlideOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+}
+
+/* Enhanced hover effects for markers */
+.maplibregl-marker:hover {
+  animation: markerGlow 2s ease-in-out infinite;
+}
+
+/* Smooth transitions for all interactive elements */
+.maplibregl-marker * {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Improved tooltip styling */
+.maplibregl-marker .tooltip {
+  animation: tooltipSlideIn 0.3s ease-out;
+}
+
+.maplibregl-marker .tooltip.hiding {
+  animation: tooltipSlideOut 0.2s ease-in;
+}
+
+/* Custom scrollbar for tooltip content */
+.maplibregl-marker .tooltip::-webkit-scrollbar {
+  width: 4px;
+}
+
+.maplibregl-marker .tooltip::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+}
+
+.maplibregl-marker .tooltip::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 2px;
+}
+
+.maplibregl-marker .tooltip::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* Focus styles for accessibility */
+.maplibregl-marker button:focus,
+.maplibregl-marker [role="button"]:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Loading state for images */
+.maplibregl-marker img {
+  transition: opacity 0.3s ease;
+}
+
+.maplibregl-marker img[loading] {
+  opacity: 0.7;
+}
+
+/* Enhanced zoom controls */
+.zoom-controls button {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.zoom-controls button:hover {
+  transform: translateY(-1px);
+}
+
+.zoom-controls button:active {
+  transform: translateY(0);
+}
+
+/* Map info panel styling */
+.map-info-panel {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .maplibregl-marker .tooltip {
+    min-width: 280px;
+    max-width: 320px;
+  }
+
+  .zoom-controls {
+    top: 2px;
+    left: 2px;
+  }
+
+  .zoom-controls button {
+    padding: 8px;
+  }
+
+  .map-info-panel {
+    bottom: 2px;
+    left: 2px;
+    padding: 8px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .maplibregl-marker .tooltip {
+    background: rgba(31, 41, 55, 0.95);
+    color: white;
+    border-color: rgba(75, 85, 99, 0.5);
+  }
+
+  .maplibregl-marker .tooltip h3 {
+    color: #f9fafb;
+  }
+
+  .maplibregl-marker .tooltip .bg-gray-50 {
+    background: rgba(55, 65, 81, 0.5);
+  }
+
+  .maplibregl-marker .tooltip code {
+    background: rgba(31, 41, 55, 0.8);
+    color: #e5e7eb;
+  }
 }

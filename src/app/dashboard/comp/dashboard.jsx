@@ -23,6 +23,7 @@ import { authApi } from "@/lib/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
+import AddMapPOIS from "./addMapPOIS";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("My Profile");
@@ -121,6 +122,7 @@ const Dashboard = () => {
 
   const tabs = [
     { name: "My Profile", icon: <User size={20} /> },
+    { name: "MAPPOIS", icon: <LocateFixed size={20} /> },
     { name: "POIs", icon: <LocateFixed size={20} /> },
     { name: "Add Map", icon: <MapPinned size={20} /> },
     { name: "Search", icon: <Searched size={20} /> },
@@ -135,6 +137,8 @@ const Dashboard = () => {
     switch (activeTab) {
       case "My Profile":
         return <MyMaps />;
+      case "MAPPOIS":
+        return <AddMapPOIS />;
       case "POIs":
         return <AddPOI />;
       case "Add Map":

@@ -535,11 +535,18 @@ export default function IndividualMaps({ id }) {
                 </h1>
                 {mapUser && (
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3 ml-8">
+                    <ProfilePictureUpload
+                      userId={mapUser?._id}
+                      size="sm"
+                      showUserInfo={false}
+                      compact={true}
+                      className="flex-shrink-0"
+                    />
                     <Link
                       href={`/profile/${mapUser.username}`}
                       className="badge badge-primary badge-md hover:badge-primary-focus transition-all duration-200 inline-flex items-center gap-2"
                     >
-                      <User className="w-4 h-4" />
+                      {/* <User className="w-4 h-4" /> */}
                       {mapUser.username}
                     </Link>
                     {mapData?.createdAt && (
@@ -982,7 +989,7 @@ export default function IndividualMaps({ id }) {
                     >
                       <div className="flex items-start gap-3">
                         <ProfilePictureUpload
-                          currentUser={comment.user_id}
+                          userId={comment.user_id?._id}
                           size="sm"
                           showUserInfo={false}
                           compact={true}

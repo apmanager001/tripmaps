@@ -47,7 +47,8 @@ const POICard = ({
 
   // Check if current user is the creator of this POI
   const isCreator =
-    isAuthenticated && poi?.user_id?._id === user._id || poi?.user_id === user._id;
+    (isAuthenticated && poi?.user_id?._id === user._id) ||
+    poi?.user_id === user._id;
 
   // Ensure we're on the client side for portal rendering
   useEffect(() => {
@@ -153,8 +154,11 @@ const POICard = ({
   };
 
   const hasImage = poi.photos && poi.photos.length > 0;
-  const imageUrl = hasImage
-    ? poi.photos[0]?.s3Url || poi.photos[0]?.fullUrl
+  const primaryOrFirstPhoto = hasImage
+    ? poi.photos.find((p) => p?.isPrimary) || poi.photos[0]
+    : null;
+  const imageUrl = primaryOrFirstPhoto
+    ? primaryOrFirstPhoto?.s3Url || primaryOrFirstPhoto?.fullUrl
     : null;
 
   return (
@@ -209,7 +213,9 @@ const POICard = ({
                     data-tip="Flag photo"
                   >
                     <button
-                      onClick={(e) => handleFlagPhoto(e, poi.photos[0], poi)}
+                      onClick={(e) =>
+                        handleFlagPhoto(e, primaryOrFirstPhoto, poi)
+                      }
                       className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-red-600/80 text-white backdrop-blur-sm transition-all duration-200"
                     >
                       <Flag size={16} />
@@ -302,9 +308,12 @@ const POICard = ({
             )}
 
             {/* Photo date badge */}
-            {hasImage && poi.photos[0]?.date_visited && (
+            {hasImage && primaryOrFirstPhoto?.date_visited && (
               <div className="text-xs text-white/90 drop-shadow-lg badge badge-primary badge-sm bg-accent/60 border-0 backdrop-blur-sm">
-                📅 {new Date(poi.photos[0].date_visited).toLocaleDateString()}
+                📅{" "}
+                {new Date(
+                  primaryOrFirstPhoto.date_visited
+                ).toLocaleDateString()}
               </div>
             )}
 
@@ -387,7 +396,7 @@ const POICard = ({
                     </button>
                   </div>
                 )}
-              
+
                 {showActions && isCreator && (
                   <div className="tooltip tooltip-top" data-tip="Edit POI">
                     <button
