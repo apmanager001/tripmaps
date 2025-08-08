@@ -534,7 +534,7 @@ export default function IndividualMaps({ id }) {
                   {mapName ? mapName.toUpperCase() : "Unnamed Map"}
                 </h1>
                 {mapUser && (
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 ml-8">
+                  <div className="flex flex-row  sm:items-center gap-3 ml-8">
                     <ProfilePictureUpload
                       userId={mapUser?._id}
                       size="sm"
@@ -542,19 +542,21 @@ export default function IndividualMaps({ id }) {
                       compact={true}
                       className="flex-shrink-0"
                     />
-                    <Link
-                      href={`/profile/${mapUser.username}`}
-                      className="badge badge-primary badge-md hover:badge-primary-focus transition-all duration-200 inline-flex items-center gap-2"
-                    >
-                      {/* <User className="w-4 h-4" /> */}
-                      {mapUser.username}
-                    </Link>
-                    {mapData?.createdAt && (
-                      <span className="text-sm text-gray-600 flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        Created {formatDate(mapData.createdAt)}
-                      </span>
-                    )}
+                    <div className="flex flex-col md:flex-row gap-1">
+                      <Link
+                        href={`/profile/${mapUser.username}`}
+                        className="badge badge-primary badge-md hover:badge-primary-focus transition-all duration-200 inline-flex items-center gap-2"
+                      >
+                        {/* <User className="w-4 h-4" /> */}
+                        {mapUser.username}
+                      </Link>
+                      {mapData?.createdAt && (
+                        <span className="text-sm text-gray-600 flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          Created {formatDate(mapData.createdAt)}
+                          </span>
+                        )}
+                    </div>
                   </div>
                 )}
               </div>
