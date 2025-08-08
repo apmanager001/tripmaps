@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Hero from "@/components/homepage/hero";
+import HeroSection from "@/components/homepage/heroSection";
 import About from "@/components/homepage/about";
 import Statistics from "@/components/homepage/statistics";
 import PopularMaps from "@/components/homepage/popularMaps";
@@ -12,7 +12,7 @@ export const metadata: Metadata = generateMetadata(seoConfigs.home);
 export default function Home() {
   return (
     <>
-      <Hero />
+      <HeroSection />
       <About />
       <PopularMaps />
       <PopularLocations />

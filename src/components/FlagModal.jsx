@@ -36,7 +36,7 @@ const FlagModal = ({ isOpen, onClose, photoId, photoUrl, locationName }) => {
 
   return (
     <div className="modal modal-open">
-      <div className="modal-box w-11/12 max-w-2xl">
+      <div className="modal-box w-11/12 max-w-2xl relative z-[10000]">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-bold text-xl text-error flex items-center gap-2">
             <Flag size={20} />

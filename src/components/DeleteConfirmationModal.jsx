@@ -1,3 +1,7 @@
+"use client";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+
 const DeleteConfirmationModal = ({
   isOpen,
   onConfirm,
@@ -5,11 +9,41 @@ const DeleteConfirmationModal = ({
   title = "Delete Photo",
   message = "Are you sure you want to delete this photo? This will permanently remove it from your account and cannot be recovered.",
 }) => {
-  if (!isOpen) return null;
+  const [isClient, setIsClient] = useState(false);
 
-  return (
-    <div className="modal modal-open">
-      <div className="modal-box max-w-md">
+  // Ensure we're on the client side for portal rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onCancel();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, onCancel]);
+
+  if (!isOpen || !isClient) return null;
+
+  const modalContent = (
+    <div className="modal modal-open" onClick={onCancel}>
+      <div
+        className="modal-box max-w-md relative z-[10000] bg-base-100"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -89,6 +123,8 @@ const DeleteConfirmationModal = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default DeleteConfirmationModal;

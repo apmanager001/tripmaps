@@ -437,6 +437,18 @@ export const poiApi = {
     }).then((res) => res.json());
   },
 
+  setPrimaryPhoto: async (
+    photoId: string
+  ): Promise<ApiResponse<{ message: string }>> => {
+    return fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND}/photos/${photoId}/primary`,
+      {
+        method: "PATCH",
+        credentials: "include",
+      }
+    ).then((res) => res.json());
+  },
+
   // Legacy POI API for external services
   getNearbyPOIs: async (lat: number, lng: number): Promise<NearbyPOI[]> => {
     const response = await fetch(

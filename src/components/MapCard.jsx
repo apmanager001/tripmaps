@@ -117,7 +117,7 @@ const MapCard = ({
       {/* Background Image */}
       {backgroundImage ? (
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center group-hover:scale-105 transition-transform duration-300"
           style={{ backgroundImage: `url(${backgroundImage})` }}
         />
       ) : (

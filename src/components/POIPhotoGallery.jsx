@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { ChevronLeft, ChevronRight, MapPin, X, Flag } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { createPortal } from "react-dom";
 
 const POIPhotoGallery = ({
   isOpen,
@@ -19,7 +20,13 @@ const POIPhotoGallery = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [zoomOrigin, setZoomOrigin] = useState({ x: 0, y: 0 });
   const [hasDragged, setHasDragged] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const containerRef = useRef(null);
+
+  // Ensure we're on the client side for portal rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Reset photo index when POI changes
   React.useEffect(() => {
@@ -32,7 +39,27 @@ const POIPhotoGallery = ({
     setHasDragged(false);
   }, [poi?._id, initialPhotoIndex]);
 
-  if (!isOpen || !poi || !poi.photos || poi.photos.length === 0) {
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !poi || !poi.photos || poi.photos.length === 0 || !isClient) {
     return null;
   }
 
@@ -136,9 +163,12 @@ const POIPhotoGallery = ({
     }
   };
 
-  return (
-    <div className="modal modal-open">
-      <div className="modal-box w-11/12 max-w-6xl h-5/6 max-h-screen bg-base-100 p-0 overflow-hidden">
+  const modalContent = (
+    <div className="modal modal-open" onClick={handleClose}>
+      <div
+        className="modal-box w-11/12 max-w-6xl h-5/6 max-h-screen bg-base-100 p-0 overflow-hidden relative z-[10000]"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-base-300 bg-gradient-to-r from-primary/10 to-secondary/10">
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -246,7 +276,7 @@ const POIPhotoGallery = ({
                 {showFlagButton && (
                   <button
                     onClick={handleFlagPhoto}
-                    className="btn btn-xs sm:btn-sm btn-outline btn-error hover:bg-error hover:text-white transition-all duration-200"
+                    className="btn btn-xs sm:btn-sm btn-error hover:bg-error hover:text-white transition-all duration-200 rounded-2xl"
                     title="Flag this photo"
                   >
                     <Flag size={12} className="sm:w-4 sm:h-4 mr-1" />
@@ -352,6 +382,8 @@ const POIPhotoGallery = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default POIPhotoGallery;

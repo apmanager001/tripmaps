@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { poiApi } from "@/lib/api";
 import { toast } from "react-hot-toast";
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import FlagModal from "./FlagModal";
 import POIPhotoGallery from "./POIPhotoGallery";
+import { createPortal } from "react-dom";
 
 const POICard = ({
   poi,
@@ -42,10 +43,16 @@ const POICard = ({
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [showDescriptionTooltip, setShowDescriptionTooltip] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   // Check if current user is the creator of this POI
-  const isCreator = user && poi.user_id && user._id === poi.user_id;
+  const isCreator =
+    isAuthenticated && poi?.user_id?._id === user._id || poi?.user_id === user._id;
 
+  // Ensure we're on the client side for portal rendering
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   // POI like mutation
   const likeMutation = useMutation({
     mutationFn: () => poiApi.likePOI(poi._id),
@@ -197,7 +204,10 @@ const POICard = ({
             {showActions && (
               <div className="flex items-center gap-2 flex-shrink-0">
                 {showFlagButton && hasImage && (
-                  <div className="tooltip tooltip-bottom tooltip-secondary" data-tip="Flag photo">
+                  <div
+                    className="tooltip tooltip-bottom tooltip-secondary"
+                    data-tip="Flag photo"
+                  >
                     <button
                       onClick={(e) => handleFlagPhoto(e, poi.photos[0], poi)}
                       className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-red-600/80 text-white backdrop-blur-sm transition-all duration-200"
@@ -239,15 +249,14 @@ const POICard = ({
               {/* Description Icon Button */}
               {poi.description && (
                 <div className="relative flex-shrink-0">
-                  
-                    <button
-                      onClick={handleDescriptionToggle}
-                      onMouseEnter={() => setShowDescriptionTooltip(true)}
-                      onMouseLeave={() => setShowDescriptionTooltip(false)}
-                      className="p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
-                    >
-                      <Info size={16} />
-                    </button>
+                  <button
+                    onClick={handleDescriptionToggle}
+                    onMouseEnter={() => setShowDescriptionTooltip(true)}
+                    onMouseLeave={() => setShowDescriptionTooltip(false)}
+                    className="p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
+                  >
+                    <Info size={16} />
+                  </button>
 
                   {/* Description Tooltip */}
                   {showDescriptionTooltip && (
@@ -294,7 +303,7 @@ const POICard = ({
 
             {/* Photo date badge */}
             {hasImage && poi.photos[0]?.date_visited && (
-              <div className="text-xs text-white/90 drop-shadow-lg badge badge-primary badge-sm bg-accent/60 text-white border-0 backdrop-blur-sm">
+              <div className="text-xs text-white/90 drop-shadow-lg badge badge-primary badge-sm bg-accent/60 border-0 backdrop-blur-sm">
                 📅 {new Date(poi.photos[0].date_visited).toLocaleDateString()}
               </div>
             )}
@@ -366,7 +375,10 @@ const POICard = ({
 
                 {/* View Photos Button */}
                 {hasImage && (
-                  <div className="tooltip tooltip-top tooltip-secondary" data-tip="View photos">
+                  <div
+                    className="tooltip tooltip-top tooltip-secondary"
+                    data-tip="View photos"
+                  >
                     <button
                       onClick={handleViewPhotos}
                       className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
@@ -375,7 +387,7 @@ const POICard = ({
                     </button>
                   </div>
                 )}
-
+              
                 {showActions && isCreator && (
                   <div className="tooltip tooltip-top" data-tip="Edit POI">
                     <button
@@ -412,17 +424,6 @@ const POICard = ({
         )}
       </div>
 
-      {/* Flag Modal */}
-      {showFlagModal && flaggingPhoto && (
-        <FlagModal
-          isOpen={showFlagModal}
-          onClose={handleCloseFlagModal}
-          photoId={flaggingPhoto.id}
-          photoUrl={flaggingPhoto.url}
-          locationName={flaggingPhoto.locationName}
-        />
-      )}
-
       {/* POI Photo Gallery */}
       <POIPhotoGallery
         isOpen={showPhotoGallery}
@@ -432,6 +433,21 @@ const POICard = ({
         showFlagButton={showFlagButton}
         onFlagPhoto={handleFlagPhoto}
       />
+
+      {/* Flag Modal - Rendered via Portal */}
+      {showFlagModal &&
+        flaggingPhoto &&
+        isClient &&
+        createPortal(
+          <FlagModal
+            isOpen={showFlagModal}
+            onClose={handleCloseFlagModal}
+            photoId={flaggingPhoto.id}
+            photoUrl={flaggingPhoto.url}
+            locationName={flaggingPhoto.locationName}
+          />,
+          document.body
+        )}
     </>
   );
 };
