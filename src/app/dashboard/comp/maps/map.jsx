@@ -33,11 +33,10 @@ const Maps = ({
   });
   const [clickedMarker, setClickedMarker] = useState(null);
   const [hoveredMarker, setHoveredMarker] = useState(null);
+  const [hoveredMarkerInfo, setHoveredMarkerInfo] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0); // For forcing map refresh
-  const [tooltipPositions, setTooltipPositions] = useState({}); // Track tooltip positions
-  const [tooltipRefs, setTooltipRefs] = useState({}); // Track tooltip refs for positioning
 
   // Ensure we're on the client side for portal rendering
   useEffect(() => {
@@ -171,14 +170,6 @@ const Maps = ({
   const handleMarkerClick = useCallback(
     (markerId) => {
       setClickedMarker(clickedMarker === markerId ? null : markerId);
-      // Clear cached position to force recalculation
-      if (clickedMarker !== markerId) {
-        setTooltipPositions((prev) => {
-          const newPositions = { ...prev };
-          delete newPositions[markerId];
-          return newPositions;
-        });
-      }
     },
     [clickedMarker]
   );
@@ -266,143 +257,13 @@ const Maps = ({
     return null;
   };
 
-  // Function to calculate and adjust tooltip position after it's rendered
-  const calculateTooltipPosition = useCallback(
-    (markerId, tooltipRef) => {
-      if (!isClient || !tooltipRef?.current) return;
-
-      const markerElement = document.querySelector(
-        `[data-marker-id="${markerId}"]`
-      );
-      if (!markerElement) return;
-
-      const markerRect = markerElement.getBoundingClientRect();
-      const tooltipRect = tooltipRef.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const viewportWidth = window.innerWidth;
-
-      // Calculate marker center
-      const markerCenterX = markerRect.left + markerRect.width / 2;
-      const markerCenterY = markerRect.top + markerRect.height / 2;
-
-      // Calculate tooltip dimensions
-      const tooltipWidth = tooltipRect.width;
-      const tooltipHeight = tooltipRect.height;
-
-      // Calculate available space in each direction
-      const spaceAbove = markerCenterY;
-      const spaceBelow = viewportHeight - markerCenterY;
-      const spaceLeft = markerCenterX;
-      const spaceRight = viewportWidth - markerCenterX;
-
-      // Check if tooltip fits in each direction
-      const canFitBottom = spaceBelow >= tooltipHeight + 20;
-      const canFitTop = spaceAbove >= tooltipHeight + 20;
-      const canFitRight = spaceRight >= tooltipWidth + 20;
-      const canFitLeft = spaceLeft >= tooltipWidth + 20;
-
-      // Determine optimal position
-      let position = "bottom";
-      if (canFitBottom) {
-        position = "bottom";
-      } else if (canFitTop) {
-        position = "top";
-      } else if (canFitRight) {
-        position = "right";
-      } else if (canFitLeft) {
-        position = "left";
-      } else {
-        // Choose direction with most space
-        const maxSpace = Math.max(
-          spaceAbove,
-          spaceBelow,
-          spaceLeft,
-          spaceRight
-        );
-        if (maxSpace === spaceBelow) position = "bottom";
-        else if (maxSpace === spaceAbove) position = "top";
-        else if (maxSpace === spaceRight) position = "right";
-        else position = "left";
-      }
-
-      // Update position state
-      setTooltipPositions((prev) => ({
-        ...prev,
-        [markerId]: position,
-      }));
-    },
-    [isClient]
-  );
-
-  // Effect to recalculate positions when tooltips become visible
-  useEffect(() => {
-    if (!isClient) return;
-
-    const visibleTooltips = Object.keys(tooltipRefs).filter((markerId) => {
-      const isVisible =
-        clickedMarker === markerId || hoveredMarker === markerId;
-      return isVisible && tooltipRefs[markerId]?.current;
-    });
-
-    visibleTooltips.forEach((markerId) => {
-      const tooltipRef = tooltipRefs[markerId];
-      if (tooltipRef?.current) {
-        // Use requestAnimationFrame to ensure DOM is updated
-        requestAnimationFrame(() => {
-          calculateTooltipPosition(markerId, tooltipRef);
-        });
-      }
-    });
-  }, [
-    clickedMarker,
-    hoveredMarker,
-    tooltipRefs,
-    calculateTooltipPosition,
-    isClient,
-  ]);
-
   // Helper function to get current tooltip position
-  const getTooltipPosition = useCallback(
-    (markerId) => {
-      return tooltipPositions[markerId] || "bottom";
-    },
-    [tooltipPositions]
-  );
-
-  // Helper function to create or get tooltip ref
-  const getTooltipRef = useCallback(
-    (markerId) => {
-      if (!tooltipRefs[markerId]) {
-        const newRef = React.createRef();
-        setTooltipRefs((prev) => ({
-          ...prev,
-          [markerId]: newRef,
-        }));
-        return newRef;
-      }
-      return tooltipRefs[markerId];
-    },
-    [tooltipRefs]
-  );
-
-  // Update tooltip positions when view state changes
-  useEffect(() => {
-    if (!isClient) return;
-
-    const updatePositions = () => {
-      setTooltipPositions({}); // Clear cached positions to force recalculation
-      setTooltipRefs({}); // Clear refs to force recreation
-    };
-
-    // Debounce the update to avoid too many recalculations
-    const timeoutId = setTimeout(updatePositions, 100);
-    return () => clearTimeout(timeoutId);
-  }, [viewState.longitude, viewState.latitude, viewState.zoom, isClient]);
+  const getTooltipPosition = useCallback((markerId) => {
+    return "right"; // Always position to the right
+  }, []);
 
   const toggleExpanded = useCallback(() => {
     setIsExpanded(!isExpanded);
-    // Clear cached positions when expanding/collapsing since viewport changes significantly
-    setTooltipPositions({});
   }, [isExpanded]);
 
   const refreshMap = useCallback(() => {
@@ -470,7 +331,7 @@ const Maps = ({
                 className={`
                   relative w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 
                   rounded-full border-3 border-white shadow-lg 
-                  transform -translate-x-1/2 -translate-y-full 
+                  transform -translate-x-1/2 -translate-y-1/2 
                   cursor-pointer transition-all duration-300 ease-out
                   hover:scale-125 hover:shadow-xl
                   ${isHovered ? "scale-110 shadow-lg" : ""}
@@ -486,14 +347,12 @@ const Maps = ({
                 }}
                 onMouseEnter={() => {
                   setHoveredMarker(markerId);
-                  // Clear cached position to force recalculation
-                  setTooltipPositions((prev) => {
-                    const newPositions = { ...prev };
-                    delete newPositions[markerId];
-                    return newPositions;
-                  });
+                  setHoveredMarkerInfo(point);
                 }}
-                onMouseLeave={() => setHoveredMarker(null)}
+                onMouseLeave={() => {
+                  setHoveredMarker(null);
+                  setHoveredMarkerInfo(null);
+                }}
                 role="button"
                 tabIndex={0}
                 aria-label={`View details for ${locationName}`}
@@ -519,200 +378,6 @@ const Maps = ({
                     transition-opacity duration-300
                     ${isHovered ? "opacity-50" : ""}
                   `}
-                ></div>
-              </div>
-
-              {/* Enhanced tooltip with better design */}
-              <div
-                ref={getTooltipRef(markerId)}
-                className={`
-                  absolute rounded-xl shadow-2xl border border-gray-200 
-                  transition-all duration-300 ease-out transform
-                  min-w-72 max-w-80 backdrop-blur-sm bg-white/95
-                  ${
-                    isTooltipVisible
-                      ? "opacity-100 scale-100 translate-y-0"
-                      : "opacity-0 scale-95 translate-y-2 pointer-events-none"
-                  }
-                  ${
-                    isHovered && !isTooltipVisible
-                      ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-                      : ""
-                  }
-                  ${
-                    getTooltipPosition(markerId) === "bottom"
-                      ? "bottom-10 left-1/2 -translate-x-1/2"
-                      : ""
-                  }
-                  ${
-                    getTooltipPosition(markerId) === "top"
-                      ? "top-10 left-1/2 -translate-x-1/2"
-                      : ""
-                  }
-                  ${
-                    getTooltipPosition(markerId) === "left"
-                      ? "left-10 top-1/2 -translate-y-1/2"
-                      : ""
-                  }
-                  ${
-                    getTooltipPosition(markerId) === "right"
-                      ? "right-10 top-1/2 -translate-y-1/2"
-                      : ""
-                  }
-                `}
-                style={{ zIndex: 9999 }}
-              >
-                {/* Header with location name */}
-                <div className="p-4 pb-3 border-b border-gray-100">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 flex-1">
-                      <MapPin className="w-4 h-4 text-red-500 flex-shrink-0" />
-                      <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-                        {locationName}
-                      </h3>
-                    </div>
-                    {point._id && (
-                      <button
-                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(
-                            `/point_of_interest/${point._id}`,
-                            "_blank"
-                          );
-                        }}
-                        aria-label="Open location details"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-4 pt-3">
-                  {/* Thumbnail Image with improved styling */}
-                  {primaryPhoto && (
-                    <div className="mb-3 -mx-4 -mt-3">
-                      <div className="relative h-32 overflow-hidden rounded-t-xl">
-                        <img
-                          src={primaryPhoto}
-                          alt={locationName}
-                          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                          }}
-                        />
-                        {/* Photo count badge if multiple photos */}
-                        {point.photos && point.photos.length > 1 && (
-                          <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-                            +{point.photos.length - 1} more
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Description */}
-                  {point.description && (
-                    <div className="mb-3">
-                      <div className="flex items-start gap-2">
-                        <Info className="w-3 h-3 text-gray-500 mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-gray-700 leading-relaxed">
-                          {point.description.length > 120
-                            ? `${point.description.substring(0, 120)}...`
-                            : point.description}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Visit Date */}
-                  {point.date_visited && (
-                    <div className="mb-3">
-                      <div className="flex items-center gap-2 text-xs text-gray-600">
-                        <Calendar className="w-3 h-3" />
-                        <span className="font-medium">Visited:</span>
-                        <span>
-                          {new Date(point.date_visited).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Coordinates with copy functionality */}
-                  <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                    <div className="text-xs text-gray-600 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">Latitude:</span>
-                        <code className="font-mono text-gray-800 bg-white px-1 rounded">
-                          {lat.toFixed(6)}
-                        </code>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">Longitude:</span>
-                        <code className="font-mono text-gray-800 bg-white px-1 rounded">
-                          {lng.toFixed(6)}
-                        </code>
-                      </div>
-                    </div>
-                    <button
-                      className="mt-2 w-full text-xs text-blue-600 hover:text-blue-800 transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigator.clipboard.writeText(
-                          `${lat.toFixed(6)}, ${lng.toFixed(6)}`
-                        );
-                      }}
-                    >
-                      Copy coordinates
-                    </button>
-                  </div>
-
-                  {/* Tags if available */}
-                  {point.tags && point.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {point.tags.slice(0, 3).map((tag, tagIndex) => (
-                        <span
-                          key={tagIndex}
-                          className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                        >
-                          {typeof tag === "object" ? tag.name : tag}
-                        </span>
-                      ))}
-                      {point.tags.length > 3 && (
-                        <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                          +{point.tags.length - 3} more
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Arrow pointing to marker */}
-                <div
-                  className={`
-                  absolute w-0 h-0 border-transparent
-                  ${
-                    getTooltipPosition(markerId) === "bottom"
-                      ? "top-full left-1/2 -translate-x-1/2 border-l-6 border-r-6 border-t-6 border-t-white"
-                      : ""
-                  }
-                  ${
-                    getTooltipPosition(markerId) === "top"
-                      ? "bottom-full left-1/2 -translate-x-1/2 border-l-6 border-r-6 border-b-6 border-b-white"
-                      : ""
-                  }
-                  ${
-                    getTooltipPosition(markerId) === "left"
-                      ? "right-full top-1/2 -translate-y-1/2 border-t-6 border-b-6 border-r-6 border-r-white"
-                      : ""
-                  }
-                  ${
-                    getTooltipPosition(markerId) === "right"
-                      ? "left-full top-1/2 -translate-y-1/2 border-t-6 border-b-6 border-l-6 border-l-white"
-                      : ""
-                  }
-                `}
                 ></div>
               </div>
             </div>
@@ -786,6 +451,144 @@ const Maps = ({
             <RefreshCw size={18} className="text-gray-700" />
           </button>
         </div>
+
+        {/* Marker Info Panel */}
+        {hoveredMarkerInfo && (
+          <div className="absolute bottom-4 left-4 z-10 max-w-sm">
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 p-4">
+              {/* Header with location name */}
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2 flex-1">
+                  <MapPin className="w-4 h-4 text-red-500 flex-shrink-0" />
+                  <h3 className="font-semibold text-gray-900 text-sm leading-tight">
+                    {hoveredMarkerInfo.name ||
+                      hoveredMarkerInfo.locationName ||
+                      "Unknown Location"}
+                  </h3>
+                </div>
+                {hoveredMarkerInfo._id && (
+                  <button
+                    className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(
+                        `/point_of_interest/${hoveredMarkerInfo._id}`,
+                        "_blank"
+                      );
+                    }}
+                    aria-label="Open location details"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+
+              {/* Thumbnail Image */}
+              {getPrimaryPhoto(hoveredMarkerInfo) && (
+                <div className="mb-3">
+                  <div className="relative h-24 overflow-hidden rounded-lg">
+                    <img
+                      src={getPrimaryPhoto(hoveredMarkerInfo)}
+                      alt={
+                        hoveredMarkerInfo.name || hoveredMarkerInfo.locationName
+                      }
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                    {/* Photo count badge if multiple photos */}
+                    {hoveredMarkerInfo.photos &&
+                      hoveredMarkerInfo.photos.length > 1 && (
+                        <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                          +{hoveredMarkerInfo.photos.length - 1} more
+                        </div>
+                      )}
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              {hoveredMarkerInfo.description && (
+                <div className="mb-2">
+                  <div className="flex items-start gap-2">
+                    <Info className="w-3 h-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-gray-700 leading-relaxed">
+                      {hoveredMarkerInfo.description.length > 80
+                        ? `${hoveredMarkerInfo.description.substring(0, 80)}...`
+                        : hoveredMarkerInfo.description}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Visit Date */}
+              {hoveredMarkerInfo.date_visited && (
+                <div className="mb-2">
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <Calendar className="w-3 h-3" />
+                    <span className="font-medium">Visited:</span>
+                    <span>
+                      {new Date(
+                        hoveredMarkerInfo.date_visited
+                      ).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Coordinates */}
+              <div className="bg-gray-50 rounded-lg p-2 mb-2">
+                <div className="text-xs text-gray-600 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Lat:</span>
+                    <code className="font-mono text-gray-800 bg-white px-1 rounded text-xs">
+                      {parseFloat(hoveredMarkerInfo.lat).toFixed(4)}
+                    </code>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Lng:</span>
+                    <code className="font-mono text-gray-800 bg-white px-1 rounded text-xs">
+                      {parseFloat(hoveredMarkerInfo.lng).toFixed(4)}
+                    </code>
+                  </div>
+                </div>
+                <button
+                  className="mt-1 w-full text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigator.clipboard.writeText(
+                      `${parseFloat(hoveredMarkerInfo.lat).toFixed(
+                        6
+                      )}, ${parseFloat(hoveredMarkerInfo.lng).toFixed(6)}`
+                    );
+                  }}
+                >
+                  Copy coordinates
+                </button>
+              </div>
+
+              {/* Tags if available */}
+              {hoveredMarkerInfo.tags && hoveredMarkerInfo.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {hoveredMarkerInfo.tags.slice(0, 3).map((tag, tagIndex) => (
+                    <span
+                      key={tagIndex}
+                      className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+                    >
+                      {typeof tag === "object" ? tag.name : tag}
+                    </span>
+                  ))}
+                  {hoveredMarkerInfo.tags.length > 3 && (
+                    <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                      +{hoveredMarkerInfo.tags.length - 3} more
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Expanded Map View */}
@@ -892,7 +695,7 @@ const Maps = ({
                               className={`
                               relative w-8 h-8 bg-gradient-to-br from-red-500 to-red-600 
                               rounded-full border-3 border-white shadow-lg 
-                              transform -translate-x-1/2 -translate-y-full 
+                              transform -translate-x-1/2 -translate-y-1/2
                               cursor-pointer transition-all duration-300 ease-out
                               hover:scale-125 hover:shadow-xl
                               ${isHovered ? "scale-110 shadow-lg" : ""}
@@ -908,14 +711,12 @@ const Maps = ({
                               }}
                               onMouseEnter={() => {
                                 setHoveredMarker(markerId);
-                                // Clear cached position to force recalculation
-                                setTooltipPositions((prev) => {
-                                  const newPositions = { ...prev };
-                                  delete newPositions[markerId];
-                                  return newPositions;
-                                });
+                                setHoveredMarkerInfo(point);
                               }}
-                              onMouseLeave={() => setHoveredMarker(null)}
+                              onMouseLeave={() => {
+                                setHoveredMarker(null);
+                                setHoveredMarkerInfo(null);
+                              }}
                               role="button"
                               tabIndex={0}
                               aria-label={`View details for ${locationName}`}
@@ -940,216 +741,6 @@ const Maps = ({
                                 absolute inset-0 rounded-full bg-red-300 opacity-0 
                                 transition-opacity duration-300
                                 ${isHovered ? "opacity-50" : ""}
-                              `}
-                              ></div>
-                            </div>
-
-                            {/* Enhanced tooltip with better design */}
-                            <div
-                              ref={getTooltipRef(markerId)}
-                              className={`
-                              absolute bg-white rounded-xl shadow-2xl border border-gray-200 
-                              transition-all duration-300 ease-out transform
-                              min-w-72 max-w-80 backdrop-blur-sm bg-white/95
-                              ${
-                                isTooltipVisible
-                                  ? "opacity-100 scale-100 translate-y-0"
-                                  : "opacity-0 scale-95 translate-y-2 pointer-events-none"
-                              }
-                              ${
-                                isHovered && !isTooltipVisible
-                                  ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
-                                  : ""
-                              }
-                              ${
-                                getTooltipPosition(markerId) === "bottom"
-                                  ? "bottom-10 left-1/2 -translate-x-1/2"
-                                  : ""
-                              }
-                              ${
-                                getTooltipPosition(markerId) === "top"
-                                  ? "top-10 left-1/2 -translate-x-1/2"
-                                  : ""
-                              }
-                              ${
-                                getTooltipPosition(markerId) === "left"
-                                  ? "left-10 top-1/2 -translate-y-1/2"
-                                  : ""
-                              }
-                              ${
-                                getTooltipPosition(markerId) === "right"
-                                  ? "right-10 top-1/2 -translate-y-1/2"
-                                  : ""
-                              }
-                            `}
-                              style={{ zIndex: 9999 }}
-                            >
-                              {/* Header with location name */}
-                              <div className="p-4 pb-3 border-b border-gray-100">
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex items-center gap-2 flex-1">
-                                    <MapPin className="w-4 h-4 text-red-500 flex-shrink-0" />
-                                    <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-                                      {locationName}
-                                    </h3>
-                                  </div>
-                                  {point._id && (
-                                    <button
-                                      className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        window.open(
-                                          `/point_of_interest/${point._id}`,
-                                          "_blank"
-                                        );
-                                      }}
-                                      aria-label="Open location details"
-                                    >
-                                      <ExternalLink className="w-3 h-3" />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="p-4 pt-3">
-                                {/* Thumbnail Image with improved styling */}
-                                {primaryPhoto && (
-                                  <div className="mb-3 -mx-4 -mt-3">
-                                    <div className="relative h-32 overflow-hidden rounded-t-xl">
-                                      <img
-                                        src={primaryPhoto}
-                                        alt={locationName}
-                                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                                        onError={(e) => {
-                                          e.target.style.display = "none";
-                                        }}
-                                      />
-                                      {/* Photo count badge if multiple photos */}
-                                      {point.photos &&
-                                        point.photos.length > 1 && (
-                                          <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
-                                            +{point.photos.length - 1} more
-                                          </div>
-                                        )}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Description */}
-                                {point.description && (
-                                  <div className="mb-3">
-                                    <div className="flex items-start gap-2">
-                                      <Info className="w-3 h-3 text-gray-500 mt-0.5 flex-shrink-0" />
-                                      <p className="text-xs text-gray-700 leading-relaxed">
-                                        {point.description.length > 120
-                                          ? `${point.description.substring(
-                                              0,
-                                              120
-                                            )}...`
-                                          : point.description}
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Visit Date */}
-                                {point.date_visited && (
-                                  <div className="mb-3">
-                                    <div className="flex items-center gap-2 text-xs text-gray-600">
-                                      <Calendar className="w-3 h-3" />
-                                      <span className="font-medium">
-                                        Visited:
-                                      </span>
-                                      <span>
-                                        {new Date(
-                                          point.date_visited
-                                        ).toLocaleDateString()}
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Coordinates with copy functionality */}
-                                <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                                  <div className="text-xs text-gray-600 space-y-1">
-                                    <div className="flex items-center justify-between">
-                                      <span className="font-medium">
-                                        Latitude:
-                                      </span>
-                                      <code className="font-mono text-gray-800 bg-white px-1 rounded">
-                                        {lat.toFixed(6)}
-                                      </code>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                      <span className="font-medium">
-                                        Longitude:
-                                      </span>
-                                      <code className="font-mono text-gray-800 bg-white px-1 rounded">
-                                        {lng.toFixed(6)}
-                                      </code>
-                                    </div>
-                                  </div>
-                                  <button
-                                    className="mt-2 w-full text-xs text-blue-600 hover:text-blue-800 transition-colors"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      navigator.clipboard.writeText(
-                                        `${lat.toFixed(6)}, ${lng.toFixed(6)}`
-                                      );
-                                    }}
-                                  >
-                                    Copy coordinates
-                                  </button>
-                                </div>
-
-                                {/* Tags if available */}
-                                {point.tags && point.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1">
-                                    {point.tags
-                                      .slice(0, 3)
-                                      .map((tag, tagIndex) => (
-                                        <span
-                                          key={tagIndex}
-                                          className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                                        >
-                                          {typeof tag === "object"
-                                            ? tag.name
-                                            : tag}
-                                        </span>
-                                      ))}
-                                    {point.tags.length > 3 && (
-                                      <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                                        +{point.tags.length - 3} more
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Arrow pointing to marker */}
-                              <div
-                                className={`
-                                absolute w-0 h-0 border-transparent
-                                ${
-                                  getTooltipPosition(markerId) === "bottom"
-                                    ? "top-full left-1/2 -translate-x-1/2 border-l-6 border-r-6 border-t-6 border-t-white"
-                                    : ""
-                                }
-                                ${
-                                  getTooltipPosition(markerId) === "top"
-                                    ? "bottom-full left-1/2 -translate-x-1/2 border-l-6 border-r-6 border-b-6 border-b-white"
-                                    : ""
-                                }
-                                ${
-                                  getTooltipPosition(markerId) === "left"
-                                    ? "right-full top-1/2 -translate-y-1/2 border-t-6 border-b-6 border-r-6 border-r-white"
-                                    : ""
-                                }
-                                ${
-                                  getTooltipPosition(markerId) === "right"
-                                    ? "left-full top-1/2 -translate-y-1/2 border-t-6 border-b-6 border-l-6 border-l-white"
-                                    : ""
-                                }
                               `}
                               ></div>
                             </div>
@@ -1200,6 +791,153 @@ const Maps = ({
                     <RefreshCw size={18} className="text-gray-700" />
                   </button>
                 </div>
+
+                {/* Marker Info Panel for Expanded View */}
+                {hoveredMarkerInfo && (
+                  <div className="absolute bottom-4 left-4 z-10 max-w-sm">
+                    <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 p-4">
+                      {/* Header with location name */}
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="flex items-center gap-2 flex-1">
+                          <MapPin className="w-4 h-4 text-red-500 flex-shrink-0" />
+                          <h3 className="font-semibold text-gray-900 text-sm leading-tight">
+                            {hoveredMarkerInfo.name ||
+                              hoveredMarkerInfo.locationName ||
+                              "Unknown Location"}
+                          </h3>
+                        </div>
+                        {hoveredMarkerInfo._id && (
+                          <button
+                            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(
+                                `/point_of_interest/${hoveredMarkerInfo._id}`,
+                                "_blank"
+                              );
+                            }}
+                            aria-label="Open location details"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Thumbnail Image */}
+                      {getPrimaryPhoto(hoveredMarkerInfo) && (
+                        <div className="mb-3">
+                          <div className="relative h-24 overflow-hidden rounded-lg">
+                            <img
+                              src={getPrimaryPhoto(hoveredMarkerInfo)}
+                              alt={
+                                hoveredMarkerInfo.name ||
+                                hoveredMarkerInfo.locationName
+                              }
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                              }}
+                            />
+                            {/* Photo count badge if multiple photos */}
+                            {hoveredMarkerInfo.photos &&
+                              hoveredMarkerInfo.photos.length > 1 && (
+                                <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                                  +{hoveredMarkerInfo.photos.length - 1} more
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Description */}
+                      {hoveredMarkerInfo.description && (
+                        <div className="mb-2">
+                          <div className="flex items-start gap-2">
+                            <Info className="w-3 h-3 text-gray-500 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-gray-700 leading-relaxed">
+                              {hoveredMarkerInfo.description.length > 80
+                                ? `${hoveredMarkerInfo.description.substring(
+                                    0,
+                                    80
+                                  )}...`
+                                : hoveredMarkerInfo.description}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Visit Date */}
+                      {hoveredMarkerInfo.date_visited && (
+                        <div className="mb-2">
+                          <div className="flex items-center gap-2 text-xs text-gray-600">
+                            <Calendar className="w-3 h-3" />
+                            <span className="font-medium">Visited:</span>
+                            <span>
+                              {new Date(
+                                hoveredMarkerInfo.date_visited
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Coordinates */}
+                      <div className="bg-gray-50 rounded-lg p-2 mb-2">
+                        <div className="text-xs text-gray-600 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">Lat:</span>
+                            <code className="font-mono text-gray-800 bg-white px-1 rounded text-xs">
+                              {parseFloat(hoveredMarkerInfo.lat).toFixed(4)}
+                            </code>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium">Lng:</span>
+                            <code className="font-mono text-gray-800 bg-white px-1 rounded text-xs">
+                              {parseFloat(hoveredMarkerInfo.lng).toFixed(4)}
+                            </code>
+                          </div>
+                        </div>
+                        <button
+                          className="mt-1 w-full text-xs text-blue-600 hover:text-blue-800 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(
+                              `${parseFloat(hoveredMarkerInfo.lat).toFixed(
+                                6
+                              )}, ${parseFloat(hoveredMarkerInfo.lng).toFixed(
+                                6
+                              )}`
+                            );
+                          }}
+                        >
+                          Copy coordinates
+                        </button>
+                      </div>
+
+                      {/* Tags if available */}
+                      {hoveredMarkerInfo.tags &&
+                        hoveredMarkerInfo.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {hoveredMarkerInfo.tags
+                              .slice(0, 3)
+                              .map((tag, tagIndex) => (
+                                <span
+                                  key={tagIndex}
+                                  className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+                                >
+                                  {typeof tag === "object" ? tag.name : tag}
+                                </span>
+                              ))}
+                            {hoveredMarkerInfo.tags.length > 3 && (
+                              <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                                +{hoveredMarkerInfo.tags.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>,
