@@ -329,6 +329,25 @@ export interface FlagCheckResponse {
   flag: Flag | null;
 }
 
+// Alert related types
+export interface Alert {
+  _id: string;
+  user_id: string | User;
+  type: "follow" | "comment" | "like" | "poi_like" | "map_like";
+  triggeredBy: string | User;
+  targetId?: string;
+  targetType?: "map" | "poi" | "comment" | null;
+  message: string;
+  isRead: boolean;
+  emailSent: boolean;
+  createdAt: string;
+}
+
+export interface AlertsResponse {
+  alerts: Alert[];
+  pagination: Pagination;
+}
+
 // Contact related types
 export interface Contact {
   _id: string;

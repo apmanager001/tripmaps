@@ -774,7 +774,7 @@ const Maps = ({
                   <button
                     onClick={toggleExpanded}
                     aria-label="Minimize map"
-                    className="p-3 bg-white/90 hover:bg-white rounded-lg shadow-lg cursor-pointer transition-all duration-200 hover:shadow-xl backdrop-blur-sm border border-gray-200"
+                    className="z-10 p-3 bg-white/90 hover:bg-white rounded-lg shadow-lg cursor-pointer transition-all duration-200 hover:shadow-xl backdrop-blur-sm border border-gray-200"
                   >
                     <Minimize2 size={18} className="text-gray-700" />
                   </button>

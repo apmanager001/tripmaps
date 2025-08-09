@@ -84,19 +84,19 @@ const registerUser = async (req, res) => {
       const mailOptions = {
         from: process.env.EMAIL_USER,
         to: email,
-        subject: "Verify Your Email - TripMaps",
+        subject: "Verify Your Email - My Trip Maps",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #2563eb;">Welcome to TripMaps!</h2>
+            <h2 style="color: #2563eb;">Welcome to My Trip Maps!</h2>
             <p>Hello ${username},</p>
-            <p>Thank you for registering with TripMaps! Please verify your email address to complete your registration.</p>
+            <p>Thank you for registering with My Trip Maps! Please verify your email address to complete your registration.</p>
             <p>Click the button below to verify your email:</p>
             <div style="text-align: center; margin: 30px 0;">
               <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Verify Email</a>
             </div>
             <p>This link will expire in 24 hours.</p>
-            <p>If you didn't create an account with TripMaps, please ignore this email.</p>
-            <p>Best regards,<br>The TripMaps Team</p>
+            <p>If you didn't create an account with My Trip Maps, please ignore this email.</p>
+            <p>Best regards,<br>The My Trip Maps Team</p>
           </div>
         `,
       };

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Maps from "../../dashboard/comp/maps/map";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import SharedButtons from "../../dashboard/comp/maps/shareButtons";
@@ -72,6 +72,10 @@ export default function IndividualMaps({ id }) {
   // Sort state
   const [sortBy, setSortBy] = useState("date_visited"); // 'date_visited' or 'locationName'
   const [sortOrder, setSortOrder] = useState("desc"); // 'asc' or 'desc'
+
+  // Share dropdown state
+  const [isShareDropdownOpen, setIsShareDropdownOpen] = useState(false);
+  const shareDropdownRef = useRef(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["individualMap", id],
@@ -230,6 +234,23 @@ export default function IndividualMaps({ id }) {
       document.title = `${mapName} | My Trip Maps`;
     }
   }, [mapName]);
+
+  // Handle click outside share dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        shareDropdownRef.current &&
+        !shareDropdownRef.current.contains(event.target)
+      ) {
+        setIsShareDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleLike = () => {
     if (!isAuthenticated) {
@@ -529,10 +550,48 @@ export default function IndividualMaps({ id }) {
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
               {/* Left side - Map title and user info */}
               <div className="flex-1">
-                <h1 className="text-2xl lg:text-3xl font-bold text-primary mb-3 leading-tight flex items-center gap-3">
-                  <MapPin className="w-6 h-6" />
-                  {mapName ? mapName.toUpperCase() : "Unnamed Map"}
-                </h1>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <h1 className="text-2xl lg:text-3xl font-bold text-primary leading-tight flex items-center gap-3 flex-1">
+                    <MapPin className="w-6 h-6 flex-shrink-0" />
+                    {mapName ? mapName.toUpperCase() : "Unnamed Map"}
+                  </h1>
+
+                  {/* Share Button - Positioned with title on mobile */}
+                  <div
+                    className="relative flex-shrink-0"
+                    ref={shareDropdownRef}
+                  >
+                    <button
+                      onClick={() =>
+                        setIsShareDropdownOpen(!isShareDropdownOpen)
+                      }
+                      className="flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors text-sm"
+                    >
+                      <Share2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Share</span>
+                    </button>
+
+                    {isShareDropdownOpen && (
+                      <div className="absolute right-0 top-full mt-2 bg-base-100 rounded-lg shadow-lg border border-base-300 p-4 min-w-[300px] z-50">
+                        <div className="space-y-4">
+                          <div>
+                            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                              Share this map
+                            </h3>
+                            <SharedButtons id={id} name={mapName} />
+                          </div>
+
+                          <div className="border-t border-base-300 pt-4">
+                            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                              Share on Instagram
+                            </h3>
+                            <InstagramShare mapName={mapName} pois={pois} />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 {mapUser && (
                   <div className="flex flex-row  sm:items-center gap-3 ml-8">
                     <ProfilePictureUpload
@@ -554,17 +613,11 @@ export default function IndividualMaps({ id }) {
                         <span className="text-sm text-gray-600 flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           Created {formatDate(mapData.createdAt)}
-                          </span>
-                        )}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Right side - Share Buttons spanning both rows */}
-              <div className="flex items-center gap-2 lg:self-center">
-                <SharedButtons id={id} name={mapName} />
-                <InstagramShare mapName={mapName} pois={pois} />
               </div>
             </div>
           </div>

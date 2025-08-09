@@ -99,7 +99,7 @@ export default function Statistics() {
         <h2 className="text-3xl font-bold text-center mb-4">
           Our Community in Numbers
         </h2>
-        <p className="text-lg text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+        <p className="text-lg text-center text-base-content mb-12 max-w-2xl mx-auto">
           Join thousands of travelers who are already sharing their adventures
           and discovering new destinations on My Trip Maps.
         </p>

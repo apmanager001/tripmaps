@@ -146,6 +146,33 @@ const userSchema = new Schema({
     type: Date,
     default: null,
   },
+  // Alert settings
+  alertSettings: {
+    followAlerts: {
+      type: Boolean,
+      default: true,
+    },
+    commentAlerts: {
+      type: Boolean,
+      default: true,
+    },
+    likeAlerts: {
+      type: Boolean,
+      default: true,
+    },
+    emailNotifications: {
+      type: Boolean,
+      default: true,
+    },
+    emailFollowAlerts: {
+      type: Boolean,
+      default: true,
+    },
+    emailCommentAlerts: {
+      type: Boolean,
+      default: true,
+    },
+  },
 });
 
 const UserModel = mongoose.model("User", userSchema);

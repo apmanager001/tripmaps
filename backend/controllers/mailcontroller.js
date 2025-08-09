@@ -51,7 +51,7 @@ const sendEmailVerification = async (req, res) => {
     const logoUrl = `${process.env.FRONTEND_URL}/tripmap.webp`;
 
     // Create email transporter
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: "smtp.zoho.com",
       port: 587,
       secure: false,
@@ -66,11 +66,11 @@ const sendEmailVerification = async (req, res) => {
 
     if (isResend) {
       // Resend email template
-      subject = "Email Verification Reminder - TripMaps";
+      subject = "Email Verification Reminder - My Trip Maps";
       htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8fafc; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="${logoUrl}" alt="TripMaps Logo" style="max-width: 200px; height: auto;">
+            <img src="${logoUrl}" alt="My Trip Maps Logo" style="max-width: 200px; height: auto;">
           </div>
           
           <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
@@ -79,7 +79,7 @@ const sendEmailVerification = async (req, res) => {
             <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Hello ${user.username},</p>
             
             <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
-              We noticed that your email address hasn't been verified yet. To access all features of TripMaps and ensure the security of your account, please verify your email address.
+              We noticed that your email address hasn't been verified yet. To access all features of My Trip Maps and ensure the security of your account, please verify your email address.
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
@@ -106,27 +106,27 @@ const sendEmailVerification = async (req, res) => {
             
             <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
               Best regards,<br>
-              <strong>The TripMaps Team</strong>
+              <strong>The My Trip Maps Team</strong>
             </p>
           </div>
         </div>
       `;
     } else {
       // Initial registration email template
-      subject = "Welcome to TripMaps - Verify Your Email";
+      subject = "Welcome to My Trip Maps - Verify Your Email";
       htmlContent = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8fafc; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="${logoUrl}" alt="TripMaps Logo" style="max-width: 200px; height: auto;">
+            <img src="${logoUrl}" alt="My Trip Maps Logo" style="max-width: 200px; height: auto;">
           </div>
           
           <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-            <h2 style="color: #2563eb; margin-bottom: 20px; text-align: center;">Welcome to TripMaps! 🗺️</h2>
+            <h2 style="color: #2563eb; margin-bottom: 20px; text-align: center;">Welcome to My Trip Maps! 🗺️</h2>
             
             <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Hello ${user.username},</p>
             
             <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
-              Thank you for joining TripMaps! We're excited to have you as part of our community of travelers and map creators.
+              Thank you for joining My Trip Maps! We're excited to have you as part of our community of travelers and map creators.
             </p>
             
             <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
@@ -162,14 +162,14 @@ const sendEmailVerification = async (req, res) => {
             </p>
             
             <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
-              If you didn't create an account with TripMaps, please ignore this email.
+              If you didn't create an account with My Trip Maps, please ignore this email.
             </p>
             
             <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
             
             <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
               Happy mapping!<br>
-              <strong>The TripMaps Team</strong>
+              <strong>The My Trip Maps Team</strong>
             </p>
           </div>
         </div>
@@ -241,7 +241,7 @@ const sendPasswordResetEmail = async (req, res) => {
     const logoUrl = `${process.env.FRONTEND_URL}/tripmap.webp`;
 
     // Create email transporter
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: "smtp.zoho.com",
       port: 587,
       secure: false, // true for 465, false for other ports
@@ -255,11 +255,11 @@ const sendPasswordResetEmail = async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Password Reset Request - TripMaps",
+      subject: "Password Reset Request - My Trip Maps",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8fafc; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="${logoUrl}" alt="TripMaps Logo" style="max-width: 200px; height: auto;">
+            <img src="${logoUrl}" alt="My Trip Maps Logo" style="max-width: 200px; height: auto;">
           </div>
           
           <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
@@ -268,7 +268,7 @@ const sendPasswordResetEmail = async (req, res) => {
             <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">Hello ${user.username},</p>
             
             <p style="color: #374151; line-height: 1.6; margin-bottom: 20px;">
-              We received a request to reset the password for your TripMaps account. If this was you, please click the button below to create a new password.
+              We received a request to reset the password for your My Trip Maps account. If this was you, please click the button below to create a new password.
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
@@ -297,7 +297,7 @@ const sendPasswordResetEmail = async (req, res) => {
             
             <p style="color: #6b7280; font-size: 14px; text-align: center; margin: 0;">
               Best regards,<br>
-              <strong>The TripMaps Team</strong>
+              <strong>The My Trip Maps Team</strong>
             </p>
           </div>
         </div>

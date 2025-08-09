@@ -79,7 +79,7 @@ export default function LoginForm() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome Back
           </h1>
-          <p className="text-gray-600">Sign in to your account</p>
+          <p className="text-neutral">Sign in to your account</p>
         </div>
 
         {/* Social Login Buttons */}
@@ -87,7 +87,7 @@ export default function LoginForm() {
           <button
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
+            className="text-neutral w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -146,7 +146,7 @@ export default function LoginForm() {
             <input
               id="identifier"
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 text-neutral rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter your email or username"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
@@ -172,7 +172,7 @@ export default function LoginForm() {
             <input
               id="password"
               type="password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 text-neutral rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -182,7 +182,7 @@ export default function LoginForm() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium cursor-pointer"
+            className="w-full bg-primary text-white py-2 px-4 rounded-lg  transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium cursor-pointer"
             disabled={loginMutation.isPending || isLoading}
           >
             {loginMutation.isPending ? (

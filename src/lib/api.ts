@@ -20,6 +20,7 @@ import {
   FlagCheckResponse,
   Contact,
   ContactStats,
+  AlertsResponse,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
@@ -94,7 +95,21 @@ export const userApi = {
 
   updateProfile: async (
     userId: string,
-    data: { username?: string; bio?: string; emailPrivate?: boolean }
+    data: {
+      username?: string;
+      bio?: string;
+      emailPrivate?: boolean;
+      email?: string;
+      socialMedia?: object;
+      alertSettings?: {
+        followAlerts?: boolean;
+        commentAlerts?: boolean;
+        likeAlerts?: boolean;
+        emailNotifications?: boolean;
+        emailFollowAlerts?: boolean;
+        emailCommentAlerts?: boolean;
+      };
+    }
   ): Promise<ApiResponse<User>> => {
     return apiRequest<ApiResponse<User>>(`/users/profile/${userId}`, {
       method: "PUT",
@@ -133,6 +148,14 @@ export const userApi = {
   updateUserProfile: async (data: {
     bio?: string;
     emailPrivate?: boolean;
+    alertSettings?: {
+      followAlerts?: boolean;
+      commentAlerts?: boolean;
+      likeAlerts?: boolean;
+      emailNotifications?: boolean;
+      emailFollowAlerts?: boolean;
+      emailCommentAlerts?: boolean;
+    };
   }): Promise<ApiResponse<User>> => {
     return apiRequest<ApiResponse<User>>("/users/profile", {
       method: "PUT",
@@ -852,6 +875,52 @@ export const contactApi = {
 
   getContactStats: async (): Promise<ApiResponse<ContactStats>> => {
     return apiRequest<ApiResponse<ContactStats>>("/admin/contacts/stats");
+  },
+};
+
+// ===== ALERT API =====
+export const alertApi = {
+  getUserAlerts: async (
+    userId: string,
+    page = 1,
+    limit = 20,
+    unreadOnly = false
+  ): Promise<ApiResponse<AlertsResponse>> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(unreadOnly && { unreadOnly: "true" }),
+    });
+
+    return apiRequest<ApiResponse<AlertsResponse>>(
+      `/users/${userId}/alerts?${params.toString()}`
+    );
+  },
+
+  markAlertAsRead: async (alertId: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>(`/alerts/${alertId}/read`, {
+      method: "PATCH",
+    });
+  },
+
+  markAllAlertsAsRead: async (userId: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>(`/users/${userId}/alerts/read-all`, {
+      method: "PATCH",
+    });
+  },
+
+  deleteAlert: async (alertId: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>(`/alerts/${alertId}`, {
+      method: "DELETE",
+    });
+  },
+
+  getAlertCount: async (
+    userId: string
+  ): Promise<ApiResponse<{ unreadCount: number; totalCount: number }>> => {
+    return apiRequest<ApiResponse<{ unreadCount: number; totalCount: number }>>(
+      `/users/${userId}/alerts/count`
+    );
   },
 };
 

@@ -13,11 +13,15 @@ import {
   Crown,
   Check,
   Globe,
+  Bell,
+  Heart,
+  MessageCircle,
+  UserPlus,
 } from "lucide-react";
 import { SocialIcon } from "react-social-icons";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/store/useAuthStore";
-import { userApi, authApi, stripeApi } from "@/lib/api";
+import { userApi, authApi, stripeApi, alertApi } from "@/lib/api";
 
 export default function Settings() {
   const { user: currentUser, clearUser } = useAuthStore();
@@ -52,6 +56,16 @@ export default function Settings() {
   });
   const [isEditingSocial, setIsEditingSocial] = useState(false);
 
+  // Alert settings states
+  const [alertSettings, setAlertSettings] = useState({
+    followAlerts: true,
+    commentAlerts: true,
+    likeAlerts: true,
+    emailNotifications: true,
+    emailFollowAlerts: true,
+    emailCommentAlerts: true,
+  });
+
   // Fetch user data
   const { data: userData, isLoading } = useQuery({
     queryKey: ["userProfile", currentUser?._id],
@@ -77,7 +91,12 @@ export default function Settings() {
   const updateProfileMutation = useMutation({
     mutationFn: (data) => userApi.updateProfile(currentUser._id, data),
     onSuccess: (data) => {
-      toast.success("Profile updated successfully!");
+      // Check if the response includes a specific message (e.g., for email changes)
+      if (data.message) {
+        toast.success(data.message);
+      } else {
+        toast.success("Profile updated successfully!");
+      }
       queryClient.invalidateQueries(["userProfile", currentUser._id]);
       setIsEditingEmail(false);
       setIsEditingBio(false);
@@ -96,29 +115,27 @@ export default function Settings() {
         return true;
       } catch (error) {
         console.error("Logout error:", error);
-        // Even if the API call fails, we should still clear local state
         return false;
       }
     },
-    onSuccess: (success) => {
-      // Always clear user state regardless of API success
+    onSuccess: () => {
+      // Clear all cached queries to prevent stale data
+      queryClient.clear();
       clearUser();
-
-      if (success) {
-        toast.success("Logged out successfully");
-      } else {
-        toast.success("Logged out (local session cleared)");
-      }
-
-      // Redirect to home page
-      window.location.href = "/";
+      toast.success("Logged out successfully");
+      // Add small delay to allow state cleanup before redirect
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
     },
     onError: (error) => {
       console.error("Logout mutation error:", error);
-      // Even on error, clear local state and redirect
+      queryClient.clear();
       clearUser();
-      toast.success("Logged out (local session cleared)");
-      window.location.href = "/";
+      toast.success("Logged out successfully");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
     },
   });
 
@@ -146,6 +163,16 @@ export default function Settings() {
         twitch: user.socialMedia?.twitch || "",
         discord: user.socialMedia?.discord || "",
         linktree: user.socialMedia?.linktree || "",
+      });
+
+      // Initialize alert settings data
+      setAlertSettings({
+        followAlerts: user.alertSettings?.followAlerts !== false,
+        commentAlerts: user.alertSettings?.commentAlerts !== false,
+        likeAlerts: user.alertSettings?.likeAlerts !== false,
+        emailNotifications: user.alertSettings?.emailNotifications !== false,
+        emailFollowAlerts: user.alertSettings?.emailFollowAlerts !== false,
+        emailCommentAlerts: user.alertSettings?.emailCommentAlerts !== false,
       });
     }
   }, [userData]);
@@ -182,6 +209,40 @@ export default function Settings() {
 
   const handleSocialMediaUpdate = () => {
     updateProfileMutation.mutate({ socialMedia });
+  };
+
+  const handleAlertSettingToggle = (alertType) => {
+    let newSettings = {
+      ...alertSettings,
+      [alertType]: !alertSettings[alertType],
+    };
+
+    // If turning off email notifications, turn off all email sub-settings
+    if (
+      alertType === "emailNotifications" &&
+      alertSettings.emailNotifications
+    ) {
+      newSettings = {
+        ...newSettings,
+        emailFollowAlerts: false,
+        emailCommentAlerts: false,
+      };
+    }
+
+    // If turning on email notifications, turn on all email sub-settings
+    if (
+      alertType === "emailNotifications" &&
+      !alertSettings.emailNotifications
+    ) {
+      newSettings = {
+        ...newSettings,
+        emailFollowAlerts: true,
+        emailCommentAlerts: true,
+      };
+    }
+
+    setAlertSettings(newSettings);
+    updateProfileMutation.mutate({ alertSettings: newSettings });
   };
 
   const handleLogout = () => {
@@ -263,6 +324,107 @@ export default function Settings() {
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">
+      {/* Upgrade Subscription - Full Width */}
+      <div className="card bg-gradient-to-br from-primary/10 to-secondary/10 shadow-lg border border-primary/20">
+        <div className="card-body">
+          <div className="flex items-center gap-2 mb-4">
+            <Crown className="w-6 h-6 text-primary" />
+            <h2 className="card-title text-xl text-primary">
+              {subscriptionStatus === "active"
+                ? "Premium Active"
+                : "Upgrade to Premium"}
+            </h2>
+          </div>
+
+          {subscriptionStatus === "active" ? (
+            <div className="space-y-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-success mb-1">
+                  ✓ Premium Active
+                </div>
+                <div className="text-sm text-gray-600">
+                  {currentPeriodEnd && (
+                    <>
+                      Renews on{" "}
+                      {new Date(currentPeriodEnd).toLocaleDateString()}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <Check className="w-4 h-4 text-success" />
+                  <span>No advertisements</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Check className="w-4 h-4 text-success" />
+                  <span>Premium features coming soon</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Check className="w-4 h-4 text-success" />
+                  <span>Priority support</span>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <button
+                  onClick={() => {
+                    // TODO: Implement cancel subscription
+                    toast.info("Cancel subscription feature coming soon");
+                  }}
+                  className="btn btn-outline btn-error"
+                >
+                  Cancel Subscription
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="text-center md:text-left">
+                <div className="text-3xl font-bold text-primary mb-1">
+                  $1.99
+                </div>
+                <div className="text-sm text-gray-600">per month</div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                <div className="flex items-center gap-2 text-sm">
+                  <Check className="w-4 h-4 text-success" />
+                  <span>No advertisements</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Check className="w-4 h-4 text-success" />
+                  <span>Premium features coming soon</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Check className="w-4 h-4 text-success" />
+                  <span>Priority support</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  onClick={handleUpgrade}
+                  disabled={isUpgrading}
+                  className="btn btn-primary btn-lg flex gap-2"
+                >
+                  {isUpgrading ? (
+                    <div className="loading loading-spinner loading-sm"></div>
+                  ) : (
+                    <Crown className="w-5 h-5" />
+                  )}
+                  {isUpgrading ? "Processing..." : "Upgrade Now"}
+                </button>
+                <p className="text-xs text-center text-gray-500">
+                  Cancel anytime. No commitment required.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column */}
@@ -358,23 +520,29 @@ export default function Settings() {
                               <span className="text-sm">Email verified</span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-1 badge badge-warning">
-                              <svg
-                                className="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                                />
-                              </svg>
-                              <span className="text-sm">
-                                Email not verified
-                              </span>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1 badge badge-warning">
+                                <svg
+                                  className="w-4 h-4"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                                  />
+                                </svg>
+                                <span className="text-sm">
+                                  Email not verified
+                                </span>
+                              </div>
+                              <p className="text-xs text-warning">
+                                Verify your email to receive notifications and
+                                access all features
+                              </p>
                             </div>
                           )}
                         </div>
@@ -494,6 +662,264 @@ export default function Settings() {
                   onChange={handleEmailPrivacyToggle}
                   disabled={updateProfileMutation.isPending}
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Alert Settings */}
+          <div className="card bg-base-100 shadow-lg">
+            <div className="card-body">
+              <h2 className="card-title text-xl flex items-center gap-2">
+                <Bell className="w-5 h-5" />
+                Alert Settings
+              </h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Choose which activities you want to be notified about
+              </p>
+
+              <div className="space-y-4">
+                {/* Follow Alerts */}
+                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <UserPlus className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">
+                        New Followers
+                      </label>
+                      <p className="text-sm text-gray-500">
+                        Get notified when someone follows you
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={alertSettings.followAlerts}
+                    onChange={() => handleAlertSettingToggle("followAlerts")}
+                    disabled={updateProfileMutation.isPending}
+                  />
+                </div>
+
+                {/* Comment Alerts */}
+                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <MessageCircle className="w-5 h-5 text-green-600" />
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">
+                        Map Comments
+                      </label>
+                      <p className="text-sm text-gray-500">
+                        Get notified when someone comments on your maps
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={alertSettings.commentAlerts}
+                    onChange={() => handleAlertSettingToggle("commentAlerts")}
+                    disabled={updateProfileMutation.isPending}
+                  />
+                </div>
+
+                {/* Like Alerts */}
+                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Heart className="w-5 h-5 text-red-600" />
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">
+                        Likes & Reactions
+                      </label>
+                      <p className="text-sm text-gray-500">
+                        Get notified when someone likes your maps or POIs
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={alertSettings.likeAlerts}
+                    onChange={() => handleAlertSettingToggle("likeAlerts")}
+                    disabled={updateProfileMutation.isPending}
+                  />
+                </div>
+
+                {/* Email Notifications - Master Toggle */}
+                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-5 h-5 text-purple-600" />
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">
+                        Email Notifications (Master)
+                      </label>
+                      <p className="text-sm text-gray-500">
+                        Enable/disable all email notifications
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={alertSettings.emailNotifications}
+                    onChange={() =>
+                      handleAlertSettingToggle("emailNotifications")
+                    }
+                    disabled={updateProfileMutation.isPending}
+                  />
+                </div>
+
+                {/* Email Follow Notifications */}
+                <div
+                  className={`flex items-center justify-between p-3 rounded-lg ${
+                    alertSettings.emailNotifications
+                      ? "bg-base-200"
+                      : "bg-gray-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <UserPlus className="w-5 h-5 text-blue-600" />
+                    <div>
+                      <label
+                        className={`text-sm font-medium ${
+                          alertSettings.emailNotifications
+                            ? "text-gray-600"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        Email for New Followers
+                      </label>
+                      <p
+                        className={`text-sm ${
+                          alertSettings.emailNotifications
+                            ? "text-gray-500"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        Get email when someone follows you
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={
+                      alertSettings.emailFollowAlerts &&
+                      alertSettings.emailNotifications
+                    }
+                    onChange={() =>
+                      handleAlertSettingToggle("emailFollowAlerts")
+                    }
+                    disabled={
+                      updateProfileMutation.isPending ||
+                      !alertSettings.emailNotifications
+                    }
+                  />
+                </div>
+
+                {/* Email Comment Notifications */}
+                <div
+                  className={`flex items-center justify-between p-3 rounded-lg ${
+                    alertSettings.emailNotifications
+                      ? "bg-base-200"
+                      : "bg-gray-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <MessageCircle className="w-5 h-5 text-green-600" />
+                    <div>
+                      <label
+                        className={`text-sm font-medium ${
+                          alertSettings.emailNotifications
+                            ? "text-gray-600"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        Email for Map Comments
+                      </label>
+                      <p
+                        className={`text-sm ${
+                          alertSettings.emailNotifications
+                            ? "text-gray-500"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        Get email when someone comments on your maps
+                      </p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="toggle toggle-primary"
+                    checked={
+                      alertSettings.emailCommentAlerts &&
+                      alertSettings.emailNotifications
+                    }
+                    onChange={() =>
+                      handleAlertSettingToggle("emailCommentAlerts")
+                    }
+                    disabled={
+                      updateProfileMutation.isPending ||
+                      !alertSettings.emailNotifications
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-6">
+          {/* Account Dates */}
+          <div className="card bg-base-100 shadow-lg">
+            <div className="card-body">
+              <h2 className="card-title text-xl">Account Information</h2>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <Calendar className="w-5 h-5 text-primary" />
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Created
+                    </label>
+                    <p className="font-semibold">{formatDate(createdDate)}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
+                  <Clock className="w-5 h-5 text-primary" />
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">
+                      Last Updated
+                    </label>
+                    <p className="font-semibold">{formatDate(updatedDate)}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Account Stats */}
+          <div className="card bg-base-100 shadow-lg">
+            <div className="card-body">
+              <h2 className="card-title text-xl">Account Statistics</h2>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-base-200 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">
+                    {dashboardData?.maps?.length || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Maps Created</div>
+                </div>
+                <div className="text-center p-4 bg-base-200 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">
+                    {dashboardData?.maps?.reduce(
+                      (total, map) => total + (map.views || 0),
+                      0
+                    ) || 0}
+                  </div>
+                  <div className="text-sm text-gray-600">Total Views</div>
+                </div>
               </div>
             </div>
           </div>
@@ -886,161 +1312,6 @@ export default function Settings() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="space-y-6">
-          {/* Account Dates */}
-          <div className="card bg-base-100 shadow-lg">
-            <div className="card-body">
-              <h2 className="card-title text-xl">Account Information</h2>
-
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
-                  <Calendar className="w-5 h-5 text-primary" />
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">
-                      Created
-                    </label>
-                    <p className="font-semibold">{formatDate(createdDate)}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 p-3 bg-base-200 rounded-lg">
-                  <Clock className="w-5 h-5 text-primary" />
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">
-                      Last Updated
-                    </label>
-                    <p className="font-semibold">{formatDate(updatedDate)}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Account Stats */}
-          <div className="card bg-base-100 shadow-lg">
-            <div className="card-body">
-              <h2 className="card-title text-xl">Account Statistics</h2>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-base-200 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">
-                    {dashboardData?.maps?.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-600">Maps Created</div>
-                </div>
-                <div className="text-center p-4 bg-base-200 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">
-                    {dashboardData?.maps?.reduce(
-                      (total, map) => total + (map.views || 0),
-                      0
-                    ) || 0}
-                  </div>
-                  <div className="text-sm text-gray-600">Total Views</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Upgrade Subscription */}
-          <div className="card bg-gradient-to-br from-primary/10 to-secondary/10 shadow-lg border border-primary/20">
-            <div className="card-body">
-              <div className="flex items-center gap-2 mb-4">
-                <Crown className="w-6 h-6 text-primary" />
-                <h2 className="card-title text-xl text-primary">
-                  {subscriptionStatus === "active"
-                    ? "Premium Active"
-                    : "Upgrade to Premium"}
-                </h2>
-              </div>
-
-              {subscriptionStatus === "active" ? (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-success mb-1">
-                      ✓ Premium Active
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {currentPeriodEnd && (
-                        <>
-                          Renews on{" "}
-                          {new Date(currentPeriodEnd).toLocaleDateString()}
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-success" />
-                      <span>No advertisements</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Check className="w-4 h-4 text-success" />
-                      <span>Premium features coming soon</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Check className="w-4 h-4 text-success" />
-                      <span>Priority support</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      // TODO: Implement cancel subscription
-                      toast.info("Cancel subscription feature coming soon");
-                    }}
-                    className="btn btn-outline btn-error w-full"
-                  >
-                    Cancel Subscription
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-1">
-                      $1.99
-                    </div>
-                    <div className="text-sm text-gray-600">per month</div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-success" />
-                      <span>No advertisements</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Check className="w-4 h-4 text-success" />
-                      <span>Premium features coming soon</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <Check className="w-4 h-4 text-success" />
-                      <span>Priority support</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleUpgrade}
-                    disabled={isUpgrading}
-                    className="btn btn-primary btn-lg w-full flex gap-2"
-                  >
-                    {isUpgrading ? (
-                      <div className="loading loading-spinner loading-sm"></div>
-                    ) : (
-                      <Crown className="w-5 h-5" />
-                    )}
-                    {isUpgrading ? "Processing..." : "Upgrade Now"}
-                  </button>
-
-                  <p className="text-xs text-center text-gray-500">
-                    Cancel anytime. No commitment required.
-                  </p>
-                </div>
-              )}
             </div>
           </div>
 

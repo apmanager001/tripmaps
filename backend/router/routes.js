@@ -119,6 +119,14 @@ const {
   getContactStats,
 } = require("../controllers/contactController");
 
+const {
+  getUserAlerts,
+  markAlertAsRead,
+  markAllAlertsAsRead,
+  deleteAlert,
+  getAlertCount,
+} = require("../controllers/alertController");
+
 const { jwtAuth, optionalJwtAuth } = require("../helpers/jwtAuth");
 const { adminAuth } = require("../middleware/adminAuth");
 const {
@@ -247,6 +255,13 @@ router.get("/flags/check/:photoId", jwtAuth, checkUserFlag);
 // ===== IMAGE PROXY ROUTES =====
 router.get("/images/:key(*)", proxyImage); // Proxy images with CORS headers
 router.get("/images/url/:key(*)", getImageUrl); // Get presigned URLs
+
+// ===== ALERT ROUTES =====
+router.get("/users/:userId/alerts", jwtAuth, getUserAlerts);
+router.patch("/alerts/:alertId/read", jwtAuth, markAlertAsRead);
+router.patch("/users/:userId/alerts/read-all", jwtAuth, markAllAlertsAsRead);
+router.delete("/alerts/:alertId", jwtAuth, deleteAlert);
+router.get("/users/:userId/alerts/count", jwtAuth, getAlertCount);
 
 // ===== CONTACT ROUTES =====
 // Public contact form submission

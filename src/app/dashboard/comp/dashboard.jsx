@@ -20,7 +20,7 @@ import SettingsPage from "./settings";
 import Admin from "./admin";
 import { useAuthStore } from "@/store/useAuthStore";
 import { authApi } from "@/lib/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import AddMapPOIS from "./addMapPOIS";
@@ -32,6 +32,7 @@ const Dashboard = () => {
   const { user, setUser, clearUser } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
 
   // Verify user authentication on mount
   const { isLoading: isVerifying } = useQuery({
@@ -49,7 +50,7 @@ const Dashboard = () => {
         throw error;
       }
     },
-    enabled: true, // Always verify on component mount
+    enabled: !!user, // Only verify if user exists
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -73,20 +74,24 @@ const Dashboard = () => {
         return false;
       }
     },
-    onSuccess: (success) => {
+    onSuccess: () => {
+      // Clear all cached queries to prevent stale data
+      queryClient.clear();
       clearUser();
-      if (success) {
-        toast.success("Logged out successfully");
-      } else {
-        toast.success("Logged out (local session cleared)");
-      }
-      window.location.href = "/";
+      toast.success("Logged out successfully");
+      // Add small delay to allow state cleanup before redirect
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
     },
     onError: (error) => {
       console.error("Logout mutation error:", error);
+      queryClient.clear();
       clearUser();
-      toast.success("Logged out (local session cleared)");
-      window.location.href = "/";
+      toast.success("Logged out successfully");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
     },
   });
 

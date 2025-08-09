@@ -8,6 +8,7 @@ const POITag = require("../model/poiTag");
 const Tag = require("../model/tag");
 const User = require("../model/user");
 const mongoose = require("mongoose");
+const { createLikeAlert } = require("./alertController");
 const { generatePresignedUrlsForPhotos } = require("../helpers/photoHelpers");
 
 // Helper function to create a new POI
@@ -713,6 +714,14 @@ const toggleMapLike = async (req, res) => {
       // Like: create new like record and increment count
       await new MapLike({ user_id: userId, map_id: id }).save();
       await Map.findByIdAndUpdate(id, { $inc: { likes: 1 } });
+
+      // Create like alert
+      try {
+        await createLikeAlert(id, "map", userId);
+      } catch (alertError) {
+        console.error("Error creating map like alert:", alertError);
+        // Don't fail the request if alert creation fails
+      }
 
       res.json({
         success: true,

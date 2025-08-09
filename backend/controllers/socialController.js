@@ -4,6 +4,7 @@ const MapComment = require("../model/mapComment");
 const CommentLike = require("../model/commentLike");
 const User = require("../model/user");
 const Map = require("../model/tripMaps");
+const { createFollowAlert, createCommentAlert } = require("./alertController");
 
 // Friend management
 const followUser = async (req, res) => {
@@ -46,6 +47,14 @@ const followUser = async (req, res) => {
     });
 
     await newFollow.save();
+
+    // Create follow alert
+    try {
+      await createFollowAlert(userId, currentUserId);
+    } catch (alertError) {
+      console.error("Error creating follow alert:", alertError);
+      // Don't fail the request if alert creation fails
+    }
 
     res.status(201).json({
       success: true,
@@ -338,6 +347,14 @@ const addComment = async (req, res) => {
     const populatedComment = await MapComment.findById(
       savedComment._id
     ).populate("user_id", "username");
+
+    // Create comment alert
+    try {
+      await createCommentAlert(mapId, userId, comment.trim());
+    } catch (alertError) {
+      console.error("Error creating comment alert:", alertError);
+      // Don't fail the request if alert creation fails
+    }
 
     res.status(201).json({
       success: true,

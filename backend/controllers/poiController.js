@@ -6,6 +6,7 @@ const POILike = require("../model/poiLike");
 const EditHistory = require("../model/editHistory");
 const mongoose = require("mongoose");
 const Photo = require("../model/photo");
+const { createLikeAlert } = require("./alertController");
 const {
   generatePresignedUrl,
   generatePresignedUrlsForPhotos,

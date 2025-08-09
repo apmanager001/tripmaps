@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   LaptopMinimal,
@@ -12,19 +12,114 @@ import {
   LogOut,
   House,
   Shield,
+  Bell,
+  X,
+  Check,
 } from "lucide-react";
 import UserStatus from "./userHeader";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { alertApi } from "@/lib/api";
 
 const NavigationMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isAlertDropdownOpen, setIsAlertDropdownOpen] = useState(false);
   const { user } = useAuthStore();
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isAlertDropdownOpen && !event.target.closest(".alert-dropdown")) {
+        setIsAlertDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isAlertDropdownOpen]);
 
   const handleDashboardNavigation = (tab) => {
     router.push(`/dashboard?tab=${tab}`);
     setIsOpen(false);
+  };
+
+  // Fetch alert count
+  const { data: alertCountData } = useQuery({
+    queryKey: ["alertCount", user?._id],
+    queryFn: () => alertApi.getAlertCount(user._id),
+    enabled: !!user?._id,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    retry: false, // Don't retry on failure to prevent console errors
+  });
+
+  // Fetch alerts for dropdown
+  const { data: alertsData, isLoading: isAlertsLoading } = useQuery({
+    queryKey: ["alerts", user?._id],
+    queryFn: () => alertApi.getUserAlerts(user._id, 1, 10),
+    enabled: !!user?._id && isAlertDropdownOpen,
+    retry: false, // Don't retry on failure to prevent console errors
+  });
+
+  // Mark alert as read mutation
+  const markAsReadMutation = useMutation({
+    mutationFn: (alertId) => alertApi.markAlertAsRead(alertId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["alertCount", user._id]);
+      queryClient.invalidateQueries(["alerts", user._id]);
+    },
+    onError: (error) => {
+      console.error("Error marking alert as read:", error);
+    },
+  });
+
+  // Mark all alerts as read mutation
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => alertApi.markAllAlertsAsRead(user._id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["alertCount", user._id]);
+      queryClient.invalidateQueries(["alerts", user._id]);
+    },
+    onError: (error) => {
+      console.error("Error marking all alerts as read:", error);
+    },
+  });
+
+  const handleMarkAsRead = (alertId) => {
+    markAsReadMutation.mutate(alertId);
+  };
+
+  const handleMarkAllAsRead = () => {
+    markAllAsReadMutation.mutate();
+  };
+
+  const formatAlertTime = (createdAt) => {
+    if (!createdAt) return "Unknown";
+
+    try {
+      const date = new Date(createdAt);
+      const now = new Date();
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) return "Unknown";
+
+      const diffInHours = (now - date) / (1000 * 60 * 60);
+
+      if (diffInHours < 1) {
+        return "Just now";
+      } else if (diffInHours < 24) {
+        return `${Math.floor(diffInHours)}h ago`;
+      } else {
+        return `${Math.floor(diffInHours / 24)}d ago`;
+      }
+    } catch (error) {
+      console.error("Error formatting alert time:", error);
+      return "Unknown";
+    }
   };
 
   const dashboardTabs = [
@@ -40,6 +135,106 @@ const NavigationMenu = () => {
 
   const fullMenu = (
     <ul className="menu menu-horizontal md:gap-1 lg:gap-6 md:text-sm lg:text-lg font-bold">
+      {user && (
+        <li className="relative">
+          <button
+            onClick={() => setIsAlertDropdownOpen(!isAlertDropdownOpen)}
+            className="btn btn-ghost btn-circle relative"
+          >
+            <Bell size={20} />
+            {alertCountData?.data?.unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                {alertCountData?.data?.unreadCount > 9
+                  ? "9+"
+                  : alertCountData?.data?.unreadCount}
+              </span>
+            )}
+          </button>
+
+          {/* Alert Dropdown */}
+          {isAlertDropdownOpen && (
+            <div className="alert-dropdown absolute top-full right-0 bg-base-100 shadow-lg z-50 w-80 rounded-lg border border-base-300 mt-2">
+              <div className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-lg">Notifications</h3>
+                  <div className="flex items-center gap-2">
+                    {(alertCountData?.data?.unreadCount || 0) > 0 && (
+                      <button
+                        onClick={handleMarkAllAsRead}
+                        disabled={markAllAsReadMutation.isPending}
+                        className="btn btn-sm btn-ghost text-xs"
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setIsAlertDropdownOpen(false)}
+                      className="btn btn-sm btn-ghost btn-circle"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                </div>
+
+                {isAlertsLoading ? (
+                  <div className="flex justify-center py-4">
+                    <div className="loading loading-spinner loading-sm"></div>
+                  </div>
+                ) : (alertsData?.data?.alerts || []).length > 0 ? (
+                  <div className="max-h-96 overflow-y-auto space-y-2">
+                    {(alertsData?.data?.alerts || []).map((alert) => (
+                      <div
+                        key={alert._id}
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                          alert.isRead
+                            ? "bg-base-100 border-base-300"
+                            : "bg-blue-50 border-blue-200"
+                        }`}
+                        onClick={() =>
+                          !alert.isRead && handleMarkAsRead(alert._id)
+                        }
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">
+                              {alert.message}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {formatAlertTime(alert.createdAt)}
+                            </p>
+                          </div>
+                          {!alert.isRead && (
+                            <div className="w-2 h-2 bg-blue-500 rounded-full ml-2 mt-1"></div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Bell size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>No notifications yet</p>
+                  </div>
+                )}
+
+                {(alertsData?.data?.alerts || []).length > 0 && (
+                  <div className="mt-3 pt-3 border-t border-base-300">
+                    <button
+                      onClick={() => {
+                        router.push("/dashboard?tab=Notifications");
+                        setIsAlertDropdownOpen(false);
+                      }}
+                      className="btn btn-sm btn-primary w-full"
+                    >
+                      View All Notifications
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </li>
+      )}
       <li>
         <UserStatus />
       </li>
@@ -65,7 +260,7 @@ const NavigationMenu = () => {
 
       {/* Mobile Dropdown */}
       {isOpen && (
-        <div className="absolute top-full right-0 bg-base-100 shadow-md z-20 md:hidden w-64 rounded-lg border border-base-300">
+        <div className="absolute top-full right-0 bg-base-100 shadow-md z-[9999] md:hidden w-64 rounded-lg border border-base-300">
           <div className="p-2">
             {user ? (
               <div className="space-y-1">
