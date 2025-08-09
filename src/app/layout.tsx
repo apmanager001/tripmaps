@@ -6,6 +6,7 @@ import Header from "../components/homepage/header";
 import Footer from "../components/homepage/footer";
 import { QueryProvider } from "@/components/utility/tanstack/queryProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import MobileDebugger from "@/components/MobileDebugger";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -211,6 +212,8 @@ export default function RootLayout({
             <Header />
             <main className="flex-grow">{children}</main>
             <Footer />
+            {/* Mobile debugging component - only shows on mobile devices */}
+            <MobileDebugger />
           </QueryProvider>
         </ErrorBoundary>
       </body>
