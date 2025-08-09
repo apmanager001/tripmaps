@@ -27,19 +27,103 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: baseUrl,
       lastModified: new Date(),
       changeFrequency: "daily" as const,
-      priority: 1,
+      priority: 1.0,
+    },
+    {
+      url: `${baseUrl}/maps`,
+      lastModified: new Date(),
+      changeFrequency: "daily" as const,
+      priority: 0.9,
+    },
+    {
+      url: `${baseUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/contact`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/guide`,
+      lastModified: new Date(),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/guide/gettingStarted`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/guide/creatingMaps`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/guide/addingPois`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/guide/editingPois`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/guide/photoUpload`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/guide/mapInterface`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/guide/sharingMaps`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/guide/mobileLimitations`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: new Date(),
+      changeFrequency: "yearly" as const,
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date(),
+      changeFrequency: "yearly" as const,
+      priority: 0.5,
     },
     {
       url: `${baseUrl}/login`,
       lastModified: new Date(),
       changeFrequency: "monthly" as const,
-      priority: 0.8,
+      priority: 0.6,
     },
     {
       url: `${baseUrl}/register`,
       lastModified: new Date(),
       changeFrequency: "monthly" as const,
-      priority: 0.8,
+      priority: 0.6,
     },
   ];
 
@@ -47,11 +131,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const dynamicPages: MetadataRoute.Sitemap = [];
 
   try {
-    // Fetch public maps for sitemap
+    // Fetch public maps for sitemap (increased limit for better SEO coverage)
     const mapsRes = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND}/maps/popular?limit=100`,
+      `${process.env.NEXT_PUBLIC_BACKEND}/maps/popular?limit=200`,
       {
-        next: { revalidate: 3600 }, // Cache for 1 hour
+        next: { revalidate: 1800 }, // Cache for 30 minutes
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "MyTripMaps-Sitemap-Generator",
+        },
       }
     );
 
@@ -68,7 +156,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
               url: `${baseUrl}/maps/${map._id}`,
               lastModified: new Date(),
               changeFrequency: "weekly" as const,
-              priority: 0.7,
+              priority: 0.8,
             };
           }
 
@@ -76,18 +164,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             url: `${baseUrl}/maps/${map._id}`,
             lastModified,
             changeFrequency: "weekly" as const,
-            priority: 0.7,
+            priority: 0.8,
           };
         });
         dynamicPages.push(...mapPages);
+        console.log(`Added ${mapPages.length} map pages to sitemap`);
       }
+    } else {
+      console.warn(`Failed to fetch maps for sitemap: ${mapsRes.status}`);
     }
 
     // Fetch public profiles for sitemap
     const usersRes = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND}/users/top?limit=50`,
+      `${process.env.NEXT_PUBLIC_BACKEND}/users/top?limit=100`,
       {
         next: { revalidate: 3600 }, // Cache for 1 hour
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "MyTripMaps-Sitemap-Generator",
+        },
       }
     );
 
@@ -98,10 +193,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           const dateString = user.updated_at || user.createdDate;
           const lastModified = dateString ? new Date(dateString) : new Date();
 
-          // Validate date
-          if (isNaN(lastModified.getTime())) {
+          // Validate date and username
+          if (isNaN(lastModified.getTime()) || !user.username) {
             return {
-              url: `${baseUrl}/profile/${user.username}`,
+              url: `${baseUrl}/profile/${encodeURIComponent(
+                user.username || "unknown"
+              )}`,
               lastModified: new Date(),
               changeFrequency: "weekly" as const,
               priority: 0.6,
@@ -109,58 +206,76 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           }
 
           return {
-            url: `${baseUrl}/profile/${user.username}`,
+            url: `${baseUrl}/profile/${encodeURIComponent(user.username)}`,
             lastModified,
             changeFrequency: "weekly" as const,
             priority: 0.6,
           };
         });
         dynamicPages.push(...profilePages);
+        console.log(`Added ${profilePages.length} profile pages to sitemap`);
       }
+    } else {
+      console.warn(`Failed to fetch users for sitemap: ${usersRes.status}`);
     }
 
     // Fetch popular POIs for sitemap
     const poisRes = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND}/pois/popular-locations`,
+      `${process.env.NEXT_PUBLIC_BACKEND}/pois/popular-locations?limit=100`,
       {
         next: { revalidate: 3600 }, // Cache for 1 hour
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "MyTripMaps-Sitemap-Generator",
+        },
       }
     );
 
     if (poisRes.ok) {
       const poisData = await poisRes.json();
       if (poisData.success && poisData.data) {
-        const poiPages = poisData.data.map((poi: POIData) => {
-          const dateString = poi.date_visited || poi.createdAt;
-          const lastModified = dateString ? new Date(dateString) : new Date();
+        const poiPages = poisData.data
+          .filter((poi: POIData) => poi.locationName) // Only include POIs with valid names
+          .map((poi: POIData) => {
+            const dateString = poi.date_visited || poi.createdAt;
+            const lastModified = dateString ? new Date(dateString) : new Date();
 
-          // Validate date
-          if (isNaN(lastModified.getTime())) {
+            // Validate date
+            if (isNaN(lastModified.getTime())) {
+              return {
+                url: `${baseUrl}/point_of_interest/${encodeURIComponent(
+                  poi.locationName
+                )}`,
+                lastModified: new Date(),
+                changeFrequency: "monthly" as const,
+                priority: 0.6,
+              };
+            }
+
             return {
               url: `${baseUrl}/point_of_interest/${encodeURIComponent(
                 poi.locationName
               )}`,
-              lastModified: new Date(),
-              changeFrequency: "weekly" as const,
-              priority: 0.5,
+              lastModified,
+              changeFrequency: "monthly" as const,
+              priority: 0.6,
             };
-          }
-
-          return {
-            url: `${baseUrl}/point_of_interest/${encodeURIComponent(
-              poi.locationName
-            )}`,
-            lastModified,
-            changeFrequency: "weekly" as const,
-            priority: 0.5,
-          };
-        });
+          });
         dynamicPages.push(...poiPages);
+        console.log(`Added ${poiPages.length} POI pages to sitemap`);
       }
+    } else {
+      console.warn(`Failed to fetch POIs for sitemap: ${poisRes.status}`);
     }
   } catch (error) {
     console.error("Error generating dynamic sitemap entries:", error);
+    console.error("Falling back to static pages only");
   }
 
-  return [...staticPages, ...dynamicPages];
+  const allPages = [...staticPages, ...dynamicPages];
+  console.log(
+    `Sitemap generated with ${allPages.length} total pages (${staticPages.length} static, ${dynamicPages.length} dynamic)`
+  );
+
+  return allPages;
 }

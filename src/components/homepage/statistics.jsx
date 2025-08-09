@@ -74,7 +74,7 @@ export default function Statistics() {
 
   if (isLoading) {
     return (
-      <section className="py-16 px-6 bg-gradient-to-r from-blue-50 to-purple-50">
+      <section className="py-16 px-6 bg-gradient-to-r from-primary to-secondary">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">
             Our Community in Numbers
@@ -94,7 +94,7 @@ export default function Statistics() {
   }
 
   return (
-    <section className="py-16 px-6 bg-gradient-to-r from-blue-50 to-purple-50">
+    <section className="py-16 px-6 bg-gradient-to-r from-base-100 to-primary">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-4">
           Our Community in Numbers
@@ -115,10 +115,10 @@ export default function Statistics() {
               >
                 {stat.icon}
               </div>
-              <div className="text-3xl font-bold text-gray-800 mb-2 text-center">
+              <div className="text-3xl font-bold  mb-2 text-center">
                 {stat.value.toLocaleString()}
               </div>
-              <div className="text-sm text-gray-600 font-medium text-center">
+              <div className="text-sm text-base-content font-medium text-center">
                 {stat.label}
               </div>
             </div>
@@ -126,7 +126,7 @@ export default function Statistics() {
         </div>
 
         <div className="text-center mt-12">
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm  mb-4">
             * Numbers are updated regularly
           </p>
         </div>

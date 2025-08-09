@@ -9,7 +9,7 @@ const Header = async () => {
         <div className="flex justify-between items-center w-full">
           <div className="flex items-center gap-4">
             <img src="/tripmap.webp" alt="Logo" width="100" height="100" />
-            <Link href="/" className="btn btn-ghost text-xl ">
+            <Link href="/" className="btn btn-ghost text-xl rounded-lg">
               My Trip Maps
             </Link>
           </div>

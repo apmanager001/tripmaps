@@ -17,6 +17,7 @@ import { poiApi } from "@/lib/api";
 import { useAuthStore } from "@/store/useAuthStore";
 import POICreationInterface from "@/components/utility/poi/POICreationInterface";
 import POICard from "@/components/POICard";
+import Link from "next/link";
 
 const AddMaps = () => {
   const fileInputRef = useRef(null);
@@ -313,8 +314,8 @@ const AddMaps = () => {
         />
       </div>
 
-      {/* POI Creation Interface */}
-      <POICreationInterface />
+      {/* POI Creation Interface
+      <POICreationInterface /> */}
 
       {/* POI Search Section */}
       <div className="bg-base-200 p-4 rounded-lg shadow">
@@ -331,6 +332,14 @@ const AddMaps = () => {
                 Search public POIs or your private ones
               </p>
             </div>
+          </div>
+          <div className="">
+            <Link href="/dashboard?tab=POIs" className="flex btn btn-primary cursor-pointer rounded-2xl">
+          
+                <Plus size={16} />
+                Add POI
+
+            </Link>
           </div>
         </div>
 
@@ -396,8 +405,6 @@ const AddMaps = () => {
                           </button>
                         }
                       />
-
-                     
                     </div>
                   ))}
                 </div>

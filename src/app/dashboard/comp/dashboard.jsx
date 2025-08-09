@@ -122,7 +122,7 @@ const Dashboard = () => {
 
   const tabs = [
     { name: "My Profile", icon: <User size={20} /> },
-    { name: "MAPPOIS", icon: <LocateFixed size={20} /> },
+    { name: "Create Map and POIs", icon: <LocateFixed size={20} /> },
     { name: "POIs", icon: <LocateFixed size={20} /> },
     { name: "Add Map", icon: <MapPinned size={20} /> },
     { name: "Search", icon: <Searched size={20} /> },
@@ -137,7 +137,7 @@ const Dashboard = () => {
     switch (activeTab) {
       case "My Profile":
         return <MyMaps />;
-      case "MAPPOIS":
+      case "Create Map and POIs":
         return <AddMapPOIS />;
       case "POIs":
         return <AddPOI />;
