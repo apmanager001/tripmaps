@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { AlertTriangle, Smartphone, Wifi, Battery, Signal } from "lucide-react";
+import { AlertTriangle, Smartphone, Wifi, Signal } from "lucide-react";
+
+interface NetworkConnection {
+  effectiveType?: string;
+  downlink?: number;
+  rtt?: number;
+  saveData?: boolean;
+}
 
 interface DeviceInfo {
   userAgent: string;
@@ -10,7 +17,7 @@ interface DeviceInfo {
   onLine: boolean;
   hardwareConcurrency: number;
   deviceMemory?: number;
-  connection?: any;
+  connection?: NetworkConnection;
   standalone?: boolean;
   orientation?: string;
   screenSize: string;
@@ -42,9 +49,15 @@ export default function MobileDebugger() {
       cookieEnabled: navigator.cookieEnabled,
       onLine: navigator.onLine,
       hardwareConcurrency: navigator.hardwareConcurrency,
-      deviceMemory: (navigator as any).deviceMemory,
-      connection: (navigator as any).connection,
-      standalone: (window.navigator as any).standalone,
+      deviceMemory: (navigator as Record<string, unknown>).deviceMemory as
+        | number
+        | undefined,
+      connection: (navigator as Record<string, unknown>).connection as
+        | NetworkConnection
+        | undefined,
+      standalone: (window.navigator as Record<string, unknown>).standalone as
+        | boolean
+        | undefined,
       orientation: screen.orientation?.type || "unknown",
       screenSize: `${screen.width}x${screen.height}`,
       viewport: `${window.innerWidth}x${window.innerHeight}`,
