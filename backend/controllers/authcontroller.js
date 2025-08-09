@@ -153,6 +153,7 @@ const loginUser = async (req, res) => {
         email: user.email,
         _id: user._id, // Use _id consistently
         username: user.username,
+        role: user.role, // Include user role for authorization
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
@@ -351,6 +352,7 @@ const googleCallback = async (req, res) => {
         email: user.email,
         _id: user._id,
         username: user.username,
+        role: user.role, // Include user role for authorization
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
@@ -457,6 +459,7 @@ const facebookCallback = async (req, res) => {
         email: user.email,
         _id: user._id,
         username: user.username,
+        role: user.role, // Include user role for authorization
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }

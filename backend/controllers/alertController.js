@@ -127,7 +127,7 @@ const getUserAlerts = async (req, res) => {
     const { page = 1, limit = 20, unreadOnly = false } = req.query;
 
     // Verify user is requesting their own alerts or is admin
-    if (req.userId !== userId && req.userRole !== "admin") {
+    if (req.user._id.toString() !== userId && req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
         message: "Access denied. You can only view your own alerts.",
@@ -184,7 +184,10 @@ const markAlertAsRead = async (req, res) => {
     }
 
     // Verify user owns this alert or is admin
-    if (alert.user_id.toString() !== req.userId && req.userRole !== "admin") {
+    if (
+      alert.user_id.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    ) {
       return res.status(403).json({
         success: false,
         message: "Access denied. You can only mark your own alerts as read.",
@@ -215,7 +218,7 @@ const markAllAlertsAsRead = async (req, res) => {
     const { userId } = req.params;
 
     // Verify user is updating their own alerts or is admin
-    if (req.userId !== userId && req.userRole !== "admin") {
+    if (req.user._id.toString() !== userId && req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
         message: "Access denied. You can only update your own alerts.",
@@ -256,7 +259,10 @@ const deleteAlert = async (req, res) => {
     }
 
     // Verify user owns this alert or is admin
-    if (alert.user_id.toString() !== req.userId && req.userRole !== "admin") {
+    if (
+      alert.user_id.toString() !== req.user._id.toString() &&
+      req.user.role !== "admin"
+    ) {
       return res.status(403).json({
         success: false,
         message: "Access denied. You can only delete your own alerts.",
@@ -284,8 +290,14 @@ const getAlertCount = async (req, res) => {
   try {
     const { userId } = req.params;
 
+    // Debug logging
+    console.log("getAlertCount - req.user:", req.user);
+    console.log("getAlertCount - userId param:", userId);
+    console.log("getAlertCount - req.user._id:", req.user._id);
+    console.log("getAlertCount - req.user.role:", req.user.role);
+
     // Verify user is requesting their own alert count or is admin
-    if (req.userId !== userId && req.userRole !== "admin") {
+    if (req.user._id.toString() !== userId && req.user.role !== "admin") {
       return res.status(403).json({
         success: false,
         message: "Access denied. You can only view your own alert count.",

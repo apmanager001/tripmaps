@@ -52,7 +52,7 @@ const NavigationMenu = () => {
   const { data: alertCountData } = useQuery({
     queryKey: ["alertCount", user?._id],
     queryFn: () => alertApi.getAlertCount(user._id),
-    enabled: !!user?._id,
+    enabled: !!user?._id && !!user?.role, // Only run if user has both _id and role
     refetchInterval: 30000, // Refetch every 30 seconds
     retry: false, // Don't retry on failure to prevent console errors
   });
@@ -61,7 +61,7 @@ const NavigationMenu = () => {
   const { data: alertsData, isLoading: isAlertsLoading } = useQuery({
     queryKey: ["alerts", user?._id],
     queryFn: () => alertApi.getUserAlerts(user._id, 1, 10),
-    enabled: !!user?._id && isAlertDropdownOpen,
+    enabled: !!user?._id && !!user?.role && isAlertDropdownOpen, // Only run if user has both _id and role
     retry: false, // Don't retry on failure to prevent console errors
   });
 
@@ -79,7 +79,10 @@ const NavigationMenu = () => {
 
   // Mark all alerts as read mutation
   const markAllAsReadMutation = useMutation({
-    mutationFn: () => alertApi.markAllAlertsAsRead(user._id),
+    mutationFn: () => {
+      if (!user?._id) throw new Error("User ID not available");
+      return alertApi.markAllAlertsAsRead(user._id);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(["alertCount", user._id]);
       queryClient.invalidateQueries(["alerts", user._id]);
@@ -181,7 +184,7 @@ const NavigationMenu = () => {
                     <div className="loading loading-spinner loading-sm"></div>
                   </div>
                 ) : (alertsData?.data?.alerts || []).length > 0 ? (
-                  <div className="max-h-96 overflow-y-auto space-y-2">
+                  <div className="max-h-96 overflow-y-auto space-y-2 text-neutral">
                     {(alertsData?.data?.alerts || []).map((alert) => (
                       <div
                         key={alert._id}

@@ -50,7 +50,7 @@ const Dashboard = () => {
         throw error;
       }
     },
-    enabled: !!user, // Only verify if user exists
+    enabled: true, // Always verify on mount
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
