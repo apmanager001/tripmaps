@@ -47,8 +47,8 @@ const POICard = ({
 
   // Check if current user is the creator of this POI
   const isCreator =
-    (isAuthenticated && poi?.user_id?._id === user._id) ||
-    poi?.user_id === user._id;
+    (isAuthenticated && user?._id && poi?.user_id?._id === user._id) ||
+    (user?._id && poi?.user_id === user._id);
 
   // Ensure we're on the client side for portal rendering
   useEffect(() => {

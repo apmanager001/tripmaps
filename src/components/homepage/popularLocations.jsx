@@ -83,7 +83,7 @@ export default function PopularLocations() {
 
   // Confirm POI deletion
   const confirmDeletePOI = async () => {
-    if (!poiToDelete) return;
+    if (!poiToDelete || !user?._id) return;
 
     const { poiId, poiName } = poiToDelete;
 

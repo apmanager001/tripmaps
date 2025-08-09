@@ -51,7 +51,7 @@ export default function NotFound() {
               <span className="font-medium">Explore Maps</span>
             </Link>
 
-            {user && (
+            {user && user._id && (
               <>
                 <Link
                   href="/dashboard"
@@ -62,7 +62,7 @@ export default function NotFound() {
                 </Link>
 
                 <Link
-                  href={`/profile/${user._id}`}
+                  href={`/profile/${user.username || user._id}`}
                   className="flex items-center justify-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200"
                 >
                   <User size={20} className="text-orange-600" />
