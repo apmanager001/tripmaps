@@ -49,15 +49,12 @@ export default function MobileDebugger() {
       cookieEnabled: navigator.cookieEnabled,
       onLine: navigator.onLine,
       hardwareConcurrency: navigator.hardwareConcurrency,
-      deviceMemory: (navigator as Record<string, unknown>).deviceMemory as
-        | number
-        | undefined,
-      connection: (navigator as Record<string, unknown>).connection as
-        | NetworkConnection
-        | undefined,
-      standalone: (window.navigator as Record<string, unknown>).standalone as
-        | boolean
-        | undefined,
+      deviceMemory: (navigator as unknown as Record<string, unknown>)
+        .deviceMemory as number | undefined,
+      connection: (navigator as unknown as Record<string, unknown>)
+        .connection as NetworkConnection | undefined,
+      standalone: (window.navigator as unknown as Record<string, unknown>)
+        .standalone as boolean | undefined,
       orientation: screen.orientation?.type || "unknown",
       screenSize: `${screen.width}x${screen.height}`,
       viewport: `${window.innerWidth}x${window.innerHeight}`,
