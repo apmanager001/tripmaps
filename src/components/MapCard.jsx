@@ -48,7 +48,7 @@ const MapCard = ({
           primaryPhoto?.s3Url ||
           primaryPhoto?.thumbnailUrl ||
           primaryPhoto?.fullUrl ||
-          "/placeholder-image.jpg";
+          "/placeholder-image.webp";
 
         images.push({
           url: imageUrl,

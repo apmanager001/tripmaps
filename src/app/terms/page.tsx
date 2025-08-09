@@ -416,7 +416,7 @@ const TermsOfService = () => {
             <div className="bg-base-200 rounded-lg p-6">
               <ul className="space-y-2">
                 <li>
-                  <strong>Email:</strong> legal@tripmaps.com
+                  <strong>Email:</strong> contact@mytripmaps.com
                 </li>
                 <li>
                   <strong>Address:</strong> [Your Business Address]
@@ -424,7 +424,7 @@ const TermsOfService = () => {
                 <li>
                   <strong>Website:</strong>{" "}
                   <Link href="/" className="link link-primary">
-                    tripmaps.com
+                    mytripmaps.com
                   </Link>
                 </li>
               </ul>

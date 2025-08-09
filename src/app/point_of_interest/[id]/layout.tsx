@@ -16,7 +16,7 @@ export async function generateMetadata({
       title: `Maps with ${poiName} - TripMaps`,
       description: `Discover all maps featuring ${poiName}. Explore travel itineraries, locations, and experiences shared by the TripMaps community.`,
       type: "website",
-      url: `https://tripmaps.com/point_of_interest/${encodeURIComponent(
+      url: `https://mytripmaps.com/point_of_interest/${encodeURIComponent(
         poiName
       )}`,
       images: [
@@ -35,7 +35,7 @@ export async function generateMetadata({
       images: ["/tripmap.webp"],
     },
     alternates: {
-      canonical: `https://tripmaps.com/point_of_interest/${encodeURIComponent(
+      canonical: `https://mytripmaps.com/point_of_interest/${encodeURIComponent(
         poiName
       )}`,
     },

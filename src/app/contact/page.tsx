@@ -310,10 +310,10 @@ const ContactPage = () => {
                 <p className="text-sm text-base-content/80">
                   For urgent matters, you can email us directly at{" "}
                   <a
-                    href="mailto:support@tripmaps.com"
+                    href="mailto:contact@tripmaps.com"
                     className="link link-primary"
                   >
-                    support@tripmaps.com
+                    contact@tripmaps.com
                   </a>
                 </p>
               </div>

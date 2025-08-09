@@ -9,8 +9,7 @@ AWS.config.update({
   secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
   region: "auto", // R2 uses 'auto' as the region
   endpoint:
-    process.env.R2_PROFILE_ENDPOINT ||
-    "https://57504fc5bc651800ba47b85ed3c810bf.r2.cloudflarestorage.com",
+    process.env.R2_PROFILE_ENDPOINT,
   s3ForcePathStyle: true, // Use path-style URLs for R2 to avoid bucket name duplication
   signatureVersion: "v4",
 });

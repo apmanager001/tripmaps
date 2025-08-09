@@ -228,7 +228,7 @@ const POIPhotoGallery = ({
                 src={
                   poi.photos[currentPhotoIndex]?.s3Url ||
                   poi.photos[currentPhotoIndex]?.fullUrl ||
-                  "/placeholder-image.jpg"
+                  "/placeholder-image.webp"
                 }
                 alt={`Photo ${currentPhotoIndex + 1}`}
                 className="w-auto h-auto max-w-full max-h-full object-contain pointer-events-none"
@@ -359,7 +359,7 @@ const POIPhotoGallery = ({
                           photo?.thumbnailUrl ||
                           photo?.s3Url ||
                           photo?.fullUrl ||
-                          "/placeholder-image.jpg"
+                          "/placeholder-image.webp"
                         }
                         alt={`Thumbnail ${index + 1}`}
                         className="w-full h-12 sm:h-24 object-cover group-hover:scale-105 transition-transform duration-200"

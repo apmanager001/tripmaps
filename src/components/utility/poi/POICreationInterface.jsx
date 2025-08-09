@@ -270,7 +270,7 @@ const POICreationInterface = ({
               }
 
               const blob = await response.blob();
-              const file = new File([blob], "photo.jpg", {
+              const file = new File([blob], "placeholder-image.webp", {
                 type: "image/jpeg",
               });
 

@@ -125,7 +125,7 @@ export default function RootLayout({
               contactPoint: {
                 "@type": "ContactPoint",
                 contactType: "customer service",
-                email: "support@mytripmaps.com",
+                email: "contact@mytripmaps.com",
               },
             }),
           }}

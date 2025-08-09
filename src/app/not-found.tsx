@@ -100,7 +100,7 @@ export default function NotFound() {
           </p>
           <div className="flex justify-center gap-4 text-sm">
             <a
-              href="mailto:support@mytripmaps.com"
+              href="mailto:contact@mytripmaps.com"
               className="text-blue-600 hover:text-blue-800 transition-colors"
             >
               Contact Support

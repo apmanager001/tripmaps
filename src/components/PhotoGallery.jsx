@@ -99,7 +99,7 @@ const PhotoGallery = ({ poiId, onPhotoUpdate }) => {
   const handleDownload = (photo) => {
     const link = document.createElement("a");
     link.href = photo.s3Url;
-    link.download = photo.originalFileName || "photo.jpg";
+    link.download = photo.originalFileName || "placeholder-image.webp";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

@@ -163,7 +163,7 @@ const AdminFlagsPage = () => {
                           (typeof flag.photoId === "object"
                             ? flag.photoId?.thumbnailUrl
                             : null) ||
-                          "/placeholder-image.jpg"
+                          "/placeholder-image.webp"
                         }
                         alt="Flagged photo"
                         width={96}

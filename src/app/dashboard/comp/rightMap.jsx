@@ -187,7 +187,7 @@ export default function NewMap({
                               src={
                                 displayData.photos[0]?.s3Url ||
                                 displayData.photos[0]?.fullUrl ||
-                                "/placeholder-image.jpg"
+                                "/placeholder-image.webp"
                               }
                               alt={`Location ${index + 1}`}
                               className="w-12 h-12 object-cover rounded-lg border border-base-300"

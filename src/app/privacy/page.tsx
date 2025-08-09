@@ -308,7 +308,7 @@ const PrivacyPolicy = () => {
             <div className="bg-base-200 rounded-lg p-6">
               <ul className="space-y-2">
                 <li>
-                  <strong>Email:</strong> privacy@tripmaps.com
+                  <strong>Email:</strong> contact@mytripmaps.com
                 </li>
 
                 <li>

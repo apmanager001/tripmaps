@@ -531,7 +531,7 @@ const EditPOIModal = ({ isOpen, onClose, poi, availableTags = [] }) => {
                       src={
                         photo?.s3Url ||
                         photo?.fullUrl ||
-                        "/placeholder-image.jpg"
+                        "/placeholder-image.webp"
                       }
                       alt={`Photo ${index + 1}`}
                       className="w-full h-24 object-cover rounded-lg"

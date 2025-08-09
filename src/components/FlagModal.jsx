@@ -61,7 +61,7 @@ const FlagModal = ({ isOpen, onClose, photoId, photoUrl, locationName }) => {
           <div className="bg-base-200 rounded-lg p-4 mb-4">
             <div className="flex items-center gap-3">
               <img
-                src={photoUrl || "/placeholder-image.jpg"}
+                src={photoUrl || "/placeholder-image.webp"}
                 alt="Photo being flagged"
                 className="w-16 h-16 object-cover rounded-lg"
               />
