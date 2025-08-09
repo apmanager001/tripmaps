@@ -10,7 +10,6 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
-  errorInfo?: ErrorInfo;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -24,46 +23,6 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
-
-    // Enhanced logging for production debugging
-    console.error("Error details:", {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      componentStack: errorInfo.componentStack,
-      userAgent: navigator.userAgent,
-      url: window.location.href,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Store error info in state for better debugging
-    this.setState({ errorInfo });
-
-    // Send error to monitoring service in production
-    if (process.env.NODE_ENV === "production") {
-      // You can replace this with your preferred error monitoring service
-      try {
-        fetch("/api/log-error", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            error: {
-              message: error.message,
-              stack: error.stack,
-              name: error.name,
-            },
-            errorInfo,
-            userAgent: navigator.userAgent,
-            url: window.location.href,
-            timestamp: new Date().toISOString(),
-          }),
-        }).catch(() => {
-          // Fail silently if error logging fails
-        });
-      } catch {
-        // Fail silently
-      }
-    }
   }
 
   public render() {
@@ -95,7 +54,6 @@ export class ErrorBoundary extends Component<Props, State> {
                   this.setState({
                     hasError: false,
                     error: undefined,
-                    errorInfo: undefined,
                   });
                 }}
                 className="btn btn-outline w-full"
@@ -104,41 +62,17 @@ export class ErrorBoundary extends Component<Props, State> {
               </button>
             </div>
 
-            {/* Show error details in development OR if user is on mobile (for debugging) */}
-            {(process.env.NODE_ENV === "development" ||
-              /Mobi|Android/i.test(navigator.userAgent)) &&
-              this.state.error && (
-                <details className="mt-4 text-left">
-                  <summary className="cursor-pointer text-sm text-base-content/70">
-                    Error Details{" "}
-                    {process.env.NODE_ENV === "production" && "(Mobile Debug)"}
-                  </summary>
-                  <div className="mt-2 text-xs bg-base-300 p-2 rounded overflow-auto max-h-40">
-                    <p>
-                      <strong>Error:</strong> {this.state.error.message}
-                    </p>
-                    <p>
-                      <strong>Name:</strong> {this.state.error.name}
-                    </p>
-                    {this.state.error.stack && (
-                      <>
-                        <p>
-                          <strong>Stack:</strong>
-                        </p>
-                        <pre className="whitespace-pre-wrap text-xs">
-                          {this.state.error.stack}
-                        </pre>
-                      </>
-                    )}
-                    <p>
-                      <strong>User Agent:</strong> {navigator.userAgent}
-                    </p>
-                    <p>
-                      <strong>URL:</strong> {window.location.href}
-                    </p>
-                  </div>
-                </details>
-              )}
+            {/* Show error details in development */}
+            {process.env.NODE_ENV === "development" && this.state.error && (
+              <details className="mt-4 text-left">
+                <summary className="cursor-pointer text-sm text-base-content/70">
+                  Error Details (Development)
+                </summary>
+                <pre className="mt-2 text-xs bg-base-300 p-2 rounded overflow-auto">
+                  {this.state.error.stack}
+                </pre>
+              </details>
+            )}
           </div>
         </div>
       );
