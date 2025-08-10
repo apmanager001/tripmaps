@@ -25,7 +25,7 @@ export default function HeroSection() {
           <div className="text-center lg:text-left">
             <div className="mb-6">
               <h1 className="text-4xl lg:text-6xl font-bold text-base-content mb-6 leading-tight">
-                Discover Amazing Places with{" "}
+                Share Amazing Places with{" "}
                 <span className="text-primary">MyTripMaps</span>
               </h1>
               <p className="text-lg lg:text-xl text-base-content/80 mb-8 max-w-2xl mx-auto lg:mx-0">

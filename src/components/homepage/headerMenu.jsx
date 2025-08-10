@@ -17,11 +17,15 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { alertApi } from "@/lib/api";
+import { useVerifyUser } from "@/components/utility/tanstack/verifyUser";
 
 const NavigationMenu = () => {
   const { user } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  // Initialize auth store with user data - this is essential for user info to display
+  const { isLoading: isAuthLoading } = useVerifyUser();
 
   const handleDashboardNavigation = (tab) => {
     router.push(`/dashboard?tab=${tab}`);
@@ -31,7 +35,7 @@ const NavigationMenu = () => {
   const { data: alertCountData } = useQuery({
     queryKey: ["alertCount", user?._id],
     queryFn: () => alertApi.getAlertCount(user._id),
-    enabled: !!user?._id && !!user?.role, // Only run if user has both _id and role
+    enabled: !isAuthLoading && !!user?._id && !!user?.role, // Only run if auth is loaded and user has both _id and role
     refetchInterval: 30000, // Refetch every 30 seconds
     retry: false, // Don't retry on failure to prevent console errors
   });
@@ -40,7 +44,7 @@ const NavigationMenu = () => {
   const { data: alertsData, isLoading: isAlertsLoading } = useQuery({
     queryKey: ["alerts", user?._id],
     queryFn: () => alertApi.getUserAlerts(user._id, 1, 10),
-    enabled: !!user?._id && !!user?.role, // Only run if user has both _id and role
+    enabled: !isAuthLoading && !!user?._id && !!user?.role, // Only run if auth is loaded and user has both _id and role
     retry: false, // Don't retry on failure to prevent console errors
   });
 
@@ -231,7 +235,11 @@ const NavigationMenu = () => {
             className="dropdown-content z-[9999] menu p-2 shadow bg-base-100 rounded-box w-64"
           >
             <div className="p-2">
-              {user ? (
+              {isAuthLoading ? (
+                <div className="flex justify-center py-4">
+                  <div className="loading loading-spinner loading-sm"></div>
+                </div>
+              ) : user ? (
                 <div className="space-y-1">
                   {/* User Info */}
                   <div className="flex items-center gap-2 p-2 border-b border-base-300">
@@ -290,7 +298,21 @@ const NavigationMenu = () => {
       </div>
 
       {/* Desktop Menu */}
-      <div className="hidden md:flex">{fullMenu}</div>
+      <div className="hidden md:flex">
+        {isAuthLoading ? (
+          <div className="flex items-center gap-4">
+            <div className="loading loading-spinner loading-sm"></div>
+          </div>
+        ) : user ? (
+          fullMenu
+        ) : (
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="btn btn-primary">
+              Login / Register
+            </Link>
+          </div>
+        )}
+      </div>
     </>
   );
 };
