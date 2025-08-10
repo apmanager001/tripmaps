@@ -19,15 +19,14 @@ const Hero = () => {
       <img
         src="/hero.webp"
         alt="Homepage Hero Image"
-        className="absolute inset-0 w-full h-full object-cover "
-        style={{ zIndex: 0 }}
+        className="absolute inset-0 w-full h-full object-cover"
       />
 
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/60" style={{ zIndex: 1 }}></div>
+      <div className="absolute inset-0 bg-black/60" style={{ zIndex: 0 }}></div>
 
       {/* Content */}
-      <div className="relative max-w-4xl mx-auto" style={{ zIndex: 2 }}>
+      <div className="relative max-w-4xl mx-auto" style={{ zIndex: 1 }}>
         <h1 className="text-4xl font-bold mb-4 drop-shadow-lg">
           Capture, Map & Share Memories
         </h1>

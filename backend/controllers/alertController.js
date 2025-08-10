@@ -290,12 +290,6 @@ const getAlertCount = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Debug logging
-    console.log("getAlertCount - req.user:", req.user);
-    console.log("getAlertCount - userId param:", userId);
-    console.log("getAlertCount - req.user._id:", req.user._id);
-    console.log("getAlertCount - req.user.role:", req.user.role);
-
     // Verify user is requesting their own alert count or is admin
     if (req.user._id.toString() !== userId && req.user.role !== "admin") {
       return res.status(403).json({

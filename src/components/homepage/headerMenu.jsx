@@ -1,20 +1,16 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import {
-  LaptopMinimal,
   Menu,
   User,
   MapPinned,
   LocateFixed,
   Search,
   Settings,
-  LogOut,
   House,
   Shield,
   Bell,
-  X,
-  Check,
 } from "lucide-react";
 import UserStatus from "./userHeader";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -23,29 +19,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { alertApi } from "@/lib/api";
 
 const NavigationMenu = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isAlertDropdownOpen, setIsAlertDropdownOpen] = useState(false);
   const { user } = useAuthStore();
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isAlertDropdownOpen && !event.target.closest(".alert-dropdown")) {
-        setIsAlertDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isAlertDropdownOpen]);
-
   const handleDashboardNavigation = (tab) => {
     router.push(`/dashboard?tab=${tab}`);
-    setIsOpen(false);
   };
 
   // Fetch alert count
@@ -61,7 +40,7 @@ const NavigationMenu = () => {
   const { data: alertsData, isLoading: isAlertsLoading } = useQuery({
     queryKey: ["alerts", user?._id],
     queryFn: () => alertApi.getUserAlerts(user._id, 1, 10),
-    enabled: !!user?._id && !!user?.role && isAlertDropdownOpen, // Only run if user has both _id and role
+    enabled: !!user?._id && !!user?.role, // Only run if user has both _id and role
     retry: false, // Don't retry on failure to prevent console errors
   });
 
@@ -137,26 +116,28 @@ const NavigationMenu = () => {
   ];
 
   const fullMenu = (
-    <ul className="menu menu-horizontal md:gap-1 lg:gap-6 md:text-sm lg:text-lg font-bold">
+    <div className="flex items-center gap-4">
       {user && (
-        <li className="relative">
-          <button
-            onClick={() => setIsAlertDropdownOpen(!isAlertDropdownOpen)}
-            className="btn btn-ghost btn-circle relative"
-          >
-            <Bell size={20} />
-            {alertCountData?.data?.unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
-                {alertCountData?.data?.unreadCount > 9
-                  ? "9+"
-                  : alertCountData?.data?.unreadCount}
-              </span>
-            )}
-          </button>
-
-          {/* Alert Dropdown */}
-          {isAlertDropdownOpen && (
-            <div className="alert-dropdown absolute top-full right-0 bg-base-100 shadow-lg z-50 w-80 rounded-lg border border-base-300 mt-2">
+        <>
+          <div className="dropdown dropdown-end">
+            <div
+              tabIndex={0}
+              role="button"
+              className="btn btn-ghost btn-circle relative"
+            >
+              <Bell size={20} />
+              {alertCountData?.data?.unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                  {alertCountData?.data?.unreadCount > 9
+                    ? "9+"
+                    : alertCountData?.data?.unreadCount}
+                </span>
+              )}
+            </div>
+            <div
+              tabIndex={0}
+              className="dropdown-content z-[9999] menu p-2 shadow bg-base-100 rounded-box w-80"
+            >
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-lg">Notifications</h3>
@@ -170,12 +151,6 @@ const NavigationMenu = () => {
                         Mark all read
                       </button>
                     )}
-                    <button
-                      onClick={() => setIsAlertDropdownOpen(false)}
-                      className="btn btn-sm btn-ghost btn-circle"
-                    >
-                      <X size={16} />
-                    </button>
                   </div>
                 </div>
 
@@ -225,7 +200,6 @@ const NavigationMenu = () => {
                     <button
                       onClick={() => {
                         router.push("/dashboard?tab=Notifications");
-                        setIsAlertDropdownOpen(false);
                       }}
                       className="btn btn-sm btn-primary w-full"
                     >
@@ -235,13 +209,11 @@ const NavigationMenu = () => {
                 )}
               </div>
             </div>
-          )}
-        </li>
+          </div>
+          <UserStatus />
+        </>
       )}
-      <li>
-        <UserStatus />
-      </li>
-    </ul>
+    </div>
   );
 
   return (
@@ -250,80 +222,75 @@ const NavigationMenu = () => {
       <div className="md:hidden flex justify-center items-center gap-4">
         <div className="flex items-center ">{/* <ThemeDropdown /> */}</div>
 
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="btn btn-square btn-ghost"
-        >
-          <Menu />
-        </button>
+        <div className="dropdown dropdown-end">
+          <div tabIndex={0} role="button" className="btn btn-square btn-ghost">
+            <Menu />
+          </div>
+          <div
+            tabIndex={0}
+            className="dropdown-content z-[9999] menu p-2 shadow bg-base-100 rounded-box w-64"
+          >
+            <div className="p-2">
+              {user ? (
+                <div className="space-y-1">
+                  {/* User Info */}
+                  <div className="flex items-center gap-2 p-2 border-b border-base-300">
+                    <User size={20} className="text-primary" />
+                    <span className="font-semibold">{user.username}</span>
+                  </div>
+
+                  {/* Dashboard Navigation */}
+                  <div className="py-2">
+                    <div className="text-xs font-semibold text-base-content/70 px-2 mb-1">
+                      Dashboard
+                    </div>
+                    {dashboardTabs.map((tab) => (
+                      <button
+                        key={tab.value}
+                        onClick={() => handleDashboardNavigation(tab.value)}
+                        className="flex items-center w-full px-2 py-2 text-left hover:bg-base-200 rounded transition-colors text-sm"
+                      >
+                        <span className="mr-2 text-primary">{tab.icon}</span>
+                        <span>{tab.name}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Other Links */}
+                  <div className="border-t border-base-300 pt-2">
+                    <Link
+                      href={`/profile/${user.username}`}
+                      className="flex items-center w-full px-2 py-2 text-left hover:bg-base-200 rounded transition-colors text-sm"
+                    >
+                      <User size={16} className="mr-2 text-primary" />
+                      <span>View Profile</span>
+                    </Link>
+                    <Link
+                      href="/"
+                      className="flex items-center w-full px-2 py-2 text-left hover:bg-base-200 rounded transition-colors text-sm"
+                    >
+                      <House size={16} className="mr-2 text-primary" />
+                      <span>Home</span>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-2">
+                  <Link
+                    href="/login"
+                    className="block w-full px-2 py-2 text-left hover:bg-base-200 rounded transition-colors"
+                  >
+                    Login / Register
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Desktop Menu */}
       <div className="hidden md:flex">{fullMenu}</div>
-
-      {/* Mobile Dropdown */}
-      {isOpen && (
-        <div className="absolute top-full right-0 bg-base-100 shadow-md z-[9999] md:hidden w-64 rounded-lg border border-base-300">
-          <div className="p-2">
-            {user ? (
-              <div className="space-y-1">
-                {/* User Info */}
-                <div className="flex items-center gap-2 p-2 border-b border-base-300">
-                  <User size={20} className="text-primary" />
-                  <span className="font-semibold">{user.username}</span>
-                </div>
-
-                {/* Dashboard Navigation */}
-                <div className="py-2">
-                  <div className="text-xs font-semibold text-base-content/70 px-2 mb-1">
-                    Dashboard
-                  </div>
-                  {dashboardTabs.map((tab) => (
-                    <button
-                      key={tab.value}
-                      onClick={() => handleDashboardNavigation(tab.value)}
-                      className="flex items-center w-full px-2 py-2 text-left hover:bg-base-200 rounded transition-colors text-sm"
-                    >
-                      <span className="mr-2 text-primary">{tab.icon}</span>
-                      <span>{tab.name}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Other Links */}
-                <div className="border-t border-base-300 pt-2">
-                  <Link
-                    href={`/profile/${user.username}`}
-                    className="flex items-center w-full px-2 py-2 text-left hover:bg-base-200 rounded transition-colors text-sm"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <User size={16} className="mr-2 text-primary" />
-                    <span>View Profile</span>
-                  </Link>
-                  <Link
-                    href="/"
-                    className="flex items-center w-full px-2 py-2 text-left hover:bg-base-200 rounded transition-colors text-sm"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <House size={16} className="mr-2 text-primary" />
-                    <span>Home</span>
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div className="p-2">
-                <Link
-                  href="/login"
-                  className="block w-full px-2 py-2 text-left hover:bg-base-200 rounded transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Login / Register
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </>
   );
 };
