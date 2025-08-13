@@ -5,41 +5,43 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import SharedButtons from "../../dashboard/comp/maps/shareButtons";
 import InstagramShare from "@/components/utility/InstagramShare";
 import POICard from "@/components/POICard";
-import POIPhotoGallery from "@/components/POIPhotoGallery";
 import AddPOIToMapModal from "@/components/AddPOIToMapModal";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import Link from "next/link";
 import {
   Heart,
   Calendar,
-  ThumbsUp,
-  Eye,
   MessageCircle,
+  Eye,
   Send,
-  User,
-  Info,
   MapPin,
-  Clock,
-  Star,
   Share2,
-  Copy,
   Pin,
-  ExternalLink,
   Bookmark,
   X,
-  Flag,
   Plus,
   ChevronLeft,
   ChevronRight,
   ArrowUpDown,
 } from "lucide-react";
-import { mapApi, poiApi, socialApi } from "@/lib/api";
+import { mapApi, socialApi } from "@/lib/api";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/store/useAuthStore";
+import { usePOIStore } from "@/store/usePOIStore";
+import PoiModalButtons from "../../dashboard/comp/comps/poiModalButtons";
 
 export default function IndividualMaps({ id }) {
   const queryClient = useQueryClient();
   const { user: currentUser, isAuthenticated } = useAuthStore();
+
+  // Use POI store for modal management
+  const {
+    openPhotoGallery,
+    openEditModal,
+    openPOIDeleteConfirm,
+    openFlagModal,
+  } = usePOIStore();
+
   const [mapName, setMapName] = useState("");
   const [coordArray, setCoordArray] = useState([]);
   const [mapData, setMapData] = useState(null);
@@ -47,7 +49,7 @@ export default function IndividualMaps({ id }) {
   const [mapUser, setMapUser] = useState(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-  const [poiLikes, setPoiLikes] = useState({});
+
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
@@ -57,11 +59,7 @@ export default function IndividualMaps({ id }) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
-  // Photo gallery modal states
-  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
-  const [selectedPOI, setSelectedPOI] = useState(null);
-  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [flaggingPhoto, setFlaggingPhoto] = useState(null);
+  // Removed photo gallery modal states - now managed by the store
 
   // Add POI modal state
   const [showAddPOIModal, setShowAddPOIModal] = useState(false);
@@ -110,39 +108,6 @@ export default function IndividualMaps({ id }) {
     },
     onError: (error) => {
       toast.error("Failed to update like");
-    },
-  });
-
-  // POI like mutation
-  const poiLikeMutation = useMutation({
-    mutationFn: ({ poiId }) => poiApi.likePOI(poiId),
-    onSuccess: (data, variables) => {
-      if (data.success) {
-        const { poiId } = variables;
-        // Update the POI likes state based on the response
-        setPoiLikes((prev) => ({
-          ...prev,
-          [poiId]: !prev[poiId],
-        }));
-
-        // Update the POI in the local state with the new likes count from response
-        setPois((prevPois) =>
-          prevPois.map((poi) =>
-            poi._id === poiId
-              ? {
-                  ...poi,
-                  likesCount: data.data.likesCount,
-                }
-              : poi
-          )
-        );
-
-        toast.success("POI like updated");
-        queryClient.invalidateQueries(["individualMap", id]);
-      }
-    },
-    onError: (error) => {
-      toast.error("Failed to update POI like");
     },
   });
 
@@ -199,13 +164,6 @@ export default function IndividualMaps({ id }) {
 
       // Reset pagination to first page when POIs change
       setCurrentPage(1);
-
-      // Initialize POI likes state
-      const poiLikesState = {};
-      mapPois.forEach((poi) => {
-        poiLikesState[poi._id] = poi.isLiked || false;
-      });
-      setPoiLikes(poiLikesState);
 
       // Transform POIs to coordinate array for the map
       const transformed = mapPois.map((poi) => ({
@@ -275,14 +233,6 @@ export default function IndividualMaps({ id }) {
     bookmarkMutation.mutate();
   };
 
-  const handlePoiLike = (poiId) => {
-    if (!isAuthenticated) {
-      toast.error("Please log in to like locations");
-      return;
-    }
-    poiLikeMutation.mutate({ poiId });
-  };
-
   const handleAddComment = () => {
     if (!isAuthenticated) {
       toast.error("Please log in to add comments");
@@ -304,27 +254,13 @@ export default function IndividualMaps({ id }) {
     }
   };
 
-  // Photo gallery functions
+  // Photo gallery functions - now handled by the store
   const handleOpenPhotoGallery = (poi, photoIndex = 0) => {
-    setSelectedPOI(poi);
-    setCurrentPhotoIndex(photoIndex);
-    setShowPhotoGallery(true);
-  };
-
-  const handleClosePhotoGallery = () => {
-    setShowPhotoGallery(false);
-    setSelectedPOI(null);
-    setCurrentPhotoIndex(0);
+    openPhotoGallery(poi, photoIndex);
   };
 
   const handleFlagPhoto = (photo, poiData) => {
-    setFlaggingPhoto({
-      id: photo._id,
-      url: photo.s3Url || photo.fullUrl,
-      locationName: poiData.locationName,
-    });
-    // You can add flag modal logic here if needed
-    toast.info("Flag functionality coming soon!");
+    openFlagModal(photo, poiData);
   };
 
   const handleNavigateToMap = (coordinates) => {
@@ -610,7 +546,7 @@ export default function IndividualMaps({ id }) {
                         {mapUser.username}
                       </Link>
                       {mapData?.createdAt && (
-                        <span className="text-sm text-gray-600 flex items-center gap-1">
+                        <span className="text-sm text-neutral-content flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           Created {formatDate(mapData.createdAt)}
                         </span>
@@ -627,6 +563,49 @@ export default function IndividualMaps({ id }) {
               mapKey="individualMap-map"
               coordArray={coordArray}
               navigateToCoordinates={navigateToCoordinates}
+              onNavigateToPoi={(poiId) => {
+                // Find the index of the poi across full, unsorted list as shown in UI's sorted/paginated view
+                const indexInSorted = sortedPois.findIndex(
+                  (p) => p._id === poiId
+                );
+                if (indexInSorted === -1) {
+                  // If not found in current dataset, just try to scroll by id after a tick
+                  setTimeout(() => {
+                    const el = document.getElementById(`poi-${poiId}`);
+                    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }, 50);
+                  return;
+                }
+
+                const targetPage = Math.floor(indexInSorted / itemsPerPage) + 1;
+                if (currentPage !== targetPage) {
+                  setCurrentPage(targetPage);
+                  // Wait for pagination to render, then scroll
+                  setTimeout(() => {
+                    const el = document.getElementById(`poi-${poiId}`);
+                    if (el) {
+                      el.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                      });
+                    } else {
+                      // Fallback second attempt after a slightly longer delay
+                      setTimeout(() => {
+                        document
+                          .getElementById(`poi-${poiId}`)
+                          ?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                          });
+                      }, 200);
+                    }
+                  }, 150);
+                } else {
+                  // Already on the right page; just scroll
+                  const el = document.getElementById(`poi-${poiId}`);
+                  el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }
+              }}
             />
           </div>
         </div>
@@ -767,7 +746,7 @@ export default function IndividualMaps({ id }) {
                   <Pin className="w-6 h-6" />
                   Map Locations
                 </h2>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-4 text-sm text-neutral-content">
                   <span className="flex items-center gap-1">
                     <span className="w-2 h-2 bg-primary rounded-full"></span>
                     {pois.length} locations total
@@ -868,14 +847,14 @@ export default function IndividualMaps({ id }) {
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-6 flex flex-col items-center justify-center">
             {pois.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <p>No locations added to this map yet.</p>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 ">
                   {currentPois.map((poi) => (
                     <POICard
                       key={poi._id}
@@ -943,14 +922,14 @@ export default function IndividualMaps({ id }) {
 
                     {/* Page Info */}
                     <div className="text-center">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-base-200 rounded-full text-sm text-gray-600">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-base-200 rounded-full text-sm text-neutral-content">
                         <span className="font-medium">
                           Showing {startIndex + 1}-
                           {Math.min(endIndex, pois.length)}
                         </span>
-                        <span className="text-gray-400">of</span>
+                        <span className="text-neutral-600">of</span>
                         <span className="font-medium">{pois.length}</span>
-                        <span className="text-gray-400">locations</span>
+                        <span className="text-neutral-content">locations</span>
                       </div>
                     </div>
                   </div>
@@ -1075,14 +1054,7 @@ export default function IndividualMaps({ id }) {
       </div>
 
       {/* POI Photo Gallery */}
-      <POIPhotoGallery
-        isOpen={showPhotoGallery}
-        onClose={handleClosePhotoGallery}
-        poi={selectedPOI}
-        initialPhotoIndex={currentPhotoIndex}
-        showFlagButton={true}
-        onFlagPhoto={handleFlagPhoto}
-      />
+      <PoiModalButtons />
 
       {/* Add POI to Map Modal */}
       <AddPOIToMapModal

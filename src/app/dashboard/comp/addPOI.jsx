@@ -1,64 +1,30 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Script from "next/script";
-import { toast } from "react-hot-toast";
-import {
-  Info,
-  MapPin,
-  X,
-  MapPinCheckInside,
-  Trash2,
-  Heart,
-  Eye,
-  Edit,
-  Lock,
-  Globe,
-  Flag,
-} from "lucide-react";
-
+import { MapPin, X } from "lucide-react";
 import POICreationInterface from "@/components/utility/poi/POICreationInterface";
 import POICard from "@/components/POICard";
-import POIPhotoGallery from "@/components/POIPhotoGallery";
-import EditPOIModal from "@/components/EditPOIModal";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { mapApi, poiApi, tagApi, flagApi } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { poiApi, tagApi } from "@/lib/api";
 import { useAuthStore } from "@/store/useAuthStore";
-import DeleteConfirmationModal from "../../../components/DeleteConfirmationModal";
-import FlagModal from "../../../components/FlagModal";
+import { usePOIStore } from "@/store/usePOIStore";
+import PoiModalButtons from "./comps/poiModalButtons";
 
 const AddPOI = () => {
   const { user } = useAuthStore();
-  const queryClient = useQueryClient();
 
-  // Removed cropping states - no longer using cropping
-  const [showTagModal, setShowTagModal] = useState(false);
-  const [tagModalPOIIndex, setTagModalPOIIndex] = useState(null);
-  const [newTagName, setNewTagName] = useState("");
+  // Use POI store for modal management
+  const {
+    openPhotoGallery,
+    openEditModal,
+    openPOIDeleteConfirm,
+    openFlagModal,
+  } = usePOIStore();
+
   const [poiSearchQuery, setPoiSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [poisPerPage] = useState(20);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
-
-  // Edit modal states
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingPOI, setEditingPOI] = useState(null);
-
-  // Photo gallery modal states
-  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
-  const [selectedPOI, setSelectedPOI] = useState(null);
-  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-
-  // Delete confirmation modal states
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [photoToDelete, setPhotoToDelete] = useState(null);
-
-  // POI deletion confirmation modal states
-  const [showPOIDeleteConfirm, setShowPOIDeleteConfirm] = useState(false);
-  const [poiToDelete, setPoiToDelete] = useState(null);
-
-  // Flag modal states
-  const [showFlagModal, setShowFlagModal] = useState(false);
-  const [flaggingPhoto, setFlaggingPhoto] = useState(null);
 
   // Fetch user's POIs
   const { data: userPOIsData, refetch: refetchPOIs } = useQuery({
@@ -104,212 +70,21 @@ const AddPOI = () => {
     },
   });
 
-  // Removed cropping functions - no longer using cropping
-
-  const handleTogglePOIPrivacy = async (poiId, currentPrivacy) => {
-    try {
-      // Toggling POI privacy
-
-      const response = await poiApi.updatePOI(poiId, {
-        isPrivate: !currentPrivacy,
-      });
-
-      if (response.success) {
-        // Refresh the POIs list
-        refetchPOIs();
-        toast.success(
-          `POI ${!currentPrivacy ? "made private" : "made public"}!`
-        );
-      } else {
-        toast.error("Failed to update POI privacy");
-      }
-    } catch (error) {
-      console.error("Error updating POI privacy:", error);
-      toast.error("Failed to update POI privacy");
-    }
-  };
 
   // Edit modal functions
   const handleEditPOI = (poi) => {
-    setEditingPOI(poi);
-    setShowEditModal(true);
-  };
-
-  const handleEditModalClose = () => {
-    setShowEditModal(false);
-    setEditingPOI(null);
+    openEditModal(poi);
   };
 
   const handleDeletePOI = async (poiId, poiName) => {
-    // Show confirmation modal instead of deleting immediately
-    setPoiToDelete({ poiId, poiName });
-    setShowPOIDeleteConfirm(true);
+    openPOIDeleteConfirm(poiId, poiName);
   };
 
   // Photo gallery functions
   const handleOpenPhotoGallery = (poi, photoIndex = 0) => {
-    setSelectedPOI(poi);
-    setCurrentPhotoIndex(photoIndex);
-    setShowPhotoGallery(true);
+    openPhotoGallery(poi, photoIndex);
   };
 
-  const handleClosePhotoGallery = () => {
-    setShowPhotoGallery(false);
-    setSelectedPOI(null);
-    setCurrentPhotoIndex(0);
-  };
-
-  // Helper function to format EXIF date
-  const formatExifDate = (dateString) => {
-    if (!dateString) return null;
-
-    // EXIF date format is typically "YYYY:MM:DD HH:MM:SS"
-    // Convert to ISO format for better compatibility
-    try {
-      const [datePart, timePart] = dateString.split(" ");
-      const [year, month, day] = datePart.split(":");
-      const [hour, minute, second] = timePart.split(":");
-
-      // Create a proper Date object
-      const date = new Date(
-        parseInt(year),
-        parseInt(month) - 1, // Month is 0-indexed
-        parseInt(day),
-        parseInt(hour),
-        parseInt(minute),
-        parseInt(second)
-      );
-
-      return date.toISOString();
-    } catch (error) {
-      console.error("Error parsing EXIF date:", error);
-      return null;
-    }
-  };
-
-  // Delete photo handler
-  const handleDeletePhoto = async (photoId, photoIndex) => {
-    // Set the photo to delete and show confirmation modal
-    setPhotoToDelete({ photoId, photoIndex });
-    setShowDeleteConfirm(true);
-  };
-
-  // Confirm photo deletion
-  const confirmDeletePhoto = async () => {
-    if (!photoToDelete) return;
-
-    const { photoId, photoIndex } = photoToDelete;
-
-    try {
-      const loadingToast = toast.loading("Deleting photo...");
-
-      const deleteResponse = await poiApi.deletePhoto(photoId);
-
-      if (deleteResponse.success) {
-        toast.success("Photo deleted successfully!", { id: loadingToast });
-
-        // Refresh the POIs list to update the display
-        refetchPOIs();
-
-        // Update the editingPOI state to reflect the deletion
-        if (editingPOI) {
-          setEditingPOI((prev) => ({
-            ...prev,
-            photos: prev.photos.filter((_, index) => index !== photoIndex),
-          }));
-        }
-      } else {
-        toast.error(`Failed to delete photo: ${deleteResponse.message}`, {
-          id: loadingToast,
-        });
-      }
-    } catch (error) {
-      console.error("Error deleting photo:", error);
-      toast.error("Failed to delete photo. Please try again.");
-    } finally {
-      // Close the confirmation modal
-      setShowDeleteConfirm(false);
-      setPhotoToDelete(null);
-    }
-  };
-
-  // Cancel photo deletion
-  const cancelDeletePhoto = () => {
-    setShowDeleteConfirm(false);
-    setPhotoToDelete(null);
-  };
-
-  // Confirm POI deletion
-  const confirmDeletePOI = async () => {
-    if (!poiToDelete) return;
-
-    const { poiId, poiName } = poiToDelete;
-
-    try {
-      // Show loading toast
-      const loadingToast = toast.loading("Checking if POI can be deleted...");
-
-      // First, check if the POI is used in any maps
-      const mapsResponse = await mapApi.getUserMaps(user._id);
-      const userMaps = mapsResponse.data?.maps || [];
-
-      // Check if this POI is used in any of the user's maps
-      const isUsedInUserMaps = userMaps.some(
-        (map) => map.pois && map.pois.some((poi) => poi.poi_id === poiId)
-      );
-
-      if (isUsedInUserMaps) {
-        toast.error(
-          "Cannot delete POI: It's currently used in one or more of your maps. Remove it from all maps first.",
-          { id: loadingToast }
-        );
-        return;
-      }
-
-      // Attempt to delete the POI
-      const deleteResponse = await poiApi.deletePOI(poiId);
-
-      if (deleteResponse.success) {
-        toast.success(
-          `POI "${poiName}" and all associated photos deleted successfully!`,
-          {
-            id: loadingToast,
-          }
-        );
-        // Refresh the POIs list
-        refetchPOIs();
-      } else {
-        // Handle specific error messages from backend
-        const errorMessage = deleteResponse.message || "Failed to delete POI";
-        if (
-          errorMessage.includes("used in") ||
-          errorMessage.includes("referenced")
-        ) {
-          toast.error(
-            `Cannot delete POI: ${errorMessage}. Remove it from all maps first.`,
-            { id: loadingToast }
-          );
-        } else {
-          toast.error(`Failed to delete POI: ${errorMessage}`, {
-            id: loadingToast,
-          });
-        }
-      }
-    } catch (error) {
-      console.error("Error deleting POI:", error);
-      toast.error("Failed to delete POI. Please try again.");
-    } finally {
-      // Close the confirmation modal
-      setShowPOIDeleteConfirm(false);
-      setPoiToDelete(null);
-    }
-  };
-
-  // Cancel POI deletion
-  const cancelDeletePOI = () => {
-    setShowPOIDeleteConfirm(false);
-    setPoiToDelete(null);
-  };
 
   // Pagination functions
   const handlePageChange = (newPage) => {
@@ -337,39 +112,6 @@ const AddPOI = () => {
     return () => clearTimeout(timer);
   }, [poiSearchQuery]);
 
-  // Flag handling functions
-  const handleFlagPhoto = (photo, poi) => {
-    setFlaggingPhoto({
-      id: photo._id,
-      url: photo.s3Url || photo.fullUrl,
-      locationName: poi.locationName,
-    });
-    setShowFlagModal(true);
-  };
-
-  const handleCloseFlagModal = () => {
-    setShowFlagModal(false);
-    setFlaggingPhoto(null);
-  };
-
-  // Image compression function
-  const compressImage = (file, quality = 0.7) => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
-
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-
-        canvas.toBlob(resolve, "image/jpeg", quality);
-      };
-
-      img.src = URL.createObjectURL(file);
-    });
-  };
 
   return (
     <>
@@ -569,56 +311,7 @@ const AddPOI = () => {
         </div>
       </div>
 
-      {/* POI Photo Gallery */}
-      <POIPhotoGallery
-        isOpen={showPhotoGallery}
-        onClose={handleClosePhotoGallery}
-        poi={selectedPOI}
-        initialPhotoIndex={currentPhotoIndex}
-        showFlagButton={true}
-        onFlagPhoto={handleFlagPhoto}
-      />
-
-      {/* Delete Photo Confirmation Modal */}
-      {showDeleteConfirm && (
-        <DeleteConfirmationModal
-          isOpen={showDeleteConfirm}
-          onConfirm={confirmDeletePhoto}
-          onCancel={cancelDeletePhoto}
-          title="Delete Photo"
-          message="Are you sure you want to delete this photo? This will permanently remove it from your account and cannot be recovered."
-        />
-      )}
-
-      {/* Edit POI Modal */}
-      <EditPOIModal
-        isOpen={showEditModal}
-        onClose={handleEditModalClose}
-        poi={editingPOI}
-        availableTags={availableTags}
-      />
-
-      {/* Delete POI Confirmation Modal */}
-      {showPOIDeleteConfirm && (
-        <DeleteConfirmationModal
-          isOpen={showPOIDeleteConfirm}
-          onConfirm={confirmDeletePOI}
-          onCancel={cancelDeletePOI}
-          title="Delete POI"
-          message={`Are you sure you want to delete "${poiToDelete?.poiName}"? This will permanently remove the POI and all its associated photos from your account and cannot be recovered.`}
-        />
-      )}
-
-      {/* Flag Modal */}
-      {showFlagModal && flaggingPhoto && (
-        <FlagModal
-          isOpen={showFlagModal}
-          onClose={handleCloseFlagModal}
-          photoId={flaggingPhoto.id}
-          photoUrl={flaggingPhoto.url}
-          locationName={flaggingPhoto.locationName}
-        />
-      )}
+      <PoiModalButtons availableTags={availableTags} />
     </>
   );
 };

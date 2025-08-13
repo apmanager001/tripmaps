@@ -125,7 +125,7 @@ const PhotoGallery = ({ poiId, onPhotoUpdate }) => {
 
   if (photos.length === 0) {
     return (
-      <div className="text-center p-8 text-gray-500">
+      <div className="text-center p-8 text-neutral-content">
         <ImageIcon className="mx-auto h-12 w-12 mb-4" />
         <p>No photos uploaded yet</p>
         <p className="text-sm">Upload the first photo to get started!</p>

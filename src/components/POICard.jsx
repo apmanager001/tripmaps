@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { poiApi } from "@/lib/api";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/store/useAuthStore";
+import { usePOIStore } from "@/store/usePOIStore";
 import Link from "next/link";
 import {
   MapPin,
@@ -38,12 +39,19 @@ const POICard = ({
 }) => {
   const { isAuthenticated, user } = useAuthStore();
   const queryClient = useQueryClient();
-  const [showFlagModal, setShowFlagModal] = useState(false);
-  const [flaggingPhoto, setFlaggingPhoto] = useState(null);
-  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
-  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [showDescriptionTooltip, setShowDescriptionTooltip] = useState(false);
   const [isClient, setIsClient] = useState(false);
+
+  // Use POI store for modal management
+  const {
+    showPhotoGallery,
+    showFlagModal,
+    flaggingPhoto,
+    openPhotoGallery,
+    openEditModal,
+    openPOIDeleteConfirm,
+    openFlagModal: openFlagModalStore,
+  } = usePOIStore();
 
   // Check if current user is the creator of this POI
   const isCreator =
@@ -54,6 +62,7 @@ const POICard = ({
   useEffect(() => {
     setIsClient(true);
   }, []);
+
   // POI like mutation
   const likeMutation = useMutation({
     mutationFn: () => poiApi.likePOI(poi._id),
@@ -96,23 +105,16 @@ const POICard = ({
 
   const handleFlagPhoto = (e, photo, poiData) => {
     e.stopPropagation();
-    setFlaggingPhoto({
-      id: photo._id,
-      url: photo.s3Url || photo.fullUrl,
-      locationName: poiData.locationName,
-    });
-    setShowFlagModal(true);
-  };
-
-  const handleCloseFlagModal = () => {
-    setShowFlagModal(false);
-    setFlaggingPhoto(null);
+    openFlagModalStore(photo, poiData.locationName);
   };
 
   const handleDelete = (e) => {
     e.stopPropagation();
     if (onDelete) {
       onDelete(poi._id, poi.locationName);
+    } else {
+      // Use store if no onDelete prop provided
+      openPOIDeleteConfirm({ poiId: poi._id, poiName: poi.locationName });
     }
   };
 
@@ -120,13 +122,15 @@ const POICard = ({
     e.stopPropagation();
     if (onEdit) {
       onEdit(poi);
+    } else {
+      // Use store if no onEdit prop provided
+      openEditModal(poi);
     }
   };
 
   const handleViewPhotos = (e) => {
     e.stopPropagation();
-    setSelectedPhotoIndex(0);
-    setShowPhotoGallery(true);
+    openPhotoGallery(poi, 0);
   };
 
   const handleDescriptionToggle = (e) => {
@@ -164,6 +168,7 @@ const POICard = ({
   return (
     <>
       <div
+        id={`poi-${poi._id}`}
         className={`relative bg-base-100 rounded-xl shadow-lg border border-base-300 h-full flex flex-col hover:shadow-xl transition-all duration-200 group overflow-hidden ${
           compact ? "max-w-sm" : ""
         } ${className}`}
@@ -436,9 +441,13 @@ const POICard = ({
       {/* POI Photo Gallery */}
       <POIPhotoGallery
         isOpen={showPhotoGallery}
-        onClose={() => setShowPhotoGallery(false)}
+        onClose={() => {
+          // Close the photo gallery using the store
+          const { closePhotoGallery } = usePOIStore.getState();
+          closePhotoGallery();
+        }}
         poi={poi}
-        initialPhotoIndex={selectedPhotoIndex}
+        initialPhotoIndex={0} // This will be managed by the store
         showFlagButton={showFlagButton}
         onFlagPhoto={handleFlagPhoto}
       />
@@ -450,7 +459,11 @@ const POICard = ({
         createPortal(
           <FlagModal
             isOpen={showFlagModal}
-            onClose={handleCloseFlagModal}
+            onClose={() => {
+              // Close the flag modal using the store
+              const { closeFlagModal } = usePOIStore.getState();
+              closeFlagModal();
+            }}
             photoId={flaggingPhoto.id}
             photoUrl={flaggingPhoto.url}
             locationName={flaggingPhoto.locationName}

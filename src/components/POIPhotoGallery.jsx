@@ -179,7 +179,7 @@ const POIPhotoGallery = ({
               <h3 className="font-bold text-lg sm:text-xl text-primary truncate">
                 {poi.locationName}
               </h3>
-              <p className="text-sm text-neutral-600">
+              <p className="text-sm text-neutral-content">
                 Photo Gallery • {poi.photos.length} photo
                 {poi.photos.length !== 1 ? "s" : ""}
               </p>

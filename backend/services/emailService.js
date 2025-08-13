@@ -103,6 +103,25 @@ const sendAlertEmail = async (
         `;
         break;
 
+      case "admin_broadcast":
+        subject = "📢 Important Update from My Trip Maps";
+        htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+              <h1 style="color: white; margin: 0; text-align: center; font-size: 24px;">My Trip Maps</h1>
+            </div>
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+              ${alertMessage}
+            </div>
+            <hr style="margin: 20px 0;">
+            <p style="color: #666; font-size: 12px; text-align: center;">
+              This is an important announcement from the My Trip Maps team. 
+              You can manage your email preferences in your account settings.
+            </p>
+          </div>
+        `;
+        break;
+
       default:
         subject = "🔔 New Notification on My Trip Maps";
         htmlContent = `

@@ -120,6 +120,13 @@ const {
 } = require("../controllers/contactController");
 
 const {
+  getUserStats,
+  sendEmailToAllUsers,
+  getAllUsers,
+  updateUserRole,
+} = require("../controllers/adminController");
+
+const {
   getUserAlerts,
   markAlertAsRead,
   markAllAlertsAsRead,
@@ -274,6 +281,12 @@ router.get("/admin/contacts/:id", jwtAuth, getContactById);
 router.put("/admin/contacts/:id/status", jwtAuth, updateContactStatus);
 router.post("/admin/contacts/:id/notes", jwtAuth, addContactNote);
 router.delete("/admin/contacts/:id", jwtAuth, deleteContact);
+
+// ===== ADMIN ROUTES =====
+router.get("/admin/users/stats", jwtAuth, adminAuth, getUserStats);
+router.post("/admin/send-email", jwtAuth, adminAuth, sendEmailToAllUsers);
+router.get("/admin/users", jwtAuth, adminAuth, getAllUsers);
+router.put("/admin/users/:userId/role", jwtAuth, adminAuth, updateUserRole);
 
 // ===== LEGACY ROUTES (for backward compatibility) =====
 // These routes maintain compatibility with existing frontend code

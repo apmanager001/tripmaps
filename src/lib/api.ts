@@ -924,6 +924,109 @@ export const alertApi = {
   },
 };
 
+// ===== ADMIN API =====
+export const adminApi = {
+  getUserStats: async (): Promise<
+    ApiResponse<{
+      totalUsers: number;
+      verifiedUsers: number;
+      unverifiedUsers: number;
+      adminUsers: number;
+      moderatorUsers: number;
+      memberUsers: number;
+      recentRegistrations: number;
+    }>
+  > => {
+    return apiRequest<
+      ApiResponse<{
+        totalUsers: number;
+        verifiedUsers: number;
+        unverifiedUsers: number;
+        adminUsers: number;
+        moderatorUsers: number;
+        memberUsers: number;
+        recentRegistrations: number;
+      }>
+    >("/admin/users/stats");
+  },
+
+  sendEmailToAllUsers: async (data: {
+    subject: string;
+    htmlContent: string;
+  }): Promise<
+    ApiResponse<{
+      totalUsers: number;
+      successful: number;
+      failed: number;
+      subject: string;
+    }>
+  > => {
+    return apiRequest<
+      ApiResponse<{
+        totalUsers: number;
+        successful: number;
+        failed: number;
+        subject: string;
+      }>
+    >("/admin/send-email", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+
+  getAllUsers: async (
+    params: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      role?: string;
+      verified?: boolean;
+    } = {}
+  ): Promise<
+    ApiResponse<{
+      data: User[];
+      pagination: {
+        currentPage: number;
+        totalPages: number;
+        totalUsers: number;
+        hasNextPage: boolean;
+        hasPrevPage: boolean;
+      };
+    }>
+  > => {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.append("page", params.page.toString());
+    if (params.limit) searchParams.append("limit", params.limit.toString());
+    if (params.search) searchParams.append("search", params.search);
+    if (params.role) searchParams.append("role", params.role);
+    if (params.verified !== undefined)
+      searchParams.append("verified", params.verified.toString());
+
+    return apiRequest<
+      ApiResponse<{
+        data: User[];
+        pagination: {
+          currentPage: number;
+          totalPages: number;
+          totalUsers: number;
+          hasNextPage: boolean;
+          hasPrevPage: boolean;
+        };
+      }>
+    >(`/admin/users?${searchParams.toString()}`);
+  },
+
+  updateUserRole: async (
+    userId: string,
+    role: "member" | "moderator" | "admin"
+  ): Promise<ApiResponse<User>> => {
+    return apiRequest<ApiResponse<User>>(`/admin/users/${userId}/role`, {
+      method: "PUT",
+      body: JSON.stringify({ role }),
+    });
+  },
+};
+
 // ===== LEGACY API (for backward compatibility) =====
 export const legacyApi = {
   getDashboard: async (userId: string): Promise<DashboardData> => {

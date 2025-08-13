@@ -13,6 +13,7 @@ import {
   RefreshCw,
   MessageSquare,
 } from "lucide-react";
+import AdminEmailComponent from "./AdminEmailComponent";
 
 const Admin = () => {
   const [statusFilter, setStatusFilter] = useState("pending");
@@ -380,6 +381,15 @@ const Admin = () => {
           )}
         </div>
       )}
+
+      {/* Email Management Section */}
+      <div className="divider my-8">
+        <h2 className="text-xl font-bold text-base-content">
+          Email Management
+        </h2>
+      </div>
+
+      <AdminEmailComponent />
     </div>
   );
 };

@@ -52,7 +52,7 @@ const FlagModal = ({ isOpen, onClose, photoId, photoUrl, locationName }) => {
         </div>
 
         <div className="mb-6">
-          <p className="text-sm text-neutral-600 mb-4">
+          <p className="text-sm text-neutral-content mb-4">
             Help us keep the community safe by reporting inappropriate content.
             Your report will be reviewed by our team.
           </p>

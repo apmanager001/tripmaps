@@ -64,7 +64,7 @@ const DeleteConfirmationModal = ({
             </div>
             <div>
               <h3 className="text-lg font-semibold">{title}</h3>
-              <p className="text-sm text-neutral-600">
+              <p className="text-sm text-neutral-content">
                 This action cannot be undone
               </p>
             </div>
@@ -92,7 +92,7 @@ const DeleteConfirmationModal = ({
 
         {/* Content */}
         <div className="mb-6">
-          <p className="text-neutral-700">{message}</p>
+          <p className="text-neutral-content">{message}</p>
         </div>
 
         {/* Action Buttons */}

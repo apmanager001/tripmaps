@@ -25,6 +25,7 @@ const Maps = ({
   mapKey,
   onNavigateToLocation,
   navigateToCoordinates = null,
+  onNavigateToPoi,
 }) => {
   const [viewState, setViewState] = useState({
     longitude: -84.5,
@@ -34,10 +35,10 @@ const Maps = ({
   const [clickedMarker, setClickedMarker] = useState(null);
   const [hoveredMarker, setHoveredMarker] = useState(null);
   const [hoveredMarkerInfo, setHoveredMarkerInfo] = useState(null);
+  const [clickedMarkerInfo, setClickedMarkerInfo] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0); // For forcing map refresh
-
   // Ensure we're on the client side for portal rendering
   useEffect(() => {
     setIsClient(true);
@@ -168,8 +169,14 @@ const Maps = ({
   }, []);
 
   const handleMarkerClick = useCallback(
-    (markerId) => {
-      setClickedMarker(clickedMarker === markerId ? null : markerId);
+    (markerId, point) => {
+      if (clickedMarker === markerId) {
+        setClickedMarker(null);
+        setClickedMarkerInfo(null);
+      } else {
+        setClickedMarker(markerId);
+        setClickedMarkerInfo(point);
+      }
     },
     [clickedMarker]
   );
@@ -183,6 +190,7 @@ const Maps = ({
       }
       // Close any open tooltip when clicking on the map
       setClickedMarker(null);
+      setClickedMarkerInfo(null);
     },
     [isClickable, onMapClick]
   );
@@ -270,6 +278,8 @@ const Maps = ({
     setRefreshKey((prev) => prev + 1);
   }, []);
 
+  const activeInfo = clickedMarkerInfo || hoveredMarkerInfo;
+
   const mapContent = (
     <Map
       key={`map-${refreshKey}`}
@@ -343,7 +353,7 @@ const Maps = ({
                 `}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleMarkerClick(markerId);
+                  handleMarkerClick(markerId, point);
                 }}
                 onMouseEnter={() => {
                   setHoveredMarker(markerId);
@@ -351,7 +361,9 @@ const Maps = ({
                 }}
                 onMouseLeave={() => {
                   setHoveredMarker(null);
-                  setHoveredMarkerInfo(null);
+                  if (clickedMarker !== markerId) {
+                    setHoveredMarkerInfo(null);
+                  }
                 }}
                 role="button"
                 tabIndex={0}
@@ -359,7 +371,7 @@ const Maps = ({
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    handleMarkerClick(markerId);
+                    handleMarkerClick(markerId, point);
                   }
                 }}
               >
@@ -453,7 +465,7 @@ const Maps = ({
         </div>
 
         {/* Marker Info Panel */}
-        {hoveredMarkerInfo && (
+        {activeInfo && (
           <div className="absolute bottom-4 left-4 z-10 max-w-sm">
             <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 p-4">
               {/* Header with location name */}
@@ -461,18 +473,18 @@ const Maps = ({
                 <div className="flex items-center gap-2 flex-1">
                   <MapPin className="w-4 h-4 text-red-500 flex-shrink-0" />
                   <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-                    {hoveredMarkerInfo.name ||
-                      hoveredMarkerInfo.locationName ||
+                    {activeInfo.name ||
+                      activeInfo.locationName ||
                       "Unknown Location"}
                   </h3>
                 </div>
-                {hoveredMarkerInfo._id && (
+                {activeInfo._id && (
                   <button
                     className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation();
                       window.open(
-                        `/point_of_interest/${hoveredMarkerInfo._id}`,
+                        `/point_of_interest/${activeInfo._id}`,
                         "_blank"
                       );
                     }}
@@ -484,54 +496,49 @@ const Maps = ({
               </div>
 
               {/* Thumbnail Image */}
-              {getPrimaryPhoto(hoveredMarkerInfo) && (
+              {getPrimaryPhoto(activeInfo) && (
                 <div className="mb-3">
                   <div className="relative h-24 overflow-hidden rounded-lg">
                     <img
-                      src={getPrimaryPhoto(hoveredMarkerInfo)}
-                      alt={
-                        hoveredMarkerInfo.name || hoveredMarkerInfo.locationName
-                      }
+                      src={getPrimaryPhoto(activeInfo)}
+                      alt={activeInfo.name || activeInfo.locationName}
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         e.target.style.display = "none";
                       }}
                     />
                     {/* Photo count badge if multiple photos */}
-                    {hoveredMarkerInfo.photos &&
-                      hoveredMarkerInfo.photos.length > 1 && (
-                        <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-full backdrop-blur-sm">
-                          +{hoveredMarkerInfo.photos.length - 1} more
-                        </div>
-                      )}
+                    {activeInfo.photos && activeInfo.photos.length > 1 && (
+                      <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                        +{activeInfo.photos.length - 1} more
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* Description */}
-              {hoveredMarkerInfo.description && (
+              {activeInfo.description && (
                 <div className="mb-2">
                   <div className="flex items-start gap-2">
                     <Info className="w-3 h-3 text-gray-500 mt-0.5 flex-shrink-0" />
                     <p className="text-xs text-gray-700 leading-relaxed">
-                      {hoveredMarkerInfo.description.length > 80
-                        ? `${hoveredMarkerInfo.description.substring(0, 80)}...`
-                        : hoveredMarkerInfo.description}
+                      {activeInfo.description.length > 80
+                        ? `${activeInfo.description.substring(0, 80)}...`
+                        : activeInfo.description}
                     </p>
                   </div>
                 </div>
               )}
 
               {/* Visit Date */}
-              {hoveredMarkerInfo.date_visited && (
+              {activeInfo.date_visited && (
                 <div className="mb-2">
                   <div className="flex items-center gap-2 text-xs text-gray-600">
                     <Calendar className="w-3 h-3" />
                     <span className="font-medium">Visited:</span>
                     <span>
-                      {new Date(
-                        hoveredMarkerInfo.date_visited
-                      ).toLocaleDateString()}
+                      {new Date(activeInfo.date_visited).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
@@ -543,13 +550,13 @@ const Maps = ({
                   <div className="flex items-center justify-between">
                     <span className="font-medium">Lat:</span>
                     <code className="font-mono text-gray-800 bg-white px-1 rounded text-xs">
-                      {parseFloat(hoveredMarkerInfo.lat).toFixed(4)}
+                      {parseFloat(activeInfo.lat).toFixed(4)}
                     </code>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="font-medium">Lng:</span>
                     <code className="font-mono text-gray-800 bg-white px-1 rounded text-xs">
-                      {parseFloat(hoveredMarkerInfo.lng).toFixed(4)}
+                      {parseFloat(activeInfo.lng).toFixed(4)}
                     </code>
                   </div>
                 </div>
@@ -558,9 +565,9 @@ const Maps = ({
                   onClick={(e) => {
                     e.stopPropagation();
                     navigator.clipboard.writeText(
-                      `${parseFloat(hoveredMarkerInfo.lat).toFixed(
-                        6
-                      )}, ${parseFloat(hoveredMarkerInfo.lng).toFixed(6)}`
+                      `${parseFloat(activeInfo.lat).toFixed(6)}, ${parseFloat(
+                        activeInfo.lng
+                      ).toFixed(6)}`
                     );
                   }}
                 >
@@ -568,10 +575,27 @@ const Maps = ({
                 </button>
               </div>
 
+              {activeInfo._id && (
+                <button
+                  className="mt-1 w-full text-xs btn btn-primary rounded-2xl"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onNavigateToPoi) {
+                      onNavigateToPoi(activeInfo._id);
+                    }
+                    if (isExpanded) {
+                      setIsExpanded(false);
+                    }
+                  }}
+                >
+                  View in list
+                </button>
+              )}
+
               {/* Tags if available */}
-              {hoveredMarkerInfo.tags && hoveredMarkerInfo.tags.length > 0 && (
+              {activeInfo.tags && activeInfo.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {hoveredMarkerInfo.tags.slice(0, 3).map((tag, tagIndex) => (
+                  {activeInfo.tags.slice(0, 3).map((tag, tagIndex) => (
                     <span
                       key={tagIndex}
                       className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
@@ -579,11 +603,26 @@ const Maps = ({
                       {typeof tag === "object" ? tag.name : tag}
                     </span>
                   ))}
-                  {hoveredMarkerInfo.tags.length > 3 && (
+                  {activeInfo.tags.length > 3 && (
                     <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                      +{hoveredMarkerInfo.tags.length - 3} more
+                      +{activeInfo.tags.length - 3} more
                     </span>
                   )}
+                </div>
+              )}
+              {clickedMarker && (
+                <div className="mt-2 text-right">
+                  <button
+                    className="px-2 py-1 text-xs btn btn-neutral rounded-2xl"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setClickedMarker(null);
+                      setClickedMarkerInfo(null);
+                      setHoveredMarkerInfo(null);
+                    }}
+                  >
+                    Close
+                  </button>
                 </div>
               )}
             </div>
@@ -707,7 +746,7 @@ const Maps = ({
                             `}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleMarkerClick(markerId);
+                                handleMarkerClick(markerId, point);
                               }}
                               onMouseEnter={() => {
                                 setHoveredMarker(markerId);
@@ -715,7 +754,9 @@ const Maps = ({
                               }}
                               onMouseLeave={() => {
                                 setHoveredMarker(null);
-                                setHoveredMarkerInfo(null);
+                                if (clickedMarker !== markerId) {
+                                  setHoveredMarkerInfo(null);
+                                }
                               }}
                               role="button"
                               tabIndex={0}
@@ -723,7 +764,7 @@ const Maps = ({
                               onKeyDown={(e) => {
                                 if (e.key === "Enter" || e.key === " ") {
                                   e.preventDefault();
-                                  handleMarkerClick(markerId);
+                                  handleMarkerClick(markerId, point);
                                 }
                               }}
                             >
@@ -793,7 +834,7 @@ const Maps = ({
                 </div>
 
                 {/* Marker Info Panel for Expanded View */}
-                {hoveredMarkerInfo && (
+                {activeInfo && (
                   <div className="absolute bottom-4 left-4 z-10 max-w-sm">
                     <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-200 p-4">
                       {/* Header with location name */}
@@ -801,18 +842,18 @@ const Maps = ({
                         <div className="flex items-center gap-2 flex-1">
                           <MapPin className="w-4 h-4 text-red-500 flex-shrink-0" />
                           <h3 className="font-semibold text-gray-900 text-sm leading-tight">
-                            {hoveredMarkerInfo.name ||
-                              hoveredMarkerInfo.locationName ||
+                            {activeInfo.name ||
+                              activeInfo.locationName ||
                               "Unknown Location"}
                           </h3>
                         </div>
-                        {hoveredMarkerInfo._id && (
+                        {activeInfo._id && (
                           <button
                             className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                             onClick={(e) => {
                               e.stopPropagation();
                               window.open(
-                                `/point_of_interest/${hoveredMarkerInfo._id}`,
+                                `/point_of_interest/${activeInfo._id}`,
                                 "_blank"
                               );
                             }}
@@ -824,25 +865,22 @@ const Maps = ({
                       </div>
 
                       {/* Thumbnail Image */}
-                      {getPrimaryPhoto(hoveredMarkerInfo) && (
+                      {getPrimaryPhoto(activeInfo) && (
                         <div className="mb-3">
                           <div className="relative h-24 overflow-hidden rounded-lg">
                             <img
-                              src={getPrimaryPhoto(hoveredMarkerInfo)}
-                              alt={
-                                hoveredMarkerInfo.name ||
-                                hoveredMarkerInfo.locationName
-                              }
+                              src={getPrimaryPhoto(activeInfo)}
+                              alt={activeInfo.name || activeInfo.locationName}
                               className="w-full h-full object-cover"
                               onError={(e) => {
                                 e.target.style.display = "none";
                               }}
                             />
                             {/* Photo count badge if multiple photos */}
-                            {hoveredMarkerInfo.photos &&
-                              hoveredMarkerInfo.photos.length > 1 && (
+                            {activeInfo.photos &&
+                              activeInfo.photos.length > 1 && (
                                 <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-full backdrop-blur-sm">
-                                  +{hoveredMarkerInfo.photos.length - 1} more
+                                  +{activeInfo.photos.length - 1} more
                                 </div>
                               )}
                           </div>
@@ -850,31 +888,31 @@ const Maps = ({
                       )}
 
                       {/* Description */}
-                      {hoveredMarkerInfo.description && (
+                      {activeInfo.description && (
                         <div className="mb-2">
                           <div className="flex items-start gap-2">
                             <Info className="w-3 h-3 text-gray-500 mt-0.5 flex-shrink-0" />
                             <p className="text-xs text-gray-700 leading-relaxed">
-                              {hoveredMarkerInfo.description.length > 80
-                                ? `${hoveredMarkerInfo.description.substring(
+                              {activeInfo.description.length > 80
+                                ? `${activeInfo.description.substring(
                                     0,
                                     80
                                   )}...`
-                                : hoveredMarkerInfo.description}
+                                : activeInfo.description}
                             </p>
                           </div>
                         </div>
                       )}
 
                       {/* Visit Date */}
-                      {hoveredMarkerInfo.date_visited && (
+                      {activeInfo.date_visited && (
                         <div className="mb-2">
                           <div className="flex items-center gap-2 text-xs text-gray-600">
                             <Calendar className="w-3 h-3" />
                             <span className="font-medium">Visited:</span>
                             <span>
                               {new Date(
-                                hoveredMarkerInfo.date_visited
+                                activeInfo.date_visited
                               ).toLocaleDateString()}
                             </span>
                           </div>
@@ -887,13 +925,13 @@ const Maps = ({
                           <div className="flex items-center justify-between">
                             <span className="font-medium">Lat:</span>
                             <code className="font-mono text-gray-800 bg-white px-1 rounded text-xs">
-                              {parseFloat(hoveredMarkerInfo.lat).toFixed(4)}
+                              {parseFloat(activeInfo.lat).toFixed(4)}
                             </code>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="font-medium">Lng:</span>
                             <code className="font-mono text-gray-800 bg-white px-1 rounded text-xs">
-                              {parseFloat(hoveredMarkerInfo.lng).toFixed(4)}
+                              {parseFloat(activeInfo.lng).toFixed(4)}
                             </code>
                           </div>
                         </div>
@@ -902,11 +940,9 @@ const Maps = ({
                           onClick={(e) => {
                             e.stopPropagation();
                             navigator.clipboard.writeText(
-                              `${parseFloat(hoveredMarkerInfo.lat).toFixed(
+                              `${parseFloat(activeInfo.lat).toFixed(
                                 6
-                              )}, ${parseFloat(hoveredMarkerInfo.lng).toFixed(
-                                6
-                              )}`
+                              )}, ${parseFloat(activeInfo.lng).toFixed(6)}`
                             );
                           }}
                         >
@@ -914,27 +950,56 @@ const Maps = ({
                         </button>
                       </div>
 
+                      {activeInfo._id && (
+                        <button
+                          className="mt-1 w-full text-xs btn btn-primary rounded-2xl"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onNavigateToPoi) {
+                              onNavigateToPoi(activeInfo._id);
+                            }
+                            if (isExpanded) {
+                              setIsExpanded(false);
+                            }
+                          }}
+                        >
+                          View in list
+                        </button>
+                      )}
+
                       {/* Tags if available */}
-                      {hoveredMarkerInfo.tags &&
-                        hoveredMarkerInfo.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1">
-                            {hoveredMarkerInfo.tags
-                              .slice(0, 3)
-                              .map((tag, tagIndex) => (
-                                <span
-                                  key={tagIndex}
-                                  className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                                >
-                                  {typeof tag === "object" ? tag.name : tag}
-                                </span>
-                              ))}
-                            {hoveredMarkerInfo.tags.length > 3 && (
-                              <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                                +{hoveredMarkerInfo.tags.length - 3} more
-                              </span>
-                            )}
-                          </div>
-                        )}
+                      {activeInfo.tags && activeInfo.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {activeInfo.tags.slice(0, 3).map((tag, tagIndex) => (
+                            <span
+                              key={tagIndex}
+                              className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+                            >
+                              {typeof tag === "object" ? tag.name : tag}
+                            </span>
+                          ))}
+                          {activeInfo.tags.length > 3 && (
+                            <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+                              +{activeInfo.tags.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {clickedMarker && (
+                        <div className="mt-2 text-right">
+                          <button
+                            className="px-2 py-1 text-xs btn btn-neutral rounded-2xl"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setClickedMarker(null);
+                              setClickedMarkerInfo(null);
+                              setHoveredMarkerInfo(null);
+                            }}
+                          >
+                            Close
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

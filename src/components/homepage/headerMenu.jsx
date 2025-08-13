@@ -163,7 +163,7 @@ const NavigationMenu = () => {
                     <div className="loading loading-spinner loading-sm"></div>
                   </div>
                 ) : (alertsData?.data?.alerts || []).length > 0 ? (
-                  <div className="max-h-96 overflow-y-auto space-y-2 text-neutral">
+                  <div className="max-h-96 overflow-y-auto space-y-2 text-neutral-content">
                     {(alertsData?.data?.alerts || []).map((alert) => (
                       <div
                         key={alert._id}
