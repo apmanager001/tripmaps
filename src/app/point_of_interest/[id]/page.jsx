@@ -1,14 +1,7 @@
-import type { Metadata } from "next";
 import PointOfInterest from "../comp/pointOfInterest";
 
-interface POIPageProps {
-  params: Promise<{ id: string }>;
-}
-
 // Generate metadata for the POI page
-export async function generateMetadata({
-  params,
-}: POIPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }) {
   const resolvedParams = await params;
   const poiName = decodeURIComponent(resolvedParams.id);
 
@@ -82,7 +75,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function POIPage({ params }: POIPageProps) {
+export default async function POIPage({ params }) {
   const resolvedParams = await params;
   return <PointOfInterest poiId={resolvedParams.id} />;
 }
