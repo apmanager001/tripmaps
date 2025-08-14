@@ -4,14 +4,17 @@ import Link from "next/link";
 import { ArrowRight, MapPin, Users, Globe, Map, User } from "lucide-react";
 
 export default function HeroSection() {
-    const scrollToSection = (sectionId) => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
-      }
-    };
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
   return (
     <section className="relative min-h-screen bg-base-200 overflow-hidden">
+      {/* Canonical URL for SEO */}
+      <link rel="canonical" href={`${window.location.origin}/`} />
+
       {/* Background decorative elements */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>

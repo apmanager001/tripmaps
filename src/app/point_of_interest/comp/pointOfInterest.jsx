@@ -11,10 +11,16 @@ import {
   Bookmark,
   Search,
   Loader,
+  Navigation,
+  Camera,
+  Cloud,
+  Share2,
+  Copy,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import MapCard from "@/components/MapCard";
+import { Map, Marker } from "@vis.gl/react-maplibre";
 
 // Component to fetch full POI data for a map
 const MapWithFullPOIs = ({ mapData }) => {
@@ -147,9 +153,40 @@ const PointOfInterest = ({ poiId }) => {
   const { maps = [], pagination = {} } = data?.data || {};
   const poi = poiData?.data?.poi || poiData?.poi || poiData;
   const poiName = poi?.locationName || "Unknown Location";
+  const hasImage = poi?.photos && poi.photos.length > 0;
+  const primaryOrFirstPhoto = hasImage
+    ? poi.photos.find((p) => p?.isPrimary) || poi.photos[0]
+    : null;
+  const heroImageUrl =
+    primaryOrFirstPhoto?.s3Url ||
+    primaryOrFirstPhoto?.fullUrl ||
+    primaryOrFirstPhoto?.url ||
+    null;
+
+  const getDirectionsUrl = (lat, lng) =>
+    `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
+  const getStreetViewUrl = (lat, lng) =>
+    `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+  const getWeatherUrl = (lat, lng) =>
+    `https://www.google.com/search?q=weather+${lat},${lng}`;
+  const getWikipediaUrl = (name) =>
+    `https://en.wikipedia.org/wiki/Special:Search?search=${encodeURIComponent(
+      name
+    )}`;
+  const copyCoords = (lat, lng) => {
+    if (!lat || !lng) return;
+    navigator.clipboard.writeText(`${lat}, ${lng}`);
+    toast.success("Coordinates copied");
+  };
 
   return (
     <div className="min-h-screen bg-base-100">
+      {/* Canonical URL for SEO */}
+      <link
+        rel="canonical"
+        href={`${window.location.origin}/point_of_interest/${poiId}`}
+      />
+
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -180,6 +217,130 @@ const PointOfInterest = ({ poiId }) => {
           }),
         }}
       />
+
+      {/* Additional SEO: Place Schema for POI */}
+      {poi && poi.lat && poi.lng && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Place",
+              name: poiName,
+              geo: {
+                "@type": "GeoCoordinates",
+                latitude: poi.lat,
+                longitude: poi.lng,
+              },
+              url: `${window.location.origin}/point_of_interest/${poiId}`,
+              image: heroImageUrl || undefined,
+              description: poi?.description || undefined,
+            }),
+          }}
+        />
+      )}
+
+      {/* Hero Section */}
+      <div className="relative">
+        <div className="relative h-56 sm:h-72 md:h-80 lg:h-96 w-full overflow-hidden">
+          {heroImageUrl ? (
+            <>
+              <img
+                src={heroImageUrl}
+                alt={poiName}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center">
+              <MapPin className="w-16 h-16 text-neutral-400" />
+            </div>
+          )}
+
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+            <div className="badge badge-primary badge-lg mb-3">
+              Point of Interest
+            </div>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white drop-shadow-lg">
+              {poiName}
+            </h1>
+            {poi?.description && (
+              <p className="mt-3 max-w-2xl text-sm sm:text-base text-white/90 line-clamp-2">
+                {poi.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Quick Action Bar */}
+        <div className="container mx-auto px-4">
+          <div className="-mt-6 sm:-mt-8 relative z-10">
+            <div className="bg-base-100/95 backdrop-blur-sm rounded-2xl shadow-xl border border-base-300 p-4 sm:p-5 flex flex-wrap gap-2 sm:gap-3 items-center justify-center">
+              {poi?.lat && poi?.lng && (
+                <>
+                  <a
+                    href={getDirectionsUrl(poi.lat, poi.lng)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary btn-sm rounded-2xl gap-2"
+                    title="Driving directions"
+                  >
+                    <Navigation size={16} /> Directions
+                  </a>
+                  <a
+                    href={getStreetViewUrl(poi.lat, poi.lng)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-neutral btn-sm rounded-2xl gap-2"
+                    title="Street View"
+                  >
+                    <Camera size={16} /> Street View
+                  </a>
+                  <a
+                    href={getWeatherUrl(poi.lat, poi.lng)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-accent btn-sm rounded-2xl gap-2"
+                    title="Local weather"
+                  >
+                    <Cloud size={16} /> Weather
+                  </a>
+                  <a
+                    href={getWikipediaUrl(poiName)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-ghost btn-sm rounded-2xl gap-2"
+                    title="Search Wikipedia"
+                  >
+                    <Share2 size={16} /> Wikipedia
+                  </a>
+                  <button
+                    className="btn btn-ghost btn-sm rounded-2xl gap-2"
+                    onClick={() => copyCoords(poi.lat, poi.lng)}
+                    title="Copy coordinates"
+                  >
+                    <Copy size={16} /> Copy Coords
+                  </button>
+                </>
+              )}
+
+              {/* Stats */}
+              <div className="divider divider-horizontal" />
+              <div className="flex items-center gap-2">
+                <Heart className="w-4 h-4 text-error" />
+                <span className="text-sm">Featured in</span>
+                <span className="font-bold text-primary">
+                  {pagination.total || 0}
+                </span>
+                <span className="text-sm">
+                  map{(pagination.total || 0) === 1 ? "" : "s"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="container mx-auto px-4 py-8">
         {/* Header Section */}

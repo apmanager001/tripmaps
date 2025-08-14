@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export const usePOIStore = create((set, get) => ({
+export const usePOIStore = create((set) => ({
   // POI Data
   selectedPOI: null,
   editingPOI: null,

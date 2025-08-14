@@ -1,5 +1,19 @@
 import React, { Suspense } from "react";
+import type { Metadata } from "next";
 import Dashboard from "./comp/dashboard";
+
+export const metadata: Metadata = {
+  title: "Dashboard - My Trip Maps",
+  description:
+    "Manage your travel maps, create new adventures, and organize your travel memories on My Trip Maps.",
+  robots: {
+    index: false, // Dashboard should not be indexed
+    follow: false,
+  },
+  alternates: {
+    canonical: "/dashboard",
+  },
+};
 
 const Page = () => {
   return (

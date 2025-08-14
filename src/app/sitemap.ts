@@ -113,18 +113,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "yearly" as const,
       priority: 0.5,
     },
-    {
-      url: `${baseUrl}/login`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/register`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.6,
-    },
+    // Note: Login and register pages are intentionally excluded from sitemap
+    // as they are user-specific and shouldn't be indexed for SEO
   ];
 
   // Dynamic pages - fetch from API
@@ -133,7 +123,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     // Fetch public maps for sitemap (increased limit for better SEO coverage)
     const mapsRes = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND}/maps/popular?limit=200`,
+      `${process.env.NEXT_PUBLIC_BACKEND}/maps/popular?limit=500`,
       {
         next: { revalidate: 1800 }, // Cache for 30 minutes
         headers: {
@@ -174,9 +164,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.warn(`Failed to fetch maps for sitemap: ${mapsRes.status}`);
     }
 
-    // Fetch public profiles for sitemap
+    // Fetch public profiles for sitemap (increased limit for better coverage)
     const usersRes = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND}/users/top?limit=100`,
+      `${process.env.NEXT_PUBLIC_BACKEND}/users/top?limit=200`,
       {
         next: { revalidate: 3600 }, // Cache for 1 hour
         headers: {
@@ -219,9 +209,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.warn(`Failed to fetch users for sitemap: ${usersRes.status}`);
     }
 
-    // Fetch popular POIs for sitemap
+    // Fetch popular POIs for sitemap (increased limit for better coverage)
     const poisRes = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND}/pois/popular-locations?limit=100`,
+      `${process.env.NEXT_PUBLIC_BACKEND}/pois/popular-locations?limit=300`,
       {
         next: { revalidate: 3600 }, // Cache for 1 hour
         headers: {
@@ -266,6 +256,66 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     } else {
       console.warn(`Failed to fetch POIs for sitemap: ${poisRes.status}`);
+    }
+
+    // Try to fetch recent maps for better coverage
+    const recentMapsRes = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND}/maps/search?sort=recent&limit=100`,
+      {
+        next: { revalidate: 1800 }, // Cache for 30 minutes
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "MyTripMaps-Sitemap-Generator",
+        },
+      }
+    );
+
+    if (recentMapsRes.ok) {
+      const recentMapsData = await recentMapsRes.json();
+      if (recentMapsData.success && recentMapsData.data?.maps) {
+        const recentMapPages = recentMapsData.data.maps
+          .filter((map: MapData) => map._id) // Ensure we have valid map IDs
+          .map((map: MapData) => {
+            const dateString = map.updatedAt || map.createdAt;
+            const lastModified = dateString ? new Date(dateString) : new Date();
+
+            return {
+              url: `${baseUrl}/maps/${map._id}`,
+              lastModified: isNaN(lastModified.getTime())
+                ? new Date()
+                : lastModified,
+              changeFrequency: "weekly" as const,
+              priority: 0.7,
+            };
+          });
+
+        // Add only unique maps that aren't already in the popular maps
+        const existingMapIds = new Set(
+          dynamicPages
+            .filter((page: MetadataRoute.Sitemap[0]) =>
+              page.url.includes("/maps/")
+            )
+            .map(
+              (page: MetadataRoute.Sitemap[0]) => page.url.split("/maps/")[1]
+            )
+        );
+
+        const uniqueRecentMaps = recentMapPages.filter(
+          (page: MetadataRoute.Sitemap[0]) =>
+            !existingMapIds.has(page.url.split("/maps/")[1])
+        );
+
+        if (uniqueRecentMaps.length > 0) {
+          dynamicPages.push(...uniqueRecentMaps);
+          console.log(
+            `Added ${uniqueRecentMaps.length} additional recent map pages to sitemap`
+          );
+        }
+      }
+    } else {
+      console.warn(
+        `Failed to fetch recent maps for sitemap: ${recentMapsRes.status}`
+      );
     }
   } catch (error) {
     console.error("Error generating dynamic sitemap entries:", error);

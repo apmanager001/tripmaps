@@ -35,12 +35,7 @@ export default function IndividualMaps({ id }) {
   const { user: currentUser, isAuthenticated } = useAuthStore();
 
   // Use POI store for modal management
-  const {
-    openPhotoGallery,
-    openEditModal,
-    openPOIDeleteConfirm,
-    openFlagModal,
-  } = usePOIStore();
+  const { openPhotoGallery, openFlagModal } = usePOIStore();
 
   const [mapName, setMapName] = useState("");
   const [coordArray, setCoordArray] = useState([]);
@@ -430,6 +425,9 @@ export default function IndividualMaps({ id }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200">
+      {/* Canonical URL for SEO */}
+      <link rel="canonical" href={`${window.location.origin}/maps/${id}`} />
+
       {/* Structured Data for Map */}
       {mapData && (
         <script
@@ -501,7 +499,7 @@ export default function IndividualMaps({ id }) {
                       onClick={() =>
                         setIsShareDropdownOpen(!isShareDropdownOpen)
                       }
-                      className="flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-colors text-sm"
+                      className="flex items-center gap-2 px-3 py-2 bg-primary text-neutral font-semibold rounded-lg hover:bg-primary/80 transition-colors text-sm"
                     >
                       <Share2 className="w-4 h-4" />
                       <span className="hidden sm:inline">Share</span>
@@ -511,14 +509,14 @@ export default function IndividualMaps({ id }) {
                       <div className="absolute right-0 top-full mt-2 bg-base-100 rounded-lg shadow-lg border border-base-300 p-4 min-w-[300px] z-50">
                         <div className="space-y-4">
                           <div>
-                            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                            <h3 className="text-sm font-semibold text-neutral-content mb-2">
                               Share this map
                             </h3>
                             <SharedButtons id={id} name={mapName} />
                           </div>
 
                           <div className="border-t border-base-300 pt-4">
-                            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                            <h3 className="text-sm font-semibold text-neutral-content mb-2">
                               Share on Instagram
                             </h3>
                             <InstagramShare mapName={mapName} pois={pois} />
@@ -765,7 +763,7 @@ export default function IndividualMaps({ id }) {
                 currentUser._id === mapUser._id && (
                   <button
                     onClick={() => setShowAddPOIModal(true)}
-                    className="btn btn-primary gap-3 shadow-lg hover:shadow-xl transition-all duration-200"
+                    className="btn btn-primary gap-3 shadow-lg hover:shadow-xl transition-all duration-200 rounded-2xl"
                   >
                     <Plus size={20} />
                     Add Location
@@ -774,7 +772,7 @@ export default function IndividualMaps({ id }) {
               <div className="flex items-center gap-2">
                 <div className="dropdown dropdown-end">
                   <button
-                    className="btn btn-primary btn-soft btn-md gap-2 hover:btn-primary transition-all duration-200"
+                    className="btn btn-primary btn-soft btn-md gap-2 hover:btn-primary transition-all duration-200 rounded-2xl"
                     tabIndex={0}
                   >
                     <ArrowUpDown size={16} />
@@ -784,7 +782,7 @@ export default function IndividualMaps({ id }) {
                     <li>
                       <button
                         onClick={() => handleSortChange("date_visited", "desc")}
-                        className={`flex items-center justify-between ${
+                        className={`flex items-center justify-between  ${
                           sortBy === "date_visited" && sortOrder === "desc"
                             ? "bg-primary text-primary-content"
                             : ""
