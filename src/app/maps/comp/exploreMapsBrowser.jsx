@@ -116,7 +116,12 @@ export default function ExploreMapsBrowser() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200">
       {/* Canonical URL for SEO */}
-      <link rel="canonical" href={`${window.location.origin}/maps`} />
+      <link
+        rel="canonical"
+        href={`${
+          process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
+        }/maps`}
+      />
 
       <div className="container mx-auto px-4 py-8">
         {/* Header */}

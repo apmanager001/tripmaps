@@ -207,7 +207,12 @@ export default function Profile({ id }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       {/* Canonical URL for SEO */}
-      <link rel="canonical" href={`${window.location.origin}/profile/${id}`} />
+      <link
+        rel="canonical"
+        href={`${
+          process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
+        }/profile/${id}`}
+      />
 
       {/* Header Section */}
       <div className="bg-gradient-to-r from-base-100 via-base-200 to-primary text-primary shadow-xl">

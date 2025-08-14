@@ -13,7 +13,12 @@ export default function HeroSection() {
   return (
     <section className="relative min-h-screen bg-base-200 overflow-hidden">
       {/* Canonical URL for SEO */}
-      <link rel="canonical" href={`${window.location.origin}/`} />
+      <link
+        rel="canonical"
+        href={`${
+          process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
+        }/`}
+      />
 
       {/* Background decorative elements */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>

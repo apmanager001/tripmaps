@@ -3,9 +3,11 @@ import React from "react";
 import { Instagram, Camera } from "lucide-react";
 import toast from "react-hot-toast";
 
-const InstagramShare = ({ mapName, pois = [] }) => {
+const InstagramShare = ({ mapName, mapId, pois = [] }) => {
   const shareToInstagram = () => {
-    const mapUrl = window.location.href;
+    const mapUrl = `${
+      process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
+    }/maps/${mapId}`;
     const caption = `🗺️ Check out my travel map "${mapName}" on TripMaps!\n\n${mapUrl}\n\n#travel #maps #tripmaps #travelmap #adventure #explore #wanderlust`;
 
     // Copy caption to clipboard
@@ -214,7 +216,7 @@ const InstagramShare = ({ mapName, pois = [] }) => {
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
 
-          const caption = `🗺️ Check out my travel map "${mapName}" on TripMaps!\n\n${window.location.href}\n\n#travel #maps #tripmaps #travelmap #adventure #explore #wanderlust`;
+          const caption = `🗺️ Check out my travel map "${mapName}" on TripMaps!\n\n${mapUrl}\n\n#travel #maps #tripmaps #travelmap #adventure #explore #wanderlust`;
           navigator.clipboard.writeText(caption);
           toast.success("Instagram-ready map image created & caption copied!");
         },

@@ -12,7 +12,9 @@ const SharedButtons = ({ id, name }) => {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const fullURL = `${window.location.origin}/maps/${id}`;
+      const fullURL = `${
+        process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
+      }/maps/${id}`;
       setLink(encodeURI(fullURL));
     }
   }, [id]);
@@ -22,7 +24,9 @@ const SharedButtons = ({ id, name }) => {
 
   function copyURL() {
     if (typeof window !== "undefined" && navigator.clipboard) {
-      const url = window.location.href;
+      const url = `${
+        process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
+      }/maps/${id}`;
       navigator.clipboard
         .writeText(url)
         .then(() => {

@@ -426,7 +426,12 @@ export default function IndividualMaps({ id }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200">
       {/* Canonical URL for SEO */}
-      <link rel="canonical" href={`${window.location.origin}/maps/${id}`} />
+      <link
+        rel="canonical"
+        href={`${
+          process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
+        }/maps/${id}`}
+      />
 
       {/* Structured Data for Map */}
       {mapData && (

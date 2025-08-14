@@ -184,7 +184,9 @@ const PointOfInterest = ({ poiId }) => {
       {/* Canonical URL for SEO */}
       <link
         rel="canonical"
-        href={`${window.location.origin}/point_of_interest/${poiId}`}
+        href={`${
+          process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
+        }/point_of_interest/${poiId}`}
       />
 
       {/* Structured Data for SEO */}
@@ -196,7 +198,9 @@ const PointOfInterest = ({ poiId }) => {
             "@type": "CollectionPage",
             name: `Maps with ${poiName}`,
             description: `Discover all maps featuring ${poiName}. Explore travel itineraries, locations, and experiences shared by the TripMaps community.`,
-            url: `${window.location.origin}/point_of_interest/${poiId}`,
+            url: `${
+              process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
+            }/point_of_interest/${poiId}`,
             mainEntity: {
               "@type": "ItemList",
               numberOfItems: pagination.total || 0,
@@ -210,7 +214,9 @@ const PointOfInterest = ({ poiId }) => {
                     "@type": "Person",
                     name: mapData.map.user_id?.username || "Unknown User",
                   },
-                  url: `${window.location.origin}/maps/${mapData.map._id}`,
+                  url: `${
+                    process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
+                  }/maps/${mapData.map._id}`,
                 },
               })),
             },
@@ -232,7 +238,9 @@ const PointOfInterest = ({ poiId }) => {
                 latitude: poi.lat,
                 longitude: poi.lng,
               },
-              url: `${window.location.origin}/point_of_interest/${poiId}`,
+              url: `${
+                process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
+              }/point_of_interest/${poiId}`,
               image: heroImageUrl || undefined,
               description: poi?.description || undefined,
             }),
