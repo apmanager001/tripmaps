@@ -7,8 +7,8 @@ mongoose.connect(
 );
 
 // Import models
-const User = require("./backend/model/user");
-const Flag = require("./backend/model/flag");
+const User = require("../backend/model/user");
+const Flag = require("../backend/model/flag");
 
 async function testAdminFunctionality() {
   try {

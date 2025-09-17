@@ -32,7 +32,7 @@ const createCheckoutSession = async (req, res) => {
         },
       ],
       mode: "subscription",
-      success_url: `${process.env.FRONTEND_URL}/dashboard/settings?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.FRONTEND_URL}/dashboard/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/dashboard/settings?canceled=true`,
       customer_email: user.email,
       metadata: {

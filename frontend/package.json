@@ -22,7 +22,6 @@
     "react-hot-toast": "^2.5.2",
     "react-image-crop": "^11.0.10",
     "react-social-icons": "^6.24.0",
-    "stripe": "^18.3.0",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
