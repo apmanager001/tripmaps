@@ -1,5 +1,7 @@
 # My Trip Maps
 
+[https://mytripmaps.com](https://mytripmaps.com)
+
 A creative platform that transforms photo memories into interactive travel maps. Users can upload images, automatically extract metadata like timestamps and GPS coordinates, pin them to custom maps, and enrich each location with names, notes, and contextual links.
 
 ## 🚀 Tech Stack
@@ -64,29 +66,6 @@ To use the map functionality, you'll need a Google Maps API key:
 4. Create credentials (API Key)
 5. Restrict the API key to your domain for security
 
-#### Environment Variables
-
-Create `.env.local` in the root directory:
-
-```env
-# Frontend Environment Variables
-NEXT_PUBLIC_BACKEND=http://localhost:5000
-NEXT_PUBLIC_RAPID_KEY=your_rapidapi_key
-NEXT_PUBLIC_RAPID_HOST=trueway-places.p.rapidapi.com
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
-```
-
-Create `.env` in the backend directory:
-
-```env
-# Backend Environment Variables
-PORT=5000
-MONGO_URL=mongodb://localhost:27017/mytripmaps
-JWT_SECRET=your_jwt_secret_key_here
-SERVER_URL=http://localhost:3000
-SERVER2_URL=http://localhost:3001
-```
-
 ### 4. Database Setup
 
 Ensure MongoDB is running and accessible at the URL specified in your environment variables.
@@ -101,11 +80,6 @@ npm run test
 # Start frontend server (from root directory)
 npm run dev
 ```
-
-The application will be available at:
-
-- Frontend: http://localhost:3000
-- Backend: http://localhost:5000
 
 ## 🏗️ Project Structure
 
@@ -238,38 +212,10 @@ For detailed API documentation, see [API_DOCUMENTATION.md](./API_DOCUMENTATION.m
 
 ## 🚀 Deployment
 
-### Frontend (Vercel)
+### Frontend (Personal Server)
 
-1. Connect your repository to Vercel
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically on push to main branch
+### Backend (Personal Server)
 
-### Backend (Railway/Render)
-
-1. Connect your repository to your preferred platform
-2. Set environment variables
-3. Configure build command: `cd backend && npm install && npm start`
-
-## 🔒 Security Considerations
-
-- API keys are stored in environment variables
-- JWT tokens are used for authentication
-- Input validation on all endpoints
-- CORS is properly configured
-- Security headers are implemented
-- Password hashing with bcrypt
-- Authorization checks on all protected routes
-
-## 🧪 Testing
-
-```bash
-# Frontend testing
-npm run lint
-
-# Backend testing (when implemented)
-cd backend
-npm test
-```
 
 ## 📝 API Documentation
 
@@ -292,6 +238,7 @@ Complete API documentation is available in [API_DOCUMENTATION.md](./API_DOCUMENT
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+[MIT](LICENSE)
 
 ## 🆘 Support
 
@@ -301,17 +248,5 @@ If you encounter any issues or have questions, please:
 2. Create a new issue with detailed information
 3. Include error messages and steps to reproduce
 
-## 🔄 Recent Refactoring
-
-This project has been recently refactored to improve:
-
-- Type safety with TypeScript
-- Error handling and user experience
-- Code organization and maintainability
-- Security and performance
-- Developer experience with better tooling
-- **Complete backend API with all CRUD operations**
-- **Social features (friends, bookmarks, comments, likes)**
-- **POI management with tags and location search**
-- **Comprehensive user management**
-- **Advanced map features with privacy controls**
+Created by [@apmanager001](https://github.com/apmanager001)  
+Contact: contact@robertfoley.us
