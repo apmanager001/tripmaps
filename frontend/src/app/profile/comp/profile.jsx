@@ -16,7 +16,10 @@ import {
   UserPlus,
   UserMinus,
   ExternalLink,
+  Plane,
 } from "lucide-react";
+import ProfileVisitedCountries from "./profileVisitedCountries";
+import { useVisitedCountries } from "@/components/visitedCountrys";
 import { SocialIcon } from "react-social-icons";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import MapCard from "@/components/MapCard";
@@ -44,11 +47,12 @@ async function fetchProfileData(id) {
   }
 }
 export default function Profile({ id }) {
+  
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const router = useRouter();
-
+  const { data: visitedCountries } = useVisitedCountries(currentUser?._id);
   const { data, isLoading, error } = useQuery({
     queryKey: ["profileData", id],
     queryFn: () => fetchProfileData(id),
@@ -205,7 +209,7 @@ export default function Profile({ id }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-300">
       {/* Canonical URL for SEO */}
       <link
         rel="canonical"
@@ -215,7 +219,7 @@ export default function Profile({ id }) {
       />
 
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-base-100 via-base-200 to-primary text-primary shadow-xl">
+      <div className="md:bg-gradient-to-r from-base-100 via-base-200 to-primary text-primary shadow-xl">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="flex flex-col lg:flex-row items-center gap-8">
             {/* Profile Picture */}
@@ -235,7 +239,7 @@ export default function Profile({ id }) {
                 <h1 className="text-4xl lg:text-5xl font-bold">
                   {user.username}
                 </h1>
-                <div className="badge badge-warning badge-lg text-white border-0 whitespace-nowrap text-xs sm:text-sm">
+                <div className="badge badge-warning badge-lg border-0 whitespace-nowrap text-xs sm:text-sm">
                   <Award size={16} className="mr-1" />
                   {getBadge(mapCount)}
                 </div>
@@ -304,30 +308,30 @@ export default function Profile({ id }) {
           {/* Left Column - About & Info */}
           <div className="lg:col-span-1 space-y-6">
             {/* About Section */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <User size={20} className="text-blue-600" />
+            <div className="bg-base-300 rounded-2xl shadow-lg p-6 border border-base-neutral">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <User size={20} className="text-primary" />
                 About {user.username}
               </h3>
 
               {user.bio ? (
-                <p className="text-gray-700 leading-relaxed">{user.bio}</p>
+                <p className="text-neutral-500 leading-relaxed">{user.bio}</p>
               ) : (
-                <p className="text-gray-500 italic">No bio available</p>
+                <p className="text-neutral-500 italic">No bio available</p>
               )}
             </div>
 
             {/* User Stats */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-              <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <Globe size={20} className="text-green-600" />
+            <div className="bg-base-300 rounded-2xl shadow-lg p-6 border border-base-content">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Globe size={20} className="text-primary" />
                 Profile Stats
               </h3>
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Member Since</span>
-                  <span className="font-semibold text-gray-800">
+                  <span className="text-neutral-500">Member Since</span>
+                  <span className="font-semibold text-neutral-400">
                     {new Date(user.createdDate).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
@@ -336,32 +340,48 @@ export default function Profile({ id }) {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Mapping Level</span>
+                  <span className="text-neutral-500">Mapping Level</span>
                   <div className="text-right">
                     <div className="badge badge-success badge-sm whitespace-nowrap text-xs">
                       {getBadge(mapCount)}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {mapCount} {mapCount === 1 ? "map" : "maps"} created
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Public Maps</span>
-                  <span className="font-semibold text-blue-600">
+                  <span className="text-neutral-500">Public Maps</span>
+                  <span className="font-semibold text-accent ">
                     {maps.length}
                   </span>
                 </div>
               </div>
             </div>
 
+            {/* Visited Countries */}
+            {visitedCountries && visitedCountries.length > 0 && ( 
+            <div className="bg-base-300 rounded-2xl shadow-lg p-6 border border-base-content">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Plane size={20} className="text-primary" />
+                Visited Countries
+                {visitedCountries.length > 0 && (
+                  <span className="badge badge-info badge-sm border-0 whitespace-nowrap text-xs sm:text-sm">
+                    {visitedCountries.length}{" "}
+                    {visitedCountries.length === 1 ? "country" : "countries"} visited
+                  </span>
+                )}
+              </h3>
+
+              <div className="space-y-4">
+                <ProfileVisitedCountries userId={user._id} />
+              </div>
+            </div>
+            )}
             {/* Social Media Links */}
             {user.socialMedia &&
               Object.values(user.socialMedia).some((link) => link) && (
-                <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                    <Globe size={20} className="text-blue-600" />
+                <div className="bg-base-300 rounded-2xl shadow-lg p-6 border border-base-neutral">
+                  <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                    <Globe size={20} className="text-primary" />
                     Social Media
                   </h3>
 
@@ -433,14 +453,14 @@ export default function Profile({ id }) {
 
           {/* Right Column - Maps */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-200">
+            <div className="bg-base-300 rounded-2xl shadow-lg p-6 border border-base-neutral">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                    <Map className="text-blue-600" size={28} />
+                  <h2 className="text-2xl font-bold  flex items-center gap-3">
+                    <Map className="text-primary" size={28} />
                     Public Maps
                   </h2>
-                  <p className="text-gray-600 mt-1">
+                  <p className="text-neutral-500 mt-1">
                     Discover the amazing places {user.username} has mapped
                   </p>
                 </div>

@@ -268,7 +268,7 @@ const Dashboard = () => {
         <div className="flex-1 flex justify-center md:px-8 md:py-10">
           <div className="w-full max-w-7xl">
             {/* Content Header */}
-            <div className="mb-8">
+            <div className="mb-8 hidden md:block">
               <h1 className="text-3xl font-bold text-primary mb-2">
                 {activeTab}
               </h1>
@@ -276,7 +276,7 @@ const Dashboard = () => {
             </div>
 
             {/* Content Container */}
-            <div className="bg-base-100/50 backdrop-blur-sm rounded-2xl shadow-xl border border-base-300 p-6">
+            <div className="bg-base-100/50 backdrop-blur-sm rounded-2xl shadow-xl border border-base-300 md:p-6">
               {renderContent()}
             </div>
           </div>

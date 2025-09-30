@@ -12,7 +12,7 @@ const Hero = () => {
 
   return (
     <section
-      className="relative py-24 px-6 text-center text-white overflow-hidden"
+      className="relative py-24 px-6 text-center text-white overflow-hidden z-10"
       style={{ minHeight: "60vh" }}
     >
       {/* Background Image */}

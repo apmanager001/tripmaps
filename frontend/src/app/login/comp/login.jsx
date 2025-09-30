@@ -73,13 +73,13 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+    <div className="min-h-screen flex md:items-center justify-center bg-base-300 md:p-4">
+      <div className="max-w-md w-full bg-base-100 md:rounded-2xl shadow-xl p-8 md:border border-neutral">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold  mb-2">
             Welcome Back
           </h1>
-          <p className="text-neutral">Sign in to your account</p>
+          <p className="text-sm text-neutral-400">Sign in to your account</p>
         </div>
 
         {/* Social Login Buttons */}
@@ -87,7 +87,7 @@ export default function LoginForm() {
           <button
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className="text-neutral w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
+            className="btn bg-white text-black border-[#e5e5e5] w-full rounded-2xl"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -110,7 +110,7 @@ export default function LoginForm() {
             Continue with Google
           </button>
 
-          <button
+          {/* <button
             onClick={handleFacebookLogin}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 cursor-pointer"
@@ -119,7 +119,7 @@ export default function LoginForm() {
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
             </svg>
             Continue with Facebook
-          </button>
+          </button> */}
         </div>
 
         {/* Divider */}
@@ -128,7 +128,7 @@ export default function LoginForm() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">
+            <span className="px-2 bg-base-100 ">
               Or continue with email
             </span>
           </div>
@@ -138,19 +138,21 @@ export default function LoginForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label
-              htmlFor="identifier"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              htmlFor="email"
+              className="block text-sm font-medium  mb-1"
             >
               Email or Username
             </label>
             <input
-              id="identifier"
+              id="email"
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 text-neutral rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full input"
               placeholder="Enter your email or username"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               disabled={loginMutation.isPending}
+              autoComplete="email"
+              required
             />
           </div>
 
@@ -158,13 +160,13 @@ export default function LoginForm() {
             <div className="flex items-center justify-between mb-1">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium "
               >
                 Password
               </label>
               <a
                 href="/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-accent hover:underline font-medium"
               >
                 Forgot Password?
               </a>
@@ -172,17 +174,19 @@ export default function LoginForm() {
             <input
               id="password"
               type="password"
-              className="w-full px-3 py-2 border border-gray-300 text-neutral rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full input"
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loginMutation.isPending}
+              autoComplete="off"
+              required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-primary text-white py-2 px-4 rounded-lg  transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium cursor-pointer"
+            className="w-full btn btn-primary rounded-lg "
             disabled={loginMutation.isPending || isLoading}
           >
             {loginMutation.isPending ? (
@@ -197,11 +201,11 @@ export default function LoginForm() {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-neutral-400">
             Don't have an account?{" "}
             <a
               href="/register"
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-accent font-medium hover:underline"
             >
               Sign up
             </a>

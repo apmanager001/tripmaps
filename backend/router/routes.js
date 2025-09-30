@@ -1,3 +1,4 @@
+const { subscribe } = require("../controllers/newsletterController");
 const express = require("express");
 const router = express.Router();
 
@@ -144,6 +145,12 @@ const {
 const { checkPOILimit, checkMapLimit } = require("../middleware/limits");
 const { upload } = require("../services/s3Service");
 const { upload: profileUpload } = require("../services/profilePictureService");
+const {
+  searchCountryByName,
+  addVisitedCountry,
+  removeVisitedCountry,
+  getVisitedCountries,
+} = require("../controllers/vistedCountryController");
 
 // ===== AUTHENTICATION ROUTES =====
 router.post("/register", validateRegistration, registerUser);
@@ -269,6 +276,19 @@ router.patch("/alerts/:alertId/read", jwtAuth, markAlertAsRead);
 router.patch("/users/:userId/alerts/read-all", jwtAuth, markAllAlertsAsRead);
 router.delete("/alerts/:alertId", jwtAuth, deleteAlert);
 router.get("/users/:userId/alerts/count", jwtAuth, getAlertCount);
+
+// === Visited Countries Routes ===
+router.get("/search-country", searchCountryByName);
+router.post("/users/visited-countries", jwtAuth, addVisitedCountry); // Add visited country
+router.delete(
+  "/users/visited-countries/:countryId",
+  jwtAuth,
+  removeVisitedCountry
+); // Remove visited country
+router.get("/users/:userId/visited-countries", getVisitedCountries); // Get all visited countries for a user
+
+// ===== NEWSLETTER ROUTE =====
+router.post("/newsletter", subscribe);
 
 // ===== CONTACT ROUTES =====
 // Public contact form submission

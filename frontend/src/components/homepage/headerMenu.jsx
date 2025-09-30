@@ -140,7 +140,7 @@ const NavigationMenu = () => {
             </div>
             <div
               tabIndex={0}
-              className="dropdown-content z-[9999] menu p-2 shadow bg-base-100 rounded-box w-80"
+              className="dropdown-content z-[9999] menu p-2 shadow bg-base-100 rounded-box w-80 border border-base-border"
             >
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -163,7 +163,7 @@ const NavigationMenu = () => {
                     <div className="loading loading-spinner loading-sm"></div>
                   </div>
                 ) : (alertsData?.data?.alerts || []).length > 0 ? (
-                  <div className="max-h-96 overflow-y-auto space-y-2 text-neutral-content">
+                  <div className="max-h-96 overflow-y-auto space-y-2 text-neutral-content ">
                     {(alertsData?.data?.alerts || []).map((alert) => (
                       <div
                         key={alert._id}
@@ -256,7 +256,7 @@ const NavigationMenu = () => {
                       <button
                         key={tab.value}
                         onClick={() => handleDashboardNavigation(tab.value)}
-                        className="flex items-center w-full px-2 py-2 text-left hover:bg-base-200 rounded transition-colors text-sm"
+                        className="flex items-center w-full px-2 py-2 text-left hover:bg-base-200 rounded transition-colors text-sm cursor-pointer"
                       >
                         <span className="mr-2 text-primary">{tab.icon}</span>
                         <span>{tab.name}</span>

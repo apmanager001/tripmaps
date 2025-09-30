@@ -57,13 +57,13 @@ export default function ForgotPasswordForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+    <div className="min-h-screen flex md:items-center justify-center bg-base-300 md:p-4">
+      <div className="max-w-md w-full bg-base-100 md:rounded-2xl shadow-xl md:border border-neutral p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold mb-2">
             Forgot Password
           </h1>
-          <p className="text-gray-600">
+          <p className="text-neutral-400 text-sm">
             Enter your email address and we'll send you a link to reset your
             password
           </p>
@@ -73,24 +73,26 @@ export default function ForgotPasswordForm() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium  mb-1"
             >
               Email Address
             </label>
             <input
               id="email"
               type="email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full input"
               placeholder="Enter your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={forgotPasswordMutation.isPending}
+              autoComplete="email"
+              required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium cursor-pointer"
+            className="w-full btn btn-primary rounded-lg"
             disabled={forgotPasswordMutation.isPending}
           >
             {forgotPasswordMutation.isPending ? (
@@ -105,11 +107,11 @@ export default function ForgotPasswordForm() {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-neutral-400">
             Remember your password?{" "}
             <a
               href="/login"
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-accent font-medium hover:underline"
             >
               Sign in
             </a>
@@ -117,11 +119,11 @@ export default function ForgotPasswordForm() {
         </div>
 
         <div className="mt-4 text-center">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-neutral-400">
             Don't have an account?{" "}
             <a
               href="/register"
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-accent font-medium hover:underline"
             >
               Sign up
             </a>

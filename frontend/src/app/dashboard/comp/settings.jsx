@@ -17,15 +17,18 @@ import {
   Heart,
   MessageCircle,
   UserPlus,
+  GlobeLock,
 } from "lucide-react";
 import { SocialIcon } from "react-social-icons";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/store/useAuthStore";
 import { userApi, authApi, stripeApi, alertApi } from "@/lib/api";
+import Country from "./settingsComp/country";
 
 export default function Settings() {
   const { user: currentUser, clearUser } = useAuthStore();
   const queryClient = useQueryClient();
+  const subAbility= process.env.STRIPE_SUBSCRIPTON_ON;
 
   // Form states
   const [email, setEmail] = useState("");
@@ -323,107 +326,109 @@ export default function Settings() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto md:p-6 space-y-6">
       {/* Upgrade Subscription - Full Width */}
-      <div className="card bg-gradient-to-br from-primary/10 to-secondary/10 shadow-lg border border-primary/20">
-        <div className="card-body">
-          <div className="flex items-center gap-2 mb-4">
-            <Crown className="w-6 h-6 text-primary" />
-            <h2 className="card-title text-xl text-primary">
-              {subscriptionStatus === "active"
-                ? "Premium Active"
-                : "Upgrade to Premium"}
-            </h2>
+      {subAbility && (
+        <div className="card bg-gradient-to-br from-primary/10 to-secondary/10 shadow-lg border border-primary/20">
+          <div className="card-body">
+            <div className="flex items-center gap-2 mb-4">
+              <Crown className="w-6 h-6 text-primary" />
+              <h2 className="card-title text-xl text-primary">
+                {subscriptionStatus === "active"
+                  ? "Premium Active"
+                  : "Upgrade to Premium"}
+              </h2>
+            </div>
+
+            {subscriptionStatus === "active" ? (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-success mb-1">
+                    ✓ Premium Active
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {currentPeriodEnd && (
+                      <>
+                        Renews on{" "}
+                        {new Date(currentPeriodEnd).toLocaleDateString()}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-success" />
+                    <span>No advertisements</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Check className="w-4 h-4 text-success" />
+                    <span>Premium features coming soon</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Check className="w-4 h-4 text-success" />
+                    <span>Priority support</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => {
+                      // TODO: Implement cancel subscription
+                      toast.info("Cancel subscription feature coming soon");
+                    }}
+                    className="btn btn-outline btn-error"
+                  >
+                    Cancel Subscription
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="text-center md:text-left">
+                  <div className="text-3xl font-bold text-primary mb-1">
+                    $1.99
+                  </div>
+                  <div className="text-sm text-gray-600">per month</div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Check className="w-4 h-4 text-success" />
+                    <span>No advertisements</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Check className="w-4 h-4 text-success" />
+                    <span>Premium features coming soon</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Check className="w-4 h-4 text-success" />
+                    <span>Priority support</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center gap-2">
+                  <button
+                    onClick={handleUpgrade}
+                    disabled={isUpgrading}
+                    className="btn btn-primary btn-lg flex gap-2"
+                  >
+                    {isUpgrading ? (
+                      <div className="loading loading-spinner loading-sm"></div>
+                    ) : (
+                      <Crown className="w-5 h-5" />
+                    )}
+                    {isUpgrading ? "Processing..." : "Upgrade Now"}
+                  </button>
+                  <p className="text-xs text-center text-gray-500">
+                    Cancel anytime. No commitment required.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-
-          {subscriptionStatus === "active" ? (
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-success mb-1">
-                  ✓ Premium Active
-                </div>
-                <div className="text-sm text-gray-600">
-                  {currentPeriodEnd && (
-                    <>
-                      Renews on{" "}
-                      {new Date(currentPeriodEnd).toLocaleDateString()}
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <Check className="w-4 h-4 text-success" />
-                  <span>No advertisements</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Check className="w-4 h-4 text-success" />
-                  <span>Premium features coming soon</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Check className="w-4 h-4 text-success" />
-                  <span>Priority support</span>
-                </div>
-              </div>
-
-              <div className="flex justify-center">
-                <button
-                  onClick={() => {
-                    // TODO: Implement cancel subscription
-                    toast.info("Cancel subscription feature coming soon");
-                  }}
-                  className="btn btn-outline btn-error"
-                >
-                  Cancel Subscription
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="text-center md:text-left">
-                <div className="text-3xl font-bold text-primary mb-1">
-                  $1.99
-                </div>
-                <div className="text-sm text-gray-600">per month</div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
-                <div className="flex items-center gap-2 text-sm">
-                  <Check className="w-4 h-4 text-success" />
-                  <span>No advertisements</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Check className="w-4 h-4 text-success" />
-                  <span>Premium features coming soon</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Check className="w-4 h-4 text-success" />
-                  <span>Priority support</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col items-center gap-2">
-                <button
-                  onClick={handleUpgrade}
-                  disabled={isUpgrading}
-                  className="btn btn-primary btn-lg flex gap-2"
-                >
-                  {isUpgrading ? (
-                    <div className="loading loading-spinner loading-sm"></div>
-                  ) : (
-                    <Crown className="w-5 h-5" />
-                  )}
-                  {isUpgrading ? "Processing..." : "Upgrade Now"}
-                </button>
-                <p className="text-xs text-center text-gray-500">
-                  Cancel anytime. No commitment required.
-                </p>
-              </div>
-            </div>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -446,7 +451,7 @@ export default function Settings() {
                     </label>
                     <p className="font-semibold">{currentUser?.username}</p>
                   </div>
-                  <div className="badge badge-primary">Cannot change</div>
+                  <div className="badge badge-primary">Can't change</div>
                 </div>
 
                 {/* Email */}
@@ -642,7 +647,10 @@ export default function Settings() {
           {/* Privacy Settings */}
           <div className="card bg-base-100 shadow-lg">
             <div className="card-body">
-              <h2 className="card-title text-xl">Privacy Settings</h2>
+              <h2 className="card-title text-xl">
+                <GlobeLock className="w-5 h-5" />
+                Privacy Settings
+              </h2>
 
               <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
                 <div>
@@ -679,7 +687,7 @@ export default function Settings() {
 
               <div className="space-y-4">
                 {/* Follow Alerts */}
-                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg border border-dashed border-info">
                   <div className="flex items-center gap-3">
                     <UserPlus className="w-5 h-5 text-blue-600" />
                     <div>
@@ -701,7 +709,7 @@ export default function Settings() {
                 </div>
 
                 {/* Comment Alerts */}
-                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg border border-dashed border-info">
                   <div className="flex items-center gap-3">
                     <MessageCircle className="w-5 h-5 text-green-600" />
                     <div>
@@ -723,7 +731,7 @@ export default function Settings() {
                 </div>
 
                 {/* Like Alerts */}
-                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg border border-dashed border-info">
                   <div className="flex items-center gap-3">
                     <Heart className="w-5 h-5 text-red-600" />
                     <div>
@@ -745,7 +753,7 @@ export default function Settings() {
                 </div>
 
                 {/* Email Notifications - Master Toggle */}
-                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg border border-dashed border-info">
                   <div className="flex items-center gap-3">
                     <Mail className="w-5 h-5 text-purple-600" />
                     <div>
@@ -770,7 +778,7 @@ export default function Settings() {
 
                 {/* Email Follow Notifications */}
                 <div
-                  className={`flex items-center justify-between p-3 rounded-lg ${
+                  className={`flex items-center justify-between p-3 rounded-lg border border-dashed border-info ${
                     alertSettings.emailNotifications
                       ? "bg-base-200"
                       : "bg-gray-100"
@@ -818,7 +826,7 @@ export default function Settings() {
 
                 {/* Email Comment Notifications */}
                 <div
-                  className={`flex items-center justify-between p-3 rounded-lg ${
+                  className={`flex items-center justify-between p-3 rounded-lg border border-dashed border-info ${
                     alertSettings.emailNotifications
                       ? "bg-base-200"
                       : "bg-gray-100"
@@ -864,6 +872,28 @@ export default function Settings() {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+          {/* Logout */}
+          <div className="card bg-base-100 shadow-lg">
+            <div className="card-body">
+              <h2 className="card-title text-xl text-error">Danger Zone</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Logging out will end your current session and redirect you to
+                the home page.
+              </p>
+              <button
+                onClick={handleLogout}
+                disabled={logoutMutation.isPending}
+                className="btn btn-error btn-lg w-full flex gap-2"
+              >
+                {logoutMutation.isPending ? (
+                  <div className="loading loading-spinner loading-sm"></div>
+                ) : (
+                  <LogOut className="w-5 h-5" />
+                )}
+                Log out
+              </button>
             </div>
           </div>
         </div>
@@ -921,6 +951,13 @@ export default function Settings() {
                   <div className="text-sm text-gray-600">Total Views</div>
                 </div>
               </div>
+            </div>
+          </div>
+          {/* Countries Visited */}
+          <div className="card bg-base-100 shadow-lg">
+            <div className="card-body">
+              <h2 className="card-title text-xl">Countries Visited</h2>
+              <Country />
             </div>
           </div>
 
@@ -1312,29 +1349,6 @@ export default function Settings() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Logout */}
-          <div className="card bg-base-100 shadow-lg">
-            <div className="card-body">
-              <h2 className="card-title text-xl text-error">Danger Zone</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Logging out will end your current session and redirect you to
-                the home page.
-              </p>
-              <button
-                onClick={handleLogout}
-                disabled={logoutMutation.isPending}
-                className="btn btn-error btn-lg w-full flex gap-2"
-              >
-                {logoutMutation.isPending ? (
-                  <div className="loading loading-spinner loading-sm"></div>
-                ) : (
-                  <LogOut className="w-5 h-5" />
-                )}
-                Log out
-              </button>
             </div>
           </div>
         </div>

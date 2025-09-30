@@ -17,6 +17,9 @@ import {
   ChevronUp,
   Bookmark,
   UserMinus,
+  Handshake,
+  Bookmark as BookmarkIcon,
+  Check,
 } from "lucide-react";
 import SharedButtons from "./maps/shareButtons";
 import Link from "next/link";
@@ -227,7 +230,7 @@ export default function Dashsection3() {
       <div className="bg-base-200 md:shadow-sm md:rounded-lg overflow-hidden">
         <button
           onClick={() => setLifetimeMapOpen(!lifetimeMapOpen)}
-          className="w-full p-4 flex items-center justify-between hover:bg-base-300 transition-colors"
+          className="w-full p-4 flex items-center justify-between hover:bg-base-300 transition-colors cursor-pointer"
         >
           <div className="flex items-center gap-3">
             <MapPin className="text-primary" size={24} />
@@ -325,12 +328,13 @@ export default function Dashsection3() {
 
         {/* Friends Panel */}
         <div className="md:w-52 bg-base-200 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96">
-          <h2 className="text-lg font-semibold text-primary border-b border-base-300 pb-2">
+          <h2 className="text-lg font-semibold text-primary border-b border-base-300 pb-2 flex items-center gap-2">
+            <Handshake className="w-5 h-5" />
             Friends
           </h2>
           {friends.length === 0 ? (
             <div className="text-md text-gray-500 space-y-2">
-              <p>You have no friends yet. 😢</p>
+              <p>You have no friends yet.</p>
             </div>
           ) : (
             friends.map((friend) => (
@@ -378,7 +382,8 @@ export default function Dashsection3() {
 
         {/* Bookmarked Maps Panel */}
         <div className="md:w-60 bg-base-200 md:shadow-md md:rounded-lg p-4 space-y-4 md:min-h-96 min-w-60">
-          <h2 className="text-lg font-semibold text-primary border-b border-base-300 pb-2">
+          <h2 className="text-lg font-semibold text-primary border-b border-base-300 pb-2 flex items-center gap-2">
+            <BookmarkIcon className="w-5 h-5" />
             Bookmarked Maps
           </h2>
           {bookmarksLoading ? (
@@ -387,7 +392,7 @@ export default function Dashsection3() {
             </div>
           ) : bookmarkedMaps.length === 0 ? (
             <div className="text-md text-gray-500 space-y-2">
-              <p>No bookmarked maps yet. 📚</p>
+              <p>No bookmarked maps yet.</p>
             </div>
           ) : (
             bookmarkedMaps.map((bookmark) => (
@@ -471,19 +476,7 @@ export default function Dashsection3() {
                               className="btn btn-success btn-xs p-1 hover:bg-success-focus rounded-full transition-colors"
                               title="Save changes"
                             >
-                              <svg
-                                className="w-3 h-3"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M5 13l4 4L19 7"
-                                />
-                              </svg>
+                              <Check className="w-3 h-3" />
                             </button>
                             <button
                               onClick={cancelEditing}
@@ -509,7 +502,7 @@ export default function Dashsection3() {
                       <td className="align-middle">
                         <Link
                           href={`/maps/${map._id}`}
-                          className="inline-flex items-center gap-2 text-blue-600 hover:underline"
+                          className="btn btn-primary rounded-2xl font-bold hover:btn-accent"
                         >
                           <MapPin />
                           View Map

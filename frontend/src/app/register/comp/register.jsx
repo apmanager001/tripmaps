@@ -97,13 +97,11 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-100 p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+    <div className="min-h-screen flex md:items-center justify-center bg-base-300 md:p-4">
+      <div className="max-w-md w-full bg-base-100 md:rounded-2xl shadow-xl md:border border-neutral p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create Account
-          </h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold  mb-2">Create Account</h1>
+          <p className="text-sm text-neutral-400">
             Join us and start mapping your adventures
           </p>
         </div>
@@ -113,7 +111,7 @@ export default function Register() {
           <button
             onClick={handleGoogleRegister}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
+            className="btn bg-white text-black border-[#e5e5e5] w-full rounded-2xl"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -136,7 +134,7 @@ export default function Register() {
             Continue with Google
           </button>
 
-          <button
+          {/* <button
             onClick={handleFacebookRegister}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 cursor-pointer"
@@ -145,7 +143,7 @@ export default function Register() {
               <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
             </svg>
             Continue with Facebook
-          </button>
+          </button> */}
         </div>
 
         {/* Divider */}
@@ -154,9 +152,7 @@ export default function Register() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white text-gray-500">
-              Or sign up with email
-            </span>
+            <span className="px-2 bg-base-100 ">Or sign up with email</span>
           </div>
         </div>
 
@@ -165,78 +161,83 @@ export default function Register() {
           <div>
             <label
               htmlFor="username"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium mb-1"
             >
               Username
             </label>
             <input
               id="username"
               type="text"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full input"
               placeholder="Choose a username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={registerMutation.isPending}
+              autoComplete="off"
+              required
             />
           </div>
 
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
               Email
             </label>
             <input
               id="email"
               type="email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full input"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={registerMutation.isPending}
+              autoComplete="email"
+              required
             />
           </div>
 
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium mb-1"
             >
               Password
             </label>
             <input
               id="password"
               type="password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full input"
               placeholder="Create a password (min 6 characters)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={registerMutation.isPending}
+              autoComplete="off"
+              required
             />
           </div>
 
           <div>
             <label
               htmlFor="repeatPassword"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium mb-1"
             >
               Confirm Password
             </label>
             <input
               id="repeatPassword"
               type="password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              className="w-full input"
               placeholder="Confirm your password"
               value={repeatPassword}
               onChange={(e) => setRepeatPassword(e.target.value)}
               disabled={registerMutation.isPending}
+              autoComplete="off"
+              required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium cursor-pointer"
+            className="w-full btn btn-primary rounded-lg"
             disabled={registerMutation.isPending || isLoading}
           >
             {registerMutation.isPending ? (
@@ -251,11 +252,11 @@ export default function Register() {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-neutral-400">
             Already have an account?{" "}
             <a
               href="/login"
-              className="text-green-600 hover:text-green-700 font-medium"
+              className="text-accent font-medium hover:underline"
             >
               Sign in
             </a>

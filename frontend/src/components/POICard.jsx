@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { poiApi } from "@/lib/api";
 import { toast } from "react-hot-toast";
@@ -165,6 +166,10 @@ const POICard = ({
     ? primaryOrFirstPhoto?.s3Url || primaryOrFirstPhoto?.fullUrl
     : null;
 
+
+  const buttonBackground =
+    "btn btn-sm bg-black/30 hover:bg-black/80 rounded-lg";
+
   return (
     <>
       <div
@@ -178,17 +183,20 @@ const POICard = ({
         {/* Background Image */}
         {hasImage ? (
           <div className="absolute inset-0 z-0">
-            <img
+            <Image
               src={imageUrl}
+              width="400"
+              height="300"
               alt={poi.locationName}
+              priority={false}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
             {/* Dark overlay for better text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
           </div>
         ) : (
-          <div className="absolute inset-0 z-0 bg-gradient-to-br from-base-200 to-base-300 flex items-center justify-center">
-            <MapPin className="w-16 h-16 text-neutral-400" />
+          <div className="absolute inset-0 z-0 bg-gradient-to-br from-base-100 to-base-300 flex items-center justify-center">
+            <MapPin className="w-24 h-24 text-neutral-400" />
           </div>
         )}
 
@@ -203,7 +211,9 @@ const POICard = ({
             {/* Left side - Photo count badge */}
             <div className="flex-shrink-0">
               {hasImage && poi.photos.length > 1 && (
-                <div className="bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm">
+                <div
+                  className={`${buttonBackground} rounded-full text-sm font-medium`}
+                >
                   +{poi.photos.length - 1} more
                 </div>
               )}
@@ -214,14 +224,14 @@ const POICard = ({
               <div className="flex items-center gap-2 flex-shrink-0">
                 {showFlagButton && hasImage && (
                   <div
-                    className="tooltip tooltip-bottom tooltip-secondary"
+                    className="tooltip tooltip-bottom "
                     data-tip="Flag photo"
                   >
                     <button
                       onClick={(e) =>
                         handleFlagPhoto(e, primaryOrFirstPhoto, poi)
                       }
-                      className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-red-600/80 text-white backdrop-blur-sm transition-all duration-200"
+                      className={`${buttonBackground} hover:bg-error`}
                     >
                       <Flag size={16} />
                     </button>
@@ -232,7 +242,7 @@ const POICard = ({
                   <div className="tooltip tooltip-bottom" data-tip="Delete POI">
                     <button
                       onClick={handleDelete}
-                      className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-error/80 text-white backdrop-blur-sm transition-all duration-200"
+                      className={`${buttonBackground}  hover:bg-error `}
                     >
                       <Trash2 size={16} />
                     </button>
@@ -248,10 +258,10 @@ const POICard = ({
           {/* Bottom Content */}
           <div className="space-y-4">
             {/* Title with Info Icon */}
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
               <Link
                 href={`/point_of_interest/${poi._id}`}
-                className="text-xl font-bold text-white line-clamp-2 hover:text-primary-focus transition-colors duration-200 px-3 py-1 rounded-lg bg-black/40 backdrop-blur-sm inline-block"
+                className={`bg-black/30 hover:bg-black/80 text-xl font-bold rounded-lg px-4 py-2 text-white whitespace-normal break-words w-full max-w-xs`}
                 onClick={(e) => e.stopPropagation()}
               >
                 {poi.locationName}
@@ -259,12 +269,12 @@ const POICard = ({
 
               {/* Description Icon Button */}
               {poi.description && (
-                <div className="relative flex-shrink-0">
+                <div className="relative flex-shrink-0 ">
                   <button
                     onClick={handleDescriptionToggle}
                     onMouseEnter={() => setShowDescriptionTooltip(true)}
                     onMouseLeave={() => setShowDescriptionTooltip(false)}
-                    className="p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
+                    className={`${buttonBackground} p-2`}
                   >
                     <Info size={16} />
                   </button>
@@ -305,12 +315,12 @@ const POICard = ({
               </div>
             )}
 
-            {/* Coordinates */}
+            {/* Coordinates
             {poi.lat && poi.lng && (
               <div className="text-xs text-white/80 drop-shadow-lg">
                 📍 {poi.lat.toFixed(6)}, {poi.lng.toFixed(6)}
               </div>
-            )}
+            )} */}
 
             {/* Photo date badge */}
             {hasImage && primaryOrFirstPhoto?.date_visited && (
@@ -322,9 +332,26 @@ const POICard = ({
               </div>
             )}
 
+            {/* Privacy Status */}
+            <div className="flex items-center gap-2">
+              {poi.isPrivate ? (
+                <div className={` ${buttonBackground} pointer-events-none`}>
+                  <Lock size={14} />
+                  <span className="text-sm font-medium">Private</span>
+                </div>
+              ) : (
+                <div
+                  className={`${buttonBackground} pointer-events-none`}
+                >
+                  <Globe size={14} />
+                  <span className="text-sm font-medium">Public</span>
+                </div>
+              )}
+            </div>
+
             {/* Action Buttons Row */}
-            <div className="flex items-center justify-between pt-2">
-              {/* Privacy Status */}
+            <div className="flex items-center justify-evenly pt-2">
+              {/* Privacy Status
               <div className="flex items-center gap-2">
                 {poi.isPrivate ? (
                   <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-black/60 text-white backdrop-blur-sm">
@@ -337,26 +364,24 @@ const POICard = ({
                     <span className="text-sm font-medium">Public</span>
                   </div>
                 )}
-              </div>
+              </div> */}
 
               {/* Like, View Photos, and Edit buttons */}
               <div className="flex items-center gap-2">
                 {showLikeButton && (
                   <div
-                    className="tooltip tooltip-top tooltip-secondary"
+                    className="tooltip tooltip-top"
                     data-tip={
-                      !isAuthenticated
-                        ? "Please log in to like POIs"
-                        : "Like this location"
+                      !isAuthenticated ? "Please log in" : "Like location"
                     }
                   >
                     <button
                       onClick={handleLike}
                       disabled={likeMutation.isPending || !isAuthenticated}
-                      className={` flex items-center gap-2 px-2 py-1 rounded-lg transition-all duration-200 backdrop-blur-sm ${
+                      className={` btn btn-sm rounded-lg  ${
                         poi.isLiked
-                          ? "bg-red-600/80 text-white shadow-lg"
-                          : "bg-black/60 hover:bg-black/80 text-white cursor-pointer"
+                          ? "bg-red-600/80"
+                          : "bg-black/30 hover:bg-black/80"
                       }`}
                     >
                       <Heart
@@ -380,7 +405,7 @@ const POICard = ({
                   >
                     <button
                       onClick={handleNavigateToMap}
-                      className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
+                      className="rounded-lg btn btn-sm bg-black/30 hover:bg-black/80"
                     >
                       <Navigation size={16} />
                     </button>
@@ -389,13 +414,10 @@ const POICard = ({
 
                 {/* View Photos Button */}
                 {hasImage && (
-                  <div
-                    className="tooltip tooltip-top tooltip-secondary"
-                    data-tip="View photos"
-                  >
+                  <div className="tooltip tooltip-top " data-tip="View photos">
                     <button
                       onClick={handleViewPhotos}
-                      className="cursor-pointer p-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
+                      className="btn btn-sm bg-black/30 rounded-lg hover:bg-black/80"
                     >
                       <Eye size={16} />
                     </button>
@@ -406,7 +428,7 @@ const POICard = ({
                   <div className="tooltip tooltip-top" data-tip="Edit POI">
                     <button
                       onClick={handleEdit}
-                      className="cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg bg-black/60 hover:bg-primary/80 text-white backdrop-blur-sm transition-all duration-200"
+                      className="btn bg-black/30 rounded-lg hover:bg-black/80 btn-sm"
                     >
                       <Edit size={16} />
                       <span className="text-sm font-medium">Edit</span>

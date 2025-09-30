@@ -197,14 +197,11 @@ const AddTags = ({
           {existingTags.map((tag, index) => (
             <span
               key={index}
-              className="badge badge-primary badge-sm flex items-center gap-1"
+              className="badge badge-primary badge-sm flex items-center justify-center gap-1 py-3"
             >
               {tag}
-              <button
-                onClick={() => handleRemoveTag(tag)}
-                className="text-xs hover:text-error"
-              >
-                ×
+              <button onClick={() => handleRemoveTag(tag)} className="">
+                <X size={12} className="hover:text-neutral cursor-pointer" />
               </button>
             </span>
           ))}
@@ -213,25 +210,25 @@ const AddTags = ({
 
       {/* Input field */}
       <div className="relative">
-        <div className="relative">
-          <label  className="input input-sm">
-            <Search size={16} className="text-gray-400" />
-          
-          <input
-            id="add-tags-input"
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={handleInputChange}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
-            onKeyDown={handleKeyDown}
-            placeholder={placeholder}
-            className=" w-full"
-            disabled={isCreating || disabled}
-            autoComplete="off"
-          />
-          </label>  
+        <div className="relative w-full flex items-center">
+          <label htmlFor='add-tags-input' className="input input-sm w-full pr-10 flex items-center gap-2">
+            <Search size={16} className="text-neutral" />
+
+            <input
+              id="add-tags-input"
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={handleInputChange}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder}
+              className="grow"
+              disabled={isCreating || disabled}
+              autoComplete="off"
+            />
+          </label>
           {inputValue && (
             <button
               onClick={() => {
@@ -239,7 +236,7 @@ const AddTags = ({
                 setIsDropdownOpen(false);
                 setSelectedIndex(-1);
               }}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              className="absolute right-2 btn btn-circle btn-ghost btn-xs z-40"
             >
               <X size={16} />
             </button>
@@ -250,18 +247,18 @@ const AddTags = ({
         {isDropdownOpen && (
           <div
             ref={dropdownRef}
-            className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+            className="absolute top-full left-0 right-0 z-10 mt-1 border bg-base-300 border-neutral rounded-lg shadow-lg max-h-60 overflow-y-auto"
           >
             {/* Existing tags */}
             {filteredTags.map((tag, index) => (
               <div
                 key={tag._id}
                 onClick={() => handleTagSelect(tag.name)}
-                className={`px-4 py-2 cursor-pointer hover:bg-gray-50 flex items-center justify-between ${
+                className={`px-4 py-2 cursor-pointer hover:bg-base-100 flex items-center justify-between ${
                   selectedIndex === index ? "bg-blue-50" : ""
                 }`}
               >
-                <span className="text-sm text-gray-700">{tag.name}</span>
+                <span className="text-sm ">{tag.name}</span>
                 <Check size={14} className="text-green-500" />
               </div>
             ))}
@@ -270,13 +267,13 @@ const AddTags = ({
             {isNewTag && (
               <div
                 onClick={handleCreateNewTag}
-                className={`px-4 py-2 cursor-pointer hover:bg-green-50 border-t border-gray-100 flex items-center justify-between ${
-                  selectedIndex === filteredTags.length ? "bg-green-50" : ""
+                className={`px-4 py-2 cursor-pointer hover:bg-green-200 border-t border-neutral flex items-center justify-between ${
+                  selectedIndex === filteredTags.length ? "bg-green-300" : ""
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Plus size={14} className="text-green-500" />
-                  <span className="text-sm text-green-700 font-medium">
+                  <Plus size={14} className="text-green-400" />
+                  <span className="text-md text-green-400 font-medium">
                     Create "{inputValue}"
                   </span>
                 </div>

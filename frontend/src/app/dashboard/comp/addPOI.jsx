@@ -125,7 +125,7 @@ const AddPOI = () => {
           <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-2">
             Manage Points of Interest
           </h2>
-          <p className="text-neutral-600 text-lg">
+          <p className="text-neutral-600">
             Create, organize, and manage your travel locations
           </p>
         </div>

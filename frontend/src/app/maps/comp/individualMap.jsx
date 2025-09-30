@@ -504,7 +504,7 @@ export default function IndividualMaps({ id }) {
                       onClick={() =>
                         setIsShareDropdownOpen(!isShareDropdownOpen)
                       }
-                      className="flex items-center gap-2 px-3 py-2 bg-primary text-neutral font-semibold rounded-lg hover:bg-primary/80 transition-colors text-sm"
+                      className="flex items-center gap-2 px-3 py-2 bg-primary text-neutral font-semibold rounded-lg hover:bg-primary/80 transition-colors text-sm cursor-pointer"
                     >
                       <Share2 className="w-4 h-4" />
                       <span className="hidden sm:inline">Share</span>
@@ -742,7 +742,7 @@ export default function IndividualMaps({ id }) {
           id="poi-section"
           className="bg-base-100 rounded-2xl shadow-xl border border-base-300"
         >
-          <div className="p-6 border-b border-base-300 bg-gradient-to-r from-accent/5 to-primary/5">
+          <div className="p-6 border-b border-base-300 bg-gradient-to-r from-accent/5 to-primary/5 rounded-t-2xl">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
               <div className="flex-1">
                 <h2 className="text-2xl font-bold text-primary mb-2 flex items-center gap-3">

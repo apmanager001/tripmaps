@@ -173,6 +173,8 @@ const userSchema = new Schema({
       default: true,
     },
   },
+  // Visited countries
+  visitedCountries: [{ type: Schema.Types.ObjectId, ref: "Country" }],
 });
 
 const UserModel = mongoose.model("User", userSchema);

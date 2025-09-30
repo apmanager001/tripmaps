@@ -1,15 +1,45 @@
 "use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MapPin, Users, Globe, Map, User } from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function HeroSection() {
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
   };
+  const backendURL = process.env.NEXT_PUBLIC_BACKEND || "http://localhost:5000";
+
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch(`${backendURL}/newsletter`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newsletterEmail }),
+      });
+      if (res.ok) {
+        toast.success("Thank you for subscribing!");
+        setNewsletterEmail("");
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Subscription failed");
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="relative min-h-screen bg-base-200 overflow-hidden">
       {/* Canonical URL for SEO */}
@@ -41,6 +71,30 @@ export default function HeroSection() {
                 fellow travelers and discover hidden gems around the world.
               </p>
             </div>
+
+            {/* Newsletter Signup */}
+            <form
+              onSubmit={handleNewsletterSubmit}
+              className="flex flex-col sm:flex-row gap-2 mb-8 max-w-md mx-auto lg:mx-0"
+            >
+              <input
+                id="newsletter-email"
+                type="email"
+                className="input input-bordered w-full"
+                placeholder="Enter your email to join our newsletter"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                required
+                disabled={loading}
+              />
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+              >
+                {loading ? "Joining..." : "Join Newsletter"}
+              </button>
+            </form>
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
