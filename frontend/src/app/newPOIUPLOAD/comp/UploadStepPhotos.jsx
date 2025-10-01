@@ -24,7 +24,7 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
   if (typeof window !== "undefined" && !window.EXIF) {
     window.EXIF = EXIF;
   }
-  // Extract EXIF GPS and attach lat/lng directly to file
+  // Extract EXIF GPS and attach lat/lng and previewUrl directly to photo object
   const extractExifAndAttach = (file, cb) => {
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -40,14 +40,12 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
               lat = toDecimal(exif.GPSLatitude, exif.GPSLatitudeRef);
               lng = toDecimal(exif.GPSLongitude, exif.GPSLongitudeRef);
             }
-            if (lat && lng) {
-              file.lat = lat;
-              file.lng = lng;
-            }
-            cb(file);
+            const previewUrl = URL.createObjectURL(file);
+            cb({ file, previewUrl, lat, lng });
           });
         } else {
-          cb(file);
+          const previewUrl = URL.createObjectURL(file);
+          cb({ file, previewUrl });
         }
       };
     };
@@ -68,8 +66,8 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
     let processed = 0;
     const newFiles = [];
     validFiles.forEach((file) => {
-      extractExifAndAttach(file, (f) => {
-        newFiles.push(f);
+      extractExifAndAttach(file, (photoObj) => {
+        newFiles.push(photoObj);
         processed++;
         if (processed === validFiles.length) {
           setAllPhotos((prev) => [...prev, ...newFiles]);
@@ -146,10 +144,10 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
             Uploaded Photos ({allPhotos.length})
           </h4>
           <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
-            {allPhotos.map((file, idx) => (
+            {allPhotos.map((photoObj, idx) => (
               <div key={idx} className="relative group">
                 <img
-                  src={URL.createObjectURL(file)}
+                  src={photoObj.previewUrl}
                   alt={`Photo ${idx + 1}`}
                   className="w-full h-20 object-cover rounded-lg"
                 />
@@ -166,11 +164,13 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
                   className={`absolute bottom-1 right-1 bg-base-100/80 rounded-full p-1 transition-opacity opacity-80 group-hover:opacity-100 tooltip tooltip-left`}
                   aria-label="Location on photo"
                   data-tip={
-                    file.lat && file.lng ? "Has GPS info" : "No GPS info"
+                    photoObj.lat && photoObj.lng
+                      ? "Has GPS info"
+                      : "No GPS info"
                   }
-                  disabled={!(file.lat && file.lng)}
+                  disabled={!(photoObj.lat && photoObj.lng)}
                 >
-                  {file.lat && file.lng ? (
+                  {photoObj.lat && photoObj.lng ? (
                     <Locate size={16} className="text-info" />
                   ) : (
                     <LocateOff size={16} className="text-neutral-500" />

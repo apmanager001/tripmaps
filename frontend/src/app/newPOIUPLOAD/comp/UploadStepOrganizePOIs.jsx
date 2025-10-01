@@ -55,7 +55,7 @@ export default function UploadStepOrganizePOIs({
     }
     // Coordinates: from selected photo or manual
     let coordinates = poiCoords;
-    
+
     if (!coordinates) {
       toast.error("Please select coordinates for this POI.");
       return;
@@ -120,12 +120,12 @@ export default function UploadStepOrganizePOIs({
   const handleCloseMapModal = () => setShowMapModal(false);
   // For demo: set manual coordinates
   const handleSetManualCoords = (lat, lng) => {
-    setManualCoords({ 'lat': lat, 'lng': lng });
+    setManualCoords({ lat: lat, lng: lng });
     setShowMapModal(false);
-    setPoiCoords({ 'lat': lat, 'lng': lng });
-    setSelectedCoordIdx('manual');
+    setPoiCoords({ lat: lat, lng: lng });
+    setSelectedCoordIdx("manual");
   };
-console.log(poiCoords);
+  console.log(poiCoords);
   return (
     <div className="w-full max-w-xl mx-auto px-4 md:px-2">
       <h3 className="font-semibold mb-2">
@@ -143,7 +143,7 @@ console.log(poiCoords);
             onClick={() => handlePhotoSelect(file)}
           >
             <img
-              src={URL.createObjectURL(file)}
+              src={file.previewUrl}
               alt=""
               className="w-full h-20 object-cover rounded-lg"
             />
@@ -234,7 +234,7 @@ console.log(poiCoords);
                         className="relative border border-neutral rounded-lg p-2 flex flex-col items-center bg-base-100"
                       >
                         <img
-                          src={URL.createObjectURL(file)}
+                          src={file.previewUrl}
                           alt="POI photo"
                           className="min- w-16 h-16 object-cover rounded mb-1"
                         />
