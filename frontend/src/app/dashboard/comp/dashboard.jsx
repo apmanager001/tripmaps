@@ -12,6 +12,7 @@ import {
   LocateFixed,
   Shield,
 } from "lucide-react";
+import UploadWizard from "@/app/newPOIUPLOAD/comp/uploadWizard";
 import MyMaps from "./mymap";
 import AddMaps from "./addMap";
 import AddPOI from "./addPOI";
@@ -128,8 +129,8 @@ const Dashboard = () => {
   const tabs = [
     { name: "My Profile", icon: <User size={20} /> },
     { name: "Create Map and POIs", icon: <LocateFixed size={20} /> },
-    { name: "POIs", icon: <LocateFixed size={20} /> },
-    { name: "Add Map", icon: <MapPinned size={20} /> },
+    // { name: "POIs", icon: <LocateFixed size={20} /> },
+    // { name: "Add Map", icon: <MapPinned size={20} /> },
     { name: "Search", icon: <Searched size={20} /> },
     { name: "Settings", icon: <Settings size={20} /> },
     // Admin tab - only show if user has admin role
@@ -143,11 +144,11 @@ const Dashboard = () => {
       case "My Profile":
         return <MyMaps />;
       case "Create Map and POIs":
-        return <AddMapPOIS />;
-      case "POIs":
-        return <AddPOI />;
-      case "Add Map":
-        return <AddMaps />;
+        return <UploadWizard />;
+      // case "POIs":
+      //   return <AddPOI />;
+      // case "Add Map":
+      //   return <AddMaps />;
       case "Search":
         return <Search />;
       case "Settings":

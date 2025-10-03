@@ -1,6 +1,6 @@
 // User limits configuration
 const USER_LIMITS = {
-  MAX_POIS: 100,
+  MAX_POIS: 150,
   MAX_MAPS: 5,
 };
 

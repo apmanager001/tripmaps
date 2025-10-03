@@ -24,6 +24,13 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
   if (typeof window !== "undefined" && !window.EXIF) {
     window.EXIF = EXIF;
   }
+  const formatExifDate = (dateString) => {
+    // Convert EXIF date format (YYYY:MM:DD HH:mm:ss) to ISO string
+    const [datePart, timePart] = dateString.split(" ");
+    const [year, month, day] = datePart.split(":");
+    const [hour, minute, second] = timePart.split(":");
+    return new Date(year, month - 1, day, hour, minute, second).toISOString();
+  };
   // Extract EXIF GPS and attach lat/lng and previewUrl directly to photo object
   const extractExifAndAttach = (file, cb) => {
     const reader = new FileReader();
@@ -35,13 +42,21 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
           window.EXIF.getData(image, function () {
             const exif = window.EXIF.getAllTags(this);
             let lat = null,
-              lng = null;
+              lng = null,
+              dateVisited = null;
             if (exif.GPSLatitude && exif.GPSLongitude) {
               lat = toDecimal(exif.GPSLatitude, exif.GPSLatitudeRef);
               lng = toDecimal(exif.GPSLongitude, exif.GPSLongitudeRef);
             }
+             if (exif.DateTimeOriginal) {
+               dateVisited = formatExifDate(exif.DateTimeOriginal);
+             } else if (exif.DateTime) {
+               dateVisited = formatExifDate(exif.DateTime);
+             } else if (exif.CreateDate) {
+               dateVisited = formatExifDate(exif.CreateDate);
+             }
             const previewUrl = URL.createObjectURL(file);
-            cb({ file, previewUrl, lat, lng });
+            cb({ file, previewUrl, lat, lng, dateVisited });
           });
         } else {
           const previewUrl = URL.createObjectURL(file);
@@ -92,7 +107,7 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto">
+    <div className="w-full max-w-xl mx-auto px-4 md:px-2">
       <div
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           isDragOver

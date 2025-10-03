@@ -13,7 +13,8 @@ import {
   RefreshCw,
   MessageSquare,
 } from "lucide-react";
-import AdminEmailComponent from "./AdminEmailComponent";
+import AdminEmailComponent from "./adminComp/AdminEmailComponent";
+import AdminNewsletter from "./adminComp/adminNewsletter";
 
 const Admin = () => {
   const [statusFilter, setStatusFilter] = useState("pending");
@@ -388,7 +389,7 @@ const Admin = () => {
           Email Management
         </h2>
       </div>
-
+      <AdminNewsletter />
       <AdminEmailComponent />
     </div>
   );

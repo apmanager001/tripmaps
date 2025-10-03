@@ -1,4 +1,4 @@
-const { subscribe } = require("../controllers/newsletterController");
+const { subscribe, getAllNewsletter } = require("../controllers/newsletterController");
 const express = require("express");
 const router = express.Router();
 
@@ -289,6 +289,7 @@ router.get("/users/:userId/visited-countries", getVisitedCountries); // Get all 
 
 // ===== NEWSLETTER ROUTE =====
 router.post("/newsletter", subscribe);
+router.get("/newsletter", jwtAuth, adminAuth, getAllNewsletter);
 
 // ===== CONTACT ROUTES =====
 // Public contact form submission

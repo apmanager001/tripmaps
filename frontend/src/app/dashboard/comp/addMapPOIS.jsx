@@ -29,7 +29,7 @@ const AddMapPOIS = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [mapName, setMapName] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
-
+  console.log(poiArray);
   // Fetch available tags
   const { data: availableTags = [], refetch: refetchTags } = useQuery({
     queryKey: ["availableTags"],

@@ -18,3 +18,14 @@ exports.subscribe = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+
+// GET /newsletter
+exports.getAllNewsletter = async (req, res) => {
+  try {
+    const newsletters = await Newsletter.find({});
+    res.status(200).json(newsletters);
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+};

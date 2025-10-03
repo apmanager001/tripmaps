@@ -9,7 +9,7 @@ const AddTags = ({
   onTagAdd,
   onTagRemove,
   existingTags = [],
-  placeholder = "Type to search tags...",
+  placeholder = "Search Tags...",
   className = "",
   disabled = false,
 }) => {
@@ -211,7 +211,10 @@ const AddTags = ({
       {/* Input field */}
       <div className="relative">
         <div className="relative w-full flex items-center">
-          <label htmlFor='add-tags-input' className="input input-sm w-full pr-10 flex items-center gap-2">
+          <label
+            htmlFor="add-tags-input"
+            className="input input-sm w-full pr-10 flex items-center gap-2"
+          >
             <Search size={16} className="text-neutral" />
 
             <input
@@ -220,7 +223,15 @@ const AddTags = ({
               type="text"
               value={inputValue}
               onChange={handleInputChange}
-              onFocus={handleInputFocus}
+              onFocus={(e) => {
+                handleInputFocus();
+                // Scroll to input on focus
+                setTimeout(() => {
+                  const el = document.getElementById("add-tags-input");
+                  if (el)
+                    el.scrollIntoView({ behavior: "smooth", block: "center" });
+                }, 0);
+              }}
               onBlur={handleInputBlur}
               onKeyDown={handleKeyDown}
               placeholder={placeholder}

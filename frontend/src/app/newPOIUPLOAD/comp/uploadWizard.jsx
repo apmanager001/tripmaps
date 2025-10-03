@@ -25,7 +25,6 @@ const UploadWizard = () => {
     setPoiArray([]);
     setMapName("");
   };
-  // console.log(allPhotos);
   return (
     <div className="flex flex-col items-center my-4">
       <ProgressBar step={step} total={3} />
