@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Info, X } from "lucide-react";
 
+
 const LimitAlert = () => {
   const [visible, setVisible] = useState(true);
 
