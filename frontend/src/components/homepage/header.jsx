@@ -4,7 +4,7 @@ import Link from "next/link";
 
 const Header = async () => {
   return (
-    <div className="hidden md:relative z-10">
+    <div className="hidden md:block md:relative z-10">
       <div className="navbar bg-base-200 px-4 py-2">
         <div className="flex justify-between items-center w-full">
           <div className="flex items-center gap-4">
