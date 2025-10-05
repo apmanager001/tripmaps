@@ -82,24 +82,46 @@ const MobileFooter = () => {
         />
         <div className="drawer-content">
           <div className="dock">
-            <button
-              onClick={() => setActive("home")}
-              className={active === "home" ? "dock-active" : ""}
-              aria-label="Home"
+            <Link
+                href="/"
+                onClick={() => setActive("home")}
+                className={active === "home" ? "dock-active" : ""}
+                aria-label="Home"
             >
               <House />
               <span className="dock-label">Home</span>
-            </button>
-
-            <button
-              onClick={() => setActive("alerts")}
-              className={active === "alerts" ? "dock-active" : ""}
-              aria-label="Alerts"
-            >
-              <Bell />
-              <span className="dock-label">Alerts</span>
-            </button>
-
+            </Link>
+            {user ? (
+              <button
+                onClick={() => setActive("alerts")}
+                className={active === "alerts" ? "dock-active" : ""}
+                aria-label="Alerts"
+              >
+                <Bell />
+                <span className="dock-label">Alerts</span>
+              </button>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setActive("login")}
+                  className={active === "login" ? "dock-active" : ""}
+                  aria-label="Login"
+                >
+                  <User />
+                  <span className="dock-label">Login</span>
+                </Link>
+                <Link
+                  href="/maps"
+                  onClick={() => setActive("maps")}
+                  className={active === "maps" ? "dock-active" : ""}
+                  aria-label="Explore Maps"
+                >
+                  <MapPinned />
+                  <span className="dock-label">Explore Maps</span>
+                </Link>
+              </>
+            )}
             <button
               onClick={handleOpenDrawer}
               className={active === "menu" ? "dock-active" : ""}
@@ -190,7 +212,7 @@ const MobileFooter = () => {
                       <span>{tab.name}</span>
                     </button>
                   ))}
-                {otherLinks.map((link) => (
+                  {otherLinks.map((link) => (
                     <button
                       key={link.name}
                       className="flex items-center gap-2 btn btn-ghost justify-start"
@@ -205,7 +227,7 @@ const MobileFooter = () => {
                   ))}
 
                   {/* Other Links */}
-                  
+
                   <div className="border-t border-base-300 my-2"></div>
                   <div className="my-4">
                     {footerLinks.map((tab) => (
