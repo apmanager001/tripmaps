@@ -25,6 +25,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import AddMapPOIS from "./addMapPOIS";
+import limitAlert from "./comps/limitAlert";
+import LimitAlert from "./comps/limitAlert";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("My Profile");
@@ -114,6 +116,39 @@ const Dashboard = () => {
     }
   }, [collapsed]);
 
+  // Auto-collapse on small screens (Tailwind 'lg' breakpoint is 1024px)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = (e) => {
+      // when viewport is less than lg, force collapsed true
+      if (e.matches) {
+        setCollapsed(true);
+      } else {
+        // when viewport becomes large again, keep collapsed false to show labels
+        setCollapsed(false);
+      }
+    };
+
+    // apply initially
+    apply(mq);
+
+    // modern browsers support addEventListener
+    if (mq.addEventListener) {
+      mq.addEventListener("change", apply);
+    } else if (mq.addListener) {
+      mq.addListener(apply);
+    }
+
+    return () => {
+      if (mq.removeEventListener) {
+        mq.removeEventListener("change", apply);
+      } else if (mq.removeListener) {
+        mq.removeListener(apply);
+      }
+    };
+  }, []);
+
   const handleLogout = () => {
     logoutMutation.mutate();
   };
@@ -170,7 +205,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex w-full min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200">
+    <div className="flex w-full min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200 mb-16 md:mb-0">
       {/* Enhanced Desktop Sidebar */}
       <div
         className={`bg-base-100/80 backdrop-blur-sm border-r border-base-300 md:transition-all duration-300 ease-in-out md:overflow-hidden 
@@ -266,10 +301,12 @@ const Dashboard = () => {
       {/* Enhanced Main Content */}
       <div className="flex-1 flex flex-col w-full">
         {/* Content Area with improved styling */}
+
         <div className="flex-1 flex justify-center md:px-8 md:py-10">
+          <LimitAlert />
           <div className="w-full max-w-7xl">
             {/* Content Header */}
-            <div className="mb-8 hidden md:block">
+            <div className="m-8 md:m-0 md:mb-8 block">
               <h1 className="text-3xl font-bold text-primary mb-2">
                 {activeTab}
               </h1>
@@ -277,7 +314,7 @@ const Dashboard = () => {
             </div>
 
             {/* Content Container */}
-            <div className="bg-base-100/50 backdrop-blur-sm rounded-2xl shadow-xl border border-base-300 md:p-6">
+            <div className="md:card bg-base-100 shadow-lg pb-2 md:pb-0">
               {renderContent()}
             </div>
           </div>

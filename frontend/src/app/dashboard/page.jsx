@@ -1,6 +1,5 @@
 import React, { Suspense } from "react";
 import Dashboard from "./comp/dashboard";
-import LimitAlert from "./comp/comps/limitAlert";
 
 export const metadata = {
   title: "Dashboard - My Trip Maps",
@@ -26,7 +25,6 @@ const Page = () => {
     >
       <div className='relative'>
         <Dashboard />
-        <LimitAlert />
       </div>
     </Suspense>
   );

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { mapApi, poiApi } from "@/lib/api";
+import ModalPortal from "@/components/modalPortal";
 
 export default function UploadStepMapSummary({
   poiArray,
@@ -13,6 +14,7 @@ export default function UploadStepMapSummary({
   onSubmit,
 }) {
   const [submitting, setSubmitting] = useState(false);
+  const [showUploadingPopup, setShowUploadingPopup] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -135,12 +137,16 @@ export default function UploadStepMapSummary({
 
   const handleSubmit = async () => {
     try {
+      // Show a popup since multiple photos can take time to upload
+      setShowUploadingPopup(true);
       setSubmitting(true);
+
       await createMapMutation.mutateAsync();
     } catch (e) {
       // error handled in onError
     } finally {
       setSubmitting(false);
+      setShowUploadingPopup(false);
     }
   };
   console.log(poiArray);
@@ -148,6 +154,7 @@ export default function UploadStepMapSummary({
     <div className="w-full max-w-xl mx-auto px-4 ">
       <h3 className="font-semibold mb-4">Review & Name Your Map</h3>
       <input
+        id='map-name-input'
         type="text"
         className="input input-bordered w-full mb-4"
         placeholder="Map Name"
@@ -183,6 +190,23 @@ export default function UploadStepMapSummary({
           {submitting ? "Saving..." : "Save Map"}
         </button>
       </div>
+      {/* Uploading popup/modal */}
+      {showUploadingPopup && (
+        <ModalPortal>
+          <div className="absolute modal modal-open z-50 flex items-center justify-center bg-black/50 w-screen h-screen">
+            <div className="flex flex-col justify-center items-center modal-box w-96 h-96 max-w-2xl text-center border border-neutral-400">
+              <h4 className="font-semibold mb-4">Uploading photos</h4>
+              <p className="text-sm text-neutral-400 mb-4">
+                Uploading may take a few moments depending on your connection and
+                the number of photos.
+              </p>
+              <div className="flex items-center justify-center">
+                <progress className="progress w-56"></progress>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
     </div>
   );
 }

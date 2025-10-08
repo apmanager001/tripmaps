@@ -1,4 +1,4 @@
-import React from 'react'
+
 import Upload from './comp/uploadWizard'
 
 const Page = () => {

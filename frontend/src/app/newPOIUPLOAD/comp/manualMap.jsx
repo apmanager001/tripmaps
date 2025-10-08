@@ -11,7 +11,7 @@ const ManualMap = ({ onSetCoords, onExpandChange }) => {
   const [viewState, setViewState] = useState({
     latitude: DEFAULT_COORDS.lat,
     longitude: DEFAULT_COORDS.lng,
-    zoom: 14,
+    zoom: 4,
   });
 
   // Handle map click to move marker

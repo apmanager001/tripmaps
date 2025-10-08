@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import AdminEmailComponent from "./adminComp/AdminEmailComponent";
 import AdminNewsletter from "./adminComp/adminNewsletter";
+import AdminGetContact from "./adminComp/adminGetContact";
 
 const Admin = () => {
   const [statusFilter, setStatusFilter] = useState("pending");
@@ -125,7 +126,7 @@ const Admin = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mx-4 mt-4">
         <div>
           <h2 className="text-2xl font-bold text-base-content">
             Flagged Photos Management
@@ -382,7 +383,13 @@ const Admin = () => {
           )}
         </div>
       )}
-
+      <div className="divider my-8">
+        <h2 className="text-xl font-bold text-base-content">
+          Contact Management
+        </h2>
+        
+      </div>
+      <AdminGetContact />
       {/* Email Management Section */}
       <div className="divider my-8">
         <h2 className="text-xl font-bold text-base-content">

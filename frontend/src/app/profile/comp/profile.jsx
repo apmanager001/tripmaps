@@ -1,6 +1,6 @@
 "use client";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import Link from "next/link";
+import { useVisitedCountries } from "@/components/visitedCountrys";
 import { useRouter } from "next/navigation";
 import {
   MapPin,
@@ -19,7 +19,6 @@ import {
   Plane,
 } from "lucide-react";
 import ProfileVisitedCountries from "./profileVisitedCountries";
-import { useVisitedCountries } from "@/components/visitedCountrys";
 import { SocialIcon } from "react-social-icons";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import MapCard from "@/components/MapCard";
@@ -47,18 +46,23 @@ async function fetchProfileData(id) {
   }
 }
 export default function Profile({ id }) {
-  
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const router = useRouter();
-  const { data: visitedCountries } = useVisitedCountries(currentUser?._id);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["profileData", id],
     queryFn: () => fetchProfileData(id),
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
   });
+
+  // Compute userId (may be undefined on first render) and call visited countries hook
+  // unconditionally so hook order stays stable between renders.
+  const userId = data?.data?.user?._id ?? null;
+  // Check visited countries for this profile user (hook must be called every render)
+  const { data: visitedCountries } = useVisitedCountries(userId);
 
   // Check if current user is following the profile user
   const { data: followingData } = useQuery({
@@ -132,6 +136,10 @@ export default function Profile({ id }) {
   }
 
   const { user, maps, stats } = data.data;
+
+  // visitedCountries hook was already called above with a possibly-null userId.
+  const shouldShowVisited = visitedCountries && visitedCountries.length > 0;
+
   const mapCount = maps.length;
 
   function getBadge(count) {
@@ -209,7 +217,7 @@ export default function Profile({ id }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-300">
+    <div className="min-h-screen bg-gradient-to-br from-base-100 via-base-200 to-base-300 mb-16 md:mb-0">
       {/* Canonical URL for SEO */}
       <link
         rel="canonical"
@@ -358,24 +366,22 @@ export default function Profile({ id }) {
             </div>
 
             {/* Visited Countries */}
-            {visitedCountries && visitedCountries.length > 0 && ( 
-            <div className="bg-base-300 rounded-2xl shadow-lg p-6 border border-base-content">
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Plane size={20} className="text-primary" />
-                Visited Countries
-                {visitedCountries.length > 0 && (
-                  <span className="badge badge-info badge-sm border-0 whitespace-nowrap text-xs sm:text-sm">
-                    {visitedCountries.length}{" "}
-                    {visitedCountries.length === 1 ? "country" : "countries"} visited
+            {shouldShowVisited && (
+              <div className="bg-base-300 rounded-2xl shadow-lg p-6 border border-base-content">
+                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Plane size={20} className="text-primary" />
+                  Visited Countries
+                  <span className="badge badge-accent text-sm">
+                    {visitedCountries.length} 
                   </span>
-                )}
-              </h3>
+                </h3>
 
-              <div className="space-y-4">
-                <ProfileVisitedCountries userId={user._id} />
+                <div className="space-y-4">
+                  <ProfileVisitedCountries data={visitedCountries} />
+                </div>
               </div>
-            </div>
             )}
+
             {/* Social Media Links */}
             {user.socialMedia &&
               Object.values(user.socialMedia).some((link) => link) && (
@@ -474,10 +480,10 @@ export default function Profile({ id }) {
                   <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <MapPin className="text-white" size={32} />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                  <h3 className="text-xl font-bold mb-2">
                     No Public Maps Yet
                   </h3>
-                  <p className="text-gray-600 max-w-md mx-auto">
+                  <p className="text-base-content/80 max-w-md mx-auto">
                     {user.username} hasn't shared any public maps yet. Check
                     back later to see their amazing discoveries!
                   </p>

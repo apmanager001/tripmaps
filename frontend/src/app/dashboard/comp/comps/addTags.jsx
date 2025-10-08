@@ -193,15 +193,15 @@ const AddTags = ({
     <div className={`relative ${className} flex flex-col gap-2`}>
       {/* Existing tags display */}
       {existingTags.length > 0 && (
-        <div className=" flex flex-wrap gap-1">
+        <div className=" flex flex-wrap gap-1 font-medium">
           {existingTags.map((tag, index) => (
             <span
               key={index}
               className="badge badge-primary badge-sm flex items-center justify-center gap-1 py-3"
             >
               {tag}
-              <button onClick={() => handleRemoveTag(tag)} className="">
-                <X size={12} className="hover:text-neutral cursor-pointer" />
+              <button onClick={() => handleRemoveTag(tag)} className="btn btn-ghost btn-xs btn-circle p-0 m-0">
+                <X size={12} className="cursor-pointer" />
               </button>
             </span>
           ))}

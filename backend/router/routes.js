@@ -1,4 +1,7 @@
-const { subscribe, getAllNewsletter } = require("../controllers/newsletterController");
+const {
+  subscribe,
+  getAllNewsletter,
+} = require("../controllers/newsletterController");
 const express = require("express");
 const router = express.Router();
 
@@ -294,14 +297,15 @@ router.get("/newsletter", jwtAuth, adminAuth, getAllNewsletter);
 // ===== CONTACT ROUTES =====
 // Public contact form submission
 router.post("/contact", submitContact);
+router.get("/contact", jwtAuth, adminAuth, getAllContacts);
 
 // Admin/moderator contact management (protected routes)
-router.get("/admin/contacts", jwtAuth, getAllContacts);
-router.get("/admin/contacts/stats", jwtAuth, getContactStats);
-router.get("/admin/contacts/:id", jwtAuth, getContactById);
-router.put("/admin/contacts/:id/status", jwtAuth, updateContactStatus);
-router.post("/admin/contacts/:id/notes", jwtAuth, addContactNote);
-router.delete("/admin/contacts/:id", jwtAuth, deleteContact);
+router.get("/admin/contacts", jwtAuth, adminAuth, getAllContacts);
+router.get("/contact/stats", jwtAuth, adminAuth, getContactStats);
+router.get("/contact/:id", jwtAuth, adminAuth, getContactById);
+router.put("/contact/:id/status", jwtAuth, adminAuth, updateContactStatus);
+router.post("/contact/:id/notes", jwtAuth, adminAuth, addContactNote);
+router.delete("/contact/:id", jwtAuth, adminAuth, deleteContact);
 
 // ===== ADMIN ROUTES =====
 router.get("/admin/users/stats", jwtAuth, adminAuth, getUserStats);

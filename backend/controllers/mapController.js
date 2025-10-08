@@ -7,6 +7,9 @@ const POILike = require("../model/poiLike");
 const POITag = require("../model/poiTag");
 const Tag = require("../model/tag");
 const User = require("../model/user");
+const Photo = require("../model/photo");
+const Flag = require("../model/flag");
+const { deleteImage } = require("../services/s3Service");
 const mongoose = require("mongoose");
 const { createLikeAlert } = require("./alertController");
 const { generatePresignedUrlsForPhotos } = require("../helpers/photoHelpers");
@@ -441,7 +444,54 @@ const deleteMap = async (req, res) => {
       });
     }
 
-    // Delete map-related data but preserve POIs
+    // Find POIs belonging to the map so we can delete related POI-level data
+    const pois = await POI.find({ map_id: id }).select("_id");
+    const poiIds = pois.map((p) => p._id);
+
+    // Delete map and all related records. We delete POIs themselves (not preserve),
+    // and remove any records tied to those POIs (likes, photos, tags), as well as
+    // flags that reference the map or any of the POIs.
+
+    // First, delete S3 objects for photos belonging to these POIs (if any).
+    if (poiIds.length > 0) {
+      try {
+        const photos = await Photo.find({ poi_id: { $in: poiIds } }).select(
+          "s3Key thumbnailKey"
+        );
+
+        const deletePromises = [];
+        photos.forEach((p) => {
+          if (p.s3Key) {
+            deletePromises.push(
+              deleteImage(p.s3Key).catch((err) => {
+                console.error("Failed to delete S3 key:", p.s3Key, err);
+                return null; // swallow error so other deletes continue
+              })
+            );
+          }
+          if (p.thumbnailKey) {
+            deletePromises.push(
+              deleteImage(p.thumbnailKey).catch((err) => {
+                console.error(
+                  "Failed to delete thumbnail key:",
+                  p.thumbnailKey,
+                  err
+                );
+                return null;
+              })
+            );
+          }
+        });
+
+        if (deletePromises.length > 0) {
+          await Promise.all(deletePromises);
+        }
+      } catch (s3Err) {
+        // Log and continue with DB deletions; don't block map deletion on S3 errors
+        console.error("Error deleting S3 images for map delete:", s3Err);
+      }
+    }
+
     await Promise.all([
       // Delete the map itself
       Map.findByIdAndDelete(id),
@@ -451,8 +501,16 @@ const deleteMap = async (req, res) => {
       Bookmark.deleteMany({ map_id: id }),
       // Delete map comments
       MapComment.deleteMany({ map_id: id }),
-      // Remove map_id from POIs (make them standalone POIs)
-      POI.updateMany({ map_id: id }, { $unset: { map_id: 1 } }),
+      // Delete POI likes for POIs on this map
+      POILike.deleteMany({ poi_id: { $in: poiIds } }),
+      // Delete photos that belong to POIs on this map (DB docs)
+      Photo.deleteMany({ poi_id: { $in: poiIds } }),
+      // Delete POI-Tag relationships for these POIs
+      POITag.deleteMany({ poi_id: { $in: poiIds } }),
+      // Delete the POIs themselves
+      POI.deleteMany({ map_id: id }),
+      // Delete flags that reference the map or the POIs
+      Flag.deleteMany({ $or: [{ mapId: id }, { poiId: { $in: poiIds } }] }),
     ]);
 
     res.json({

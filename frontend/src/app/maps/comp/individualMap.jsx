@@ -7,6 +7,7 @@ import InstagramShare from "@/components/utility/InstagramShare";
 import POICard from "@/components/POICard";
 import AddPOIToMapModal from "@/components/AddPOIToMapModal";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
+import PhotoGalleryButton from "./photogalleryButton";
 import Link from "next/link";
 import {
   Heart,
@@ -87,7 +88,6 @@ export default function IndividualMaps({ id }) {
     },
     enabled: !!id,
   });
-
   // Map like mutation
   const likeMutation = useMutation({
     mutationFn: () => mapApi.likeMap(id),
@@ -540,16 +540,18 @@ export default function IndividualMaps({ id }) {
                       compact={true}
                       className="flex-shrink-0"
                     />
-                    <div className="flex flex-col md:flex-row gap-1">
-                      <Link
-                        href={`/profile/${mapUser.username}`}
-                        className="badge badge-primary badge-md hover:badge-primary-focus transition-all duration-200 inline-flex items-center gap-2"
-                      >
-                        {/* <User className="w-4 h-4" /> */}
-                        {mapUser.username}
-                      </Link>
+                    <div className="flex flex-col gap-1">
+                      <div>
+                        <Link
+                          href={`/profile/${mapUser.username}`}
+                          className="badge badge-primary badge-md hover:badge-accent"
+                        >
+                          {/* <User className="w-4 h-4" /> */}
+                          {mapUser.username}
+                        </Link>
+                      </div>
                       {mapData?.createdAt && (
-                        <span className="text-sm text-neutral-content flex items-center gap-1">
+                        <span className="text-xs text-neutral-content flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           Created {formatDate(mapData.createdAt)}
                         </span>
@@ -666,49 +668,67 @@ export default function IndividualMaps({ id }) {
             {/* Center - Social Action Buttons */}
             <div className="flex flex-wrap items-center gap-3">
               {/* Bookmark Button */}
-              {mapUser && currentUser && mapUser._id !== currentUser._id && (
-                <button
-                  onClick={handleBookmark}
-                  disabled={bookmarkMutation.isPending || !isAuthenticated}
-                  className={`btn btn-xs md:btn-sm btn-soft btn-accent rounded-full gap-2 ${
-                    !isAuthenticated
-                      ? "btn-disabled opacity-50"
-                      : isBookmarked
-                      ? "btn-accent shadow-md"
-                      : "btn-outline btn-accent hover:btn-accent hover:shadow-md"
-                  } transition-all duration-200`}
-                  title={
-                    !isAuthenticated
-                      ? "Please log in to bookmark maps"
-                      : isBookmarked
-                      ? "Remove from bookmarks"
-                      : "Add to Travel Journal"
-                  }
-                >
-                  <Bookmark
-                    className={`w-4 h-4 ${isBookmarked ? "fill-current" : ""}`}
-                  />
-                  {/* <span className="font-medium">
+              {isAuthenticated &&
+                currentUser &&
+                mapUser._id !== currentUser._id && (
+                  <button
+                    onClick={handleBookmark}
+                    disabled={bookmarkMutation.isPending || !isAuthenticated}
+                    className={`tooltip tooltip-top btn btn-xs md:btn-sm btn-soft btn-accent rounded-full gap-2 ${
+                      !isAuthenticated
+                        ? "btn-disabled opacity-50"
+                        : isBookmarked
+                        ? "btn-accent shadow-md"
+                        : "btn-outline btn-accent hover:btn-accent hover:shadow-md"
+                    } transition-all duration-200`}
+                    data-tip={
+                      !isAuthenticated
+                        ? "Please log in to bookmark maps"
+                        : isBookmarked
+                        ? "Remove from bookmarks"
+                        : "Add to Travel Journal"
+                    }
+                    aria-label={
+                      isBookmarked
+                        ? "Remove from bookmarks"
+                        : "Add to Travel Journal"
+                    }
+                    type="button"
+                  >
+                    <Bookmark
+                      className={`w-4 h-4 ${
+                        isBookmarked ? "fill-current" : ""
+                      }`}
+                    />
+                    {/* <span className="font-medium">
                     {isBookmarked ? "Bookmarked" : "Bookmark"}
                   </span> */}
-                  {bookmarkMutation.isPending && (
-                    <div className="loading loading-spinner loading-xs"></div>
-                  )}
-                </button>
-              )}
-
+                    {bookmarkMutation.isPending && (
+                      <div className="loading loading-spinner loading-xs"></div>
+                    )}
+                  </button>
+                )}
+              {/* Photo Gallery Button */}
+              {/* Pass all POI photos to the gallery button so users can view map-wide photos */}
+              <PhotoGalleryButton
+                id={id}
+                photos={pois.flatMap((p) =>
+                  (p.photos || []).map((ph) => ({ ...ph, poiId: p._id }))
+                )}
+                mapName={mapName}
+              />
               {/* Like Button */}
               <button
                 onClick={handleLike}
                 disabled={likeMutation.isPending || !isAuthenticated}
-                className={`btn btn-xs md:btn-sm btn-soft btn-error rounded-full gap-2 ${
+                className={`btn btn-xs md:btn-sm btn-soft btn-error rounded-full gap-2 tooltip tooltip-top ${
                   !isAuthenticated
                     ? "btn-disabled opacity-50"
                     : isLiked
                     ? "btn-error shadow-md"
                     : "btn-outline btn-error hover:btn-error hover:shadow-md"
                 } transition-all duration-200`}
-                title={
+                data-tip={
                   !isAuthenticated
                     ? "Please log in to like maps"
                     : "Like this Map"
@@ -726,8 +746,10 @@ export default function IndividualMaps({ id }) {
               {/* Comments Button */}
               <button
                 onClick={() => setIsCommentsOpen(true)}
-                className="btn btn-xs md:btn-sm btn-soft btn-primary rounded-full gap-2 hover:shadow-md transition-all duration-200"
-                title="View and Add Comments"
+                className="tooltip tooltip-left btn btn-xs md:btn-sm btn-soft btn-primary rounded-full gap-2 hover:shadow-md transition-all duration-200"
+                data-tip="View and Add Comments"
+                aria-label="View and Add Comments"
+                type="button"
               >
                 <MessageCircle className="w-4 h-4" />
                 {/* <span className="font-medium">Comments</span> */}

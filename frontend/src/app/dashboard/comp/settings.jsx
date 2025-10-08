@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import {
   LogOut,
+  Lock,
   User,
   Mail,
   Edit3,
@@ -326,7 +328,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto md:p-6 space-y-6">
+    <div className="max-w-7xl mx-auto md:p-6 space-y-6 mb-16">
       {/* Upgrade Subscription - Full Width */}
       {subAbility && (
         <div className="card bg-gradient-to-br from-primary/10 to-secondary/10 shadow-lg border border-primary/20">
@@ -435,7 +437,7 @@ export default function Settings() {
         {/* Left Column */}
         <div className="space-y-6">
           {/* Account Information */}
-          <div className="card bg-base-100 shadow-lg">
+          <div className="md:card bg-base-100 shadow-lg">
             <div className="card-body">
               <h2 className="card-title text-xl flex items-center gap-2">
                 <User className="w-5 h-5" />
@@ -446,7 +448,7 @@ export default function Settings() {
                 {/* Username */}
                 <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
                   <div>
-                    <label className="text-sm font-medium text-gray-600">
+                    <label className="text-sm font-medium text-base-content/60">
                       Username
                     </label>
                     <p className="font-semibold">{currentUser?.username}</p>
@@ -457,7 +459,7 @@ export default function Settings() {
                 {/* Email */}
                 <div className="p-3 bg-base-200 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-gray-600 flex items-center gap-1">
+                    <label className="text-sm font-medium text-base-content/60 flex items-center gap-1">
                       <Mail className="w-4 h-4" />
                       Email Address
                     </label>
@@ -572,7 +574,8 @@ export default function Settings() {
                 {/* Bio */}
                 <div className="p-3 bg-base-200 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium text-gray-600">
+                    <label className="text-sm font-medium text-base-content/60 flex gap-1">
+                      <User className="w-4 h-4" />
                       Bio
                     </label>
                     {!isEditingBio ? (
@@ -625,19 +628,20 @@ export default function Settings() {
                 <div className="p-3 bg-base-200 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-600">
+                      <label className="text-sm font-medium text-base-content/60 flex gap-1">
+                        <Lock className="w-4 h-4" />
                         Password
                       </label>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-base-content">
                         Change your account password
                       </p>
                     </div>
-                    <a
+                    <Link
                       href="/forgot-password"
                       className="btn btn-sm rounded-full btn-error btn-soft"
                     >
                       Change Password
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -645,7 +649,7 @@ export default function Settings() {
           </div>
 
           {/* Privacy Settings */}
-          <div className="card bg-base-100 shadow-lg">
+          <div className="md:card bg-base-100 shadow-lg">
             <div className="card-body">
               <h2 className="card-title text-xl">
                 <GlobeLock className="w-5 h-5" />
@@ -654,10 +658,11 @@ export default function Settings() {
 
               <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
                 <div>
-                  <label className="text-sm font-medium text-gray-600">
+                  <label className="text-sm font-medium text-base-content/60 flex items-center gap-1">
+                    <Mail className="w-4 h-4" />
                     Email Privacy
                   </label>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-base-content">
                     {emailPrivate
                       ? "Your email is hidden from other users"
                       : "Your email is visible to other users"}
@@ -675,7 +680,7 @@ export default function Settings() {
           </div>
 
           {/* Alert Settings */}
-          <div className="card bg-base-100 shadow-lg">
+          <div className="md:card bg-base-100 shadow-lg">
             <div className="card-body">
               <h2 className="card-title text-xl flex items-center gap-2">
                 <Bell className="w-5 h-5" />
@@ -753,7 +758,7 @@ export default function Settings() {
                 </div>
 
                 {/* Email Notifications - Master Toggle */}
-                <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg border border-dashed border-info">
+                {/* <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg border border-dashed border-info">
                   <div className="flex items-center gap-3">
                     <Mail className="w-5 h-5 text-purple-600" />
                     <div>
@@ -774,10 +779,10 @@ export default function Settings() {
                     }
                     disabled={updateProfileMutation.isPending}
                   />
-                </div>
+                </div> */}
 
                 {/* Email Follow Notifications */}
-                <div
+                {/* <div
                   className={`flex items-center justify-between p-3 rounded-lg border border-dashed border-info ${
                     alertSettings.emailNotifications
                       ? "bg-base-200"
@@ -822,10 +827,10 @@ export default function Settings() {
                       !alertSettings.emailNotifications
                     }
                   />
-                </div>
+                </div> */}
 
                 {/* Email Comment Notifications */}
-                <div
+                {/* <div
                   className={`flex items-center justify-between p-3 rounded-lg border border-dashed border-info ${
                     alertSettings.emailNotifications
                       ? "bg-base-200"
@@ -870,12 +875,12 @@ export default function Settings() {
                       !alertSettings.emailNotifications
                     }
                   />
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
           {/* Logout */}
-          <div className="card bg-base-100 shadow-lg">
+          <div className="md:card bg-base-100 shadow-lg">
             <div className="card-body">
               <h2 className="card-title text-xl text-error">Danger Zone</h2>
               <p className="text-sm text-gray-600 mb-4">
@@ -901,7 +906,7 @@ export default function Settings() {
         {/* Right Column */}
         <div className="space-y-6">
           {/* Account Dates */}
-          <div className="card bg-base-100 shadow-lg">
+          <div className="md:card bg-base-100 shadow-lg">
             <div className="card-body">
               <h2 className="card-title text-xl">Account Information</h2>
 
@@ -930,7 +935,7 @@ export default function Settings() {
           </div>
 
           {/* Account Stats */}
-          <div className="card bg-base-100 shadow-lg">
+          <div className="md:card bg-base-100 shadow-lg">
             <div className="card-body">
               <h2 className="card-title text-xl">Account Statistics</h2>
 
@@ -954,7 +959,7 @@ export default function Settings() {
             </div>
           </div>
           {/* Countries Visited */}
-          <div className="card bg-base-100 shadow-lg">
+          <div className="md:card bg-base-100 shadow-lg">
             <div className="card-body">
               <h2 className="card-title text-xl">Countries Visited</h2>
               <Country />
@@ -962,7 +967,7 @@ export default function Settings() {
           </div>
 
           {/* Social Media Links */}
-          <div className="card bg-base-100 shadow-lg">
+          <div className="md:card bg-base-100 shadow-lg">
             <div className="card-body">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="card-title text-xl">Social Media Links</h2>

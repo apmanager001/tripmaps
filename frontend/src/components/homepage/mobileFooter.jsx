@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Image from "next/image";
 import {
   House,
   Bell,
@@ -82,6 +83,13 @@ const MobileFooter = () => {
         />
         <div className="drawer-content">
           <div className="dock">
+            <Image 
+              src='/tripmap.webp'
+              alt='Trip Map'
+              className="w-8 h-14"
+              width={25}
+              height={50}
+            />
             <Link
                 href="/"
                 onClick={() => setActive("home")}
@@ -138,11 +146,11 @@ const MobileFooter = () => {
             className="drawer-overlay"
             onClick={handleCloseDrawer}
           ></label>
-          <div className="w-64 bg-base-100 p-4 h-screen">
+          <div className="w-64 bg-base-100 p-4 h-full">
             {isAuthLoading ? (
               <div className="text-sm text-neutral">Loading user...</div>
             ) : !user ? (
-              <>
+              <div className="relative h-full">
                 <div className="flex items-center justify-between mb-4">
                   <div />
                   <button
@@ -153,13 +161,20 @@ const MobileFooter = () => {
                     <X />
                   </button>
                 </div>
-                <div className="flex flex-col gap-2 w-full">
+                <div className="absolute bottom-4 flex flex-col gap-2 w-full">
                   <Link
                     href="/login"
+                    className="btn btn-ghost w-full"
+                    onClick={handleCloseDrawer}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/register"
                     className="btn btn-primary w-full"
                     onClick={handleCloseDrawer}
                   >
-                    Login / Register
+                    Register
                   </Link>
                 </div>
                 <div className="my-4">
@@ -178,7 +193,7 @@ const MobileFooter = () => {
                     </Link>
                   ))}
                 </div>
-              </>
+              </div>
             ) : (
               <>
                 <div className="flex items-center justify-between mb-4">

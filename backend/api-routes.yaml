@@ -6,9 +6,9 @@ info:
   contact:
     name: My Trip Maps Support
 servers:
-  - url: http://localhost:3000
+  - url: http://localhost:3001
     description: Development server
-  - url: https://mytripmaps.com
+  - url: https://your-production-domain.com
     description: Production server
 
 paths:

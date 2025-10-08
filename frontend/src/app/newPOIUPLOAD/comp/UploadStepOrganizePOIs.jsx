@@ -15,6 +15,7 @@ import { toast } from "react-hot-toast";
 import Map from "./map";
 import AddTags from "../../dashboard/comp/comps/addTags";
 import ManualMap from "./manualMap";
+import ModalPortal from "@/components/modalPortal";
 
 const MAX_POIS = 25;
 const MAX_PHOTOS_PER_POI = 3;
@@ -667,47 +668,50 @@ export default function UploadStepOrganizePOIs({
           Next: Map Summary
         </button>
       </div>
-
-      <dialog id="viewMap" className="modal w-full h-full">
-        <div
-          className={`relative bg-base-200 rounded-lg shadow-lg border border-neutral p-4 ${
-            isExpanded ? "w-full h-full" : ""
-          }`}
-        >
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="font-semibold">Pick Location on Map</h4>
-            <form method="dialog">
-              <button className="btn btn-circle btn-ghost">
-                <X />
-              </button>
-            </form>
+      <ModalPortal>
+        <dialog id="viewMap" className="modal w-full h-full">
+          <div
+            className={`relative bg-base-200 rounded-lg shadow-lg border border-neutral p-4 ${
+              isExpanded ? "w-full h-full" : ""
+            }`}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="font-semibold">Location on Map</h4>
+              <form method="dialog">
+                <button className="btn btn-circle btn-ghost">
+                  <X />
+                </button>
+              </form>
+            </div>
+            <Map
+              coordArray={[mapCoords]}
+              onExpandChange={handleMapExpandChange}
+            />
           </div>
-          <Map
-            coordArray={[mapCoords]}
-            onExpandChange={handleMapExpandChange}
-          />
-        </div>
-      </dialog>
-      <dialog id="manualMap" className="modal w-full h-full">
-        <div
-          className={`relative bg-base-200 rounded-lg shadow-lg border border-neutral p-4 ${
-            isExpanded ? "w-full h-full" : ""
-          }`}
-        >
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="font-semibold">Pick Location on Map</h4>
-            <form method="dialog">
-              <button className="btn btn-circle btn-ghost">
-                <X />
-              </button>
-            </form>
+        </dialog>
+      </ModalPortal>
+      <ModalPortal>
+        <dialog id="manualMap" className="modal w-full h-full">
+          <div
+            className={`relative bg-base-200 rounded-lg shadow-lg border border-neutral p-4 ${
+              isExpanded ? "w-full h-full" : ""
+            }`}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h4 className="font-semibold">Pick Location on Map</h4>
+              <form method="dialog">
+                <button className="btn btn-circle btn-ghost">
+                  <X />
+                </button>
+              </form>
+            </div>
+            <ManualMap
+              onSetCoords={handleSetManualCoords}
+              onExpandChange={handleMapExpandChange}
+            />
           </div>
-          <ManualMap
-            onSetCoords={handleSetManualCoords}
-            onExpandChange={handleMapExpandChange}
-          />
-        </div>
-      </dialog>
+        </dialog>
+      </ModalPortal>
     </div>
   );
 }

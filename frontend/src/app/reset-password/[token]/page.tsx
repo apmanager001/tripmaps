@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -62,27 +63,27 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br  p-4">
+      <div className="max-w-md w-full bg-base-300 rounded-2xl shadow-xl border border-base-content/15 p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold mb-2">
             Reset Password
           </h1>
-          <p className="text-gray-600">Enter your new password below</p>
+          <p className="text-base-content/60">Enter your new password below</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium mb-1"
             >
               New Password
             </label>
             <input
               id="password"
               type="password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Enter your new password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -93,14 +94,14 @@ export default function ResetPasswordPage() {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium mb-1"
             >
               Confirm New Password
             </label>
             <input
               id="confirmPassword"
               type="password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Confirm your new password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -110,7 +111,7 @@ export default function ResetPasswordPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium cursor-pointer"
+            className="w-full btn btn-primary text-white py-2 px-4 rounded-lg "
             disabled={resetPasswordMutation.isPending}
           >
             {resetPasswordMutation.isPending ? (
@@ -125,14 +126,14 @@ export default function ResetPasswordPage() {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-base-content/60">
             Remember your password?{" "}
-            <a
+            <Link
               href="/login"
-              className="text-blue-600 hover:text-blue-700 font-medium"
+              className="text-accent font-medium"
             >
               Sign in
-            </a>
+            </Link>
           </p>
         </div>
       </div>

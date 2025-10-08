@@ -78,12 +78,13 @@ const FlagModal = ({ isOpen, onClose, photoId, photoUrl, locationName }) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Reason Selection */}
           <div>
-            <label className="label">
+            <label htmlFor="flag-reason" className="label">
               <span className="label-text font-medium">
                 Reason for flagging
               </span>
             </label>
             <select
+              id="flag-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               className="select select-bordered w-full"
@@ -99,12 +100,13 @@ const FlagModal = ({ isOpen, onClose, photoId, photoUrl, locationName }) => {
 
           {/* Additional Details */}
           <div>
-            <label className="label">
+            <label htmlFor="flag-details" className="label">
               <span className="label-text font-medium">
                 Additional details (optional)
               </span>
             </label>
             <textarea
+              id="flag-details"
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               placeholder="Please provide any additional context about why this photo should be flagged..."

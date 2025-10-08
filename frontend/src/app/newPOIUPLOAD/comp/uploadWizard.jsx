@@ -16,10 +16,6 @@ const UploadWizard = () => {
 
   const handleSubmit = async () => {
     // TODO: Implement actual save logic (API call)
-    // For now, just show a toast
-    import("react-hot-toast").then(({ toast }) => {
-      toast.success("Map saved! (Demo only)");
-    });
     setStep(1);
     setAllPhotos([]);
     setPoiArray([]);

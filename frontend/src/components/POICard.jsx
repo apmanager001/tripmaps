@@ -9,6 +9,7 @@ import { usePOIStore } from "@/store/usePOIStore";
 import Link from "next/link";
 import {
   MapPin,
+  CalendarDays,
   Edit,
   Eye,
   Trash2,
@@ -190,6 +191,7 @@ const POICard = ({
               alt={poi.locationName}
               priority={false}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
             />
             {/* Dark overlay for better text readability */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
@@ -325,7 +327,7 @@ const POICard = ({
             {/* Photo date badge */}
             {hasImage && primaryOrFirstPhoto?.date_visited && (
               <div className="text-xs text-white/90 drop-shadow-lg badge badge-primary badge-sm bg-accent/60 border-0 backdrop-blur-sm">
-                📅{" "}
+                <CalendarDays size={14} />
                 {new Date(
                   primaryOrFirstPhoto.date_visited
                 ).toLocaleDateString()}
