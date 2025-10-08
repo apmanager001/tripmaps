@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Document, { Html, Head, Main, NextScript } from "next/document";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";

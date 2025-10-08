@@ -1,5 +1,4 @@
 "use client";
-import { useEffect, useState } from "react";
 // import { useSearchParams } from "next/navigation";
 import { CheckCircle, Crown, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -7,7 +6,7 @@ import Link from "next/link";
 export default function SubscriptionSuccess() {
   // const router = useRouter();
   // const searchParams = useSearchParams();
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  // const [sessionId, setSessionId] = useState<string | null>(null);
 
   // useEffect(() => {
   //   // Get the session_id from URL parameters
@@ -58,14 +57,14 @@ export default function SubscriptionSuccess() {
             </div>
 
             {/* Session ID (for debugging) */}
-            {sessionId && (
+            {/* {sessionId && (
               <div className="bg-base-200 rounded-lg p-4 mb-6">
                 <p className="text-xs text-gray-500 mb-2">Session ID:</p>
                 <p className="text-xs font-mono text-gray-600 break-all">
-                  {sessionId}
+                   {sessionId} 
                 </p>
               </div>
-            )}
+            )} */}
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
