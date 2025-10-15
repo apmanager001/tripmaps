@@ -43,27 +43,27 @@ const POICard = ({
   const queryClient = useQueryClient();
   const [showDescriptionTooltip, setShowDescriptionTooltip] = useState(false);
   const [isClient, setIsClient] = useState(false);
-    // POI delete mutation
-    const deleteMutation = useMutation({
-      mutationFn: (poiId) => poiApi.deletePOI(poiId),
-      onSuccess: (data) => {
-        if (data.success) {
-          toast.success("POI deleted successfully");
-          queryClient.invalidateQueries(["individualMap"]);
-          queryClient.invalidateQueries(["userPOIs"]);
-          queryClient.invalidateQueries(["popularPOIs"]);
-        } else {
-          toast.error(data.message || "Failed to delete POI");
-        }
-      },
-      onError: (error) => {
-        toast.error(`Failed to delete POI: ${error.message}`);
-      },
-    });
+  // POI delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (poiId) => poiApi.deletePOI(poiId),
+    onSuccess: (data) => {
+      if (data.success) {
+        toast.success("POI deleted successfully");
+        queryClient.invalidateQueries(["individualMap"]);
+        queryClient.invalidateQueries(["userPOIs"]);
+        queryClient.invalidateQueries(["popularPOIs"]);
+      } else {
+        toast.error(data.message || "Failed to delete POI");
+      }
+    },
+    onError: (error) => {
+      toast.error(`Failed to delete POI: ${error.message}`);
+    },
+  });
 
-    // Local state for delete confirmation modal
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [pendingDeletePOI, setPendingDeletePOI] = useState(null);
+  // Local state for delete confirmation modal
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [pendingDeletePOI, setPendingDeletePOI] = useState(null);
 
   // Use POI store for modal management
   const {
@@ -135,7 +135,7 @@ const POICard = ({
     if (onDelete) {
       // onDelete(poi._id, poi.locationName);
       deleteMutation.mutate(poi._id);
-    } else {  
+    } else {
       // Use store if no onDelete prop provided
       openPOIDeleteConfirm({ poiId: poi._id, poiName: poi.locationName });
     }
@@ -187,7 +187,6 @@ const POICard = ({
   const imageUrl = primaryOrFirstPhoto
     ? primaryOrFirstPhoto?.s3Url || primaryOrFirstPhoto?.fullUrl
     : null;
-
 
   const buttonBackground =
     "btn btn-sm bg-black/30 hover:bg-black/80 rounded-lg";
@@ -363,9 +362,7 @@ const POICard = ({
                   <span className="text-sm font-medium">Private</span>
                 </div>
               ) : (
-                <div
-                  className={`${buttonBackground} pointer-events-none`}
-                >
+                <div className={`${buttonBackground} pointer-events-none`}>
                   <Globe size={14} />
                   <span className="text-sm font-medium">Public</span>
                 </div>
