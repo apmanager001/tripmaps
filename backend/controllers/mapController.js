@@ -301,7 +301,7 @@ const getUserMaps = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    // Populate POIs with photos for each map
+    // Populate POIs with photos for each map and add total counts
     const mapsWithPOIs = await Promise.all(
       maps.map(async (map) => {
         const pois = await POI.find({ map_id: map._id })
@@ -327,9 +327,19 @@ const getUserMaps = async (req, res) => {
           })
         );
 
+        // Calculate total POI and photo count for this map
+        const totalPOICount = await POI.countDocuments({ map_id: map._id });
+        const poiIds = await POI.find({ map_id: map._id }).distinct("_id");
+        const totalPhotoCount =
+          poiIds.length > 0
+            ? await Photo.countDocuments({ poi_id: { $in: poiIds } })
+            : 0;
+
         return {
           ...map.toObject(),
           pois: poisWithPresignedUrls,
+          totalPOICount,
+          totalPhotoCount,
         };
       })
     );

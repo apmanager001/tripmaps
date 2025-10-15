@@ -109,7 +109,7 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
   return (
     <div className="w-full max-w-xl mx-auto px-4 md:px-2">
       <div
-        className={`h-96 md:h-full border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+        className={`h-96 md:h-full border-2 border-dashed rounded-lg md:p-8 text-center transition-colors ${
           isDragOver
             ? "border-primary bg-primary/5"
             : "border-base-300 hover:border-primary/50"

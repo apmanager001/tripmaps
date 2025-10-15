@@ -11,11 +11,13 @@ import {
   LogOut,
   LocateFixed,
   Shield,
+  Bell,
 } from "lucide-react";
 import UploadWizard from "@/app/newPOIUPLOAD/comp/uploadWizard";
 import MyMaps from "./mymap";
 import AddMaps from "./addMap";
 import AddPOI from "./addPOI";
+import Alert from "./alerts";
 import Search from "./search";
 import SettingsPage from "./settings";
 import Admin from "./admin";
@@ -25,7 +27,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import AddMapPOIS from "./addMapPOIS";
-import limitAlert from "./comps/limitAlert";
 import LimitAlert from "./comps/limitAlert";
 
 const Dashboard = () => {
@@ -163,10 +164,11 @@ const Dashboard = () => {
 
   const tabs = [
     { name: "My Profile", icon: <User size={20} /> },
-    { name: "Create Map and POIs", icon: <LocateFixed size={20} /> },
+    { name: "Create Map", icon: <LocateFixed size={20} /> },
     // { name: "POIs", icon: <LocateFixed size={20} /> },
     // { name: "Add Map", icon: <MapPinned size={20} /> },
     { name: "Search", icon: <Searched size={20} /> },
+    { name: "Alerts", icon: <Bell size={20} /> },
     { name: "Settings", icon: <Settings size={20} /> },
     // Admin tab - only show if user has admin role
     ...(user?.role === "admin"
@@ -178,8 +180,10 @@ const Dashboard = () => {
     switch (activeTab) {
       case "My Profile":
         return <MyMaps />;
-      case "Create Map and POIs":
+      case "Create Map":
         return <UploadWizard />;
+      case "Alerts":
+        return <Alert />;
       // case "POIs":
       //   return <AddPOI />;
       // case "Add Map":

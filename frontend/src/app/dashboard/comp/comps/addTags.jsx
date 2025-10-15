@@ -215,7 +215,7 @@ const AddTags = ({
             htmlFor="add-tags-input"
             className="input input-sm w-full pr-10 flex items-center gap-2"
           >
-            <Search size={16} className="text-neutral" />
+            <Search size={16} className="text-white" />
 
             <input
               id="add-tags-input"

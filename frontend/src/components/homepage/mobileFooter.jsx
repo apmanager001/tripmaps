@@ -16,9 +16,13 @@ import {
   BookOpen,
   FileText,
   Mail,
+  LogOut
 } from "lucide-react";
+import toast from "react-hot-toast";
 import Link from "next/link";
+import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useVerifyUser } from "../utility/tanstack/verifyUser";
 
@@ -26,15 +30,16 @@ const MobileFooter = () => {
   const [active, setActive] = useState("home"); // 'home' | 'alerts' | 'menu'
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { isLoading: isAuthLoading } = useVerifyUser();
-  const { user } = useAuthStore();
+  const { user, clearUser } = useAuthStore();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Configurable menu arrays (mirror headerMenu)
   const dashboardTabs = [
     { name: "My Dashboard", value: "", icon: <User size={16} /> },
     {
-      name: "Add Map",
-      value: "Create Map and POIs",
+      name: "Create Map",
+      value: "Create Map",
       icon: <MapPinned size={16} />,
     },
     { name: "Search", value: "Search", icon: <Search size={16} /> },
@@ -61,6 +66,38 @@ const MobileFooter = () => {
     // { name: "Home", href: "/", icon: <House size={16} /> },
   ];
 
+  // Logout mutation
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      try {
+        await authApi.logout();
+        return true;
+      } catch (error) {
+        console.error("Logout error:", error);
+        return false;
+      }
+    },
+    onSuccess: () => {
+      // Clear all cached queries to prevent stale data
+      queryClient.clear();
+      clearUser();
+      toast.success("Logged out successfully");
+      // Add small delay to allow state cleanup before redirect
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
+    },
+    onError: (error) => {
+      console.error("Logout mutation error:", error);
+      queryClient.clear();
+      clearUser();
+      toast.success("Logged out successfully");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 100);
+    },
+  });
+
   const handleOpenDrawer = () => {
     setDrawerOpen(true);
     setActive("menu");
@@ -68,6 +105,10 @@ const MobileFooter = () => {
 
   const handleCloseDrawer = () => {
     setDrawerOpen(false);
+  };
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
   };
 
   return (
@@ -83,26 +124,32 @@ const MobileFooter = () => {
         />
         <div className="drawer-content">
           <div className="dock">
-            <Image 
-              src='/tripmap.webp'
-              alt='Trip Map'
-              className="w-8 h-14"
-              width={25}
-              height={50}
-            />
+            <div className="">
+              <Image
+                src="/tripmap.webp"
+                alt="Trip Map"
+                className="w-14 h-14"
+                width={25}
+                height={50}
+              />
+            </div>
             <Link
-                href="/"
-                onClick={() => setActive("home")}
-                className={active === "home" ? "dock-active" : ""}
-                aria-label="Home"
+              href="/"
+              onClick={() => setActive("home")}
+              className={active === "home" ? "dock-active" : ""}
+              aria-label="Home"
             >
               <House />
               <span className="dock-label">Home</span>
             </Link>
             {user ? (
               <button
-                onClick={() => setActive("alerts")}
-                className={active === "alerts" ? "dock-active" : ""}
+                href="/dashboard?tab=alerts"
+                onClick={() => {
+                  setActive("alerts"),
+                  router.push("/dashboard?tab=Alerts")
+                }}
+                className={active === "Alerts" ? "dock-active" : ""}
                 aria-label="Alerts"
               >
                 <Bell />
@@ -259,6 +306,32 @@ const MobileFooter = () => {
                         <span>{tab.name}</span>
                       </Link>
                     ))}
+                  </div>
+                  <div className="absolute bottom-4 w-full pr-7">
+                    <button
+                      onClick={handleLogout}
+                      disabled={logoutMutation.isPending}
+                      className={`btn btn-error btn-soft w-full rounded-xl ${
+                        logoutMutation.isPending
+                          ? "opacity-50 cursor-not-allowed bg-base-200"
+                          : "hover:bg-error/10 hover:text-error hover:shadow-md"
+                      }`}
+                      title="Logout"
+                    >
+                      <span className="mr-3">
+                        {logoutMutation.isPending ? (
+                          <div className="loading loading-spinner loading-xs"></div>
+                        ) : (
+                          <LogOut
+                            size={20}
+                            className="group-hover:scale-110 transition-transform duration-200"
+                          />
+                        )}
+                      </span>
+                      <span className="inline font-medium text-error">
+                        Logout
+                      </span>
+                    </button>
                   </div>
                 </nav>
               </>

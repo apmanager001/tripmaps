@@ -3,10 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MapPin, Users, Globe, Map, User } from "lucide-react";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 export default function HeroSection() {
+  const { user } = useAuthStore();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollToSection = (sectionId) => {
@@ -98,7 +100,7 @@ export default function HeroSection() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <Link href="/register" className="btn btn-primary btn-lg group">
+              <Link href={user ? "/dashboard" : "/register"} className="btn btn-primary btn-lg group">
                 Start Mapping
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>

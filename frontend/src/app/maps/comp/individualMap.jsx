@@ -6,6 +6,7 @@ import SharedButtons from "../../dashboard/comp/maps/shareButtons";
 import InstagramShare from "@/components/utility/InstagramShare";
 import POICard from "@/components/POICard";
 import AddPOIToMapModal from "@/components/AddPOIToMapModal";
+import CreatePOIAddToMap from "./createPOIAddToMap";
 import ProfilePictureUpload from "@/components/ProfilePictureUpload";
 import PhotoGalleryButton from "./photogalleryButton";
 import Link from "next/link";
@@ -422,7 +423,6 @@ export default function IndividualMaps({ id }) {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-base-200 via-base-100 to-base-200">
       {/* Canonical URL for SEO */}
@@ -884,6 +884,7 @@ export default function IndividualMaps({ id }) {
                     <POICard
                       key={poi._id}
                       poi={poi}
+                      onDelete={true}
                       showActions={true}
                       showLikeButton={true}
                       showFlagButton={true}
@@ -1081,8 +1082,7 @@ export default function IndividualMaps({ id }) {
       {/* POI Photo Gallery */}
       <PoiModalButtons />
 
-      {/* Add POI to Map Modal */}
-      <AddPOIToMapModal
+      <CreatePOIAddToMap
         isOpen={showAddPOIModal}
         onClose={() => setShowAddPOIModal(false)}
         mapId={id}

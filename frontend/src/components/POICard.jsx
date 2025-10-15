@@ -43,6 +43,27 @@ const POICard = ({
   const queryClient = useQueryClient();
   const [showDescriptionTooltip, setShowDescriptionTooltip] = useState(false);
   const [isClient, setIsClient] = useState(false);
+    // POI delete mutation
+    const deleteMutation = useMutation({
+      mutationFn: (poiId) => poiApi.deletePOI(poiId),
+      onSuccess: (data) => {
+        if (data.success) {
+          toast.success("POI deleted successfully");
+          queryClient.invalidateQueries(["individualMap"]);
+          queryClient.invalidateQueries(["userPOIs"]);
+          queryClient.invalidateQueries(["popularPOIs"]);
+        } else {
+          toast.error(data.message || "Failed to delete POI");
+        }
+      },
+      onError: (error) => {
+        toast.error(`Failed to delete POI: ${error.message}`);
+      },
+    });
+
+    // Local state for delete confirmation modal
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [pendingDeletePOI, setPendingDeletePOI] = useState(null);
 
   // Use POI store for modal management
   const {
@@ -109,12 +130,12 @@ const POICard = ({
     e.stopPropagation();
     openFlagModalStore(photo, poiData.locationName);
   };
-
   const handleDelete = (e) => {
     e.stopPropagation();
     if (onDelete) {
-      onDelete(poi._id, poi.locationName);
-    } else {
+      // onDelete(poi._id, poi.locationName);
+      deleteMutation.mutate(poi._id);
+    } else {  
       // Use store if no onDelete prop provided
       openPOIDeleteConfirm({ poiId: poi._id, poiName: poi.locationName });
     }

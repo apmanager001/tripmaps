@@ -63,6 +63,7 @@ const MapCard = ({
 
   const thumbnailImages = getThumbnailImages();
   // Use total counts from backend if available, otherwise calculate from POI array
+  // console.log("Map data in MapCard:", map);
   const totalPOIs =
     map?.totalPOICount || (map?.pois || map?.poi_ids || []).length;
   const totalPhotos =

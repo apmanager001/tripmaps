@@ -140,7 +140,7 @@ const NavigationMenu = () => {
             </div>
             <div
               tabIndex={0}
-              className="dropdown-content z-[9999] menu p-2 shadow bg-base-100 rounded-box w-80 border border-base-border"
+              className="dropdown-content z-[9999] menu p-2 shadow bg-base-100 rounded-box w-80 border border-white/20"
             >
               <div className="p-4">
                 <div className="flex items-center justify-between mb-3">
@@ -200,14 +200,14 @@ const NavigationMenu = () => {
                 )}
 
                 {(alertsData?.data?.alerts || []).length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-base-300">
+                  <div className="mt-3 pt-3 border-t border-base-300/20">
                     <button
                       onClick={() => {
-                        router.push("/dashboard?tab=Notifications");
+                        router.push("/dashboard?tab=Alerts");
                       }}
                       className="btn btn-sm btn-primary w-full"
                     >
-                      View All Notifications
+                      View All Alerts
                     </button>
                   </div>
                 )}
