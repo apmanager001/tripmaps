@@ -1,9 +1,18 @@
 // UploadStepPhotos.jsx
 "use client";
-import { useRef, useState } from "react";
-import { Upload, Trash2, Locate, LocateOff } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import {
+  Upload,
+  Trash2,
+  Locate,
+  LocateOff,
+  MessageCircleWarning,
+} from "lucide-react";
 import { toast } from "react-hot-toast";
 import EXIF from "exif-js";
+
+// Keep a module-level toast id so we can dismiss any previous instance
+let mobileToastId = null;
 
 const MAX_POIS = 25;
 const MAX_PHOTOS_PER_POI = 3;
@@ -48,13 +57,13 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
               lat = toDecimal(exif.GPSLatitude, exif.GPSLatitudeRef);
               lng = toDecimal(exif.GPSLongitude, exif.GPSLongitudeRef);
             }
-             if (exif.DateTimeOriginal) {
-               dateVisited = formatExifDate(exif.DateTimeOriginal);
-             } else if (exif.DateTime) {
-               dateVisited = formatExifDate(exif.DateTime);
-             } else if (exif.CreateDate) {
-               dateVisited = formatExifDate(exif.CreateDate);
-             }
+            if (exif.DateTimeOriginal) {
+              dateVisited = formatExifDate(exif.DateTimeOriginal);
+            } else if (exif.DateTime) {
+              dateVisited = formatExifDate(exif.DateTime);
+            } else if (exif.CreateDate) {
+              dateVisited = formatExifDate(exif.CreateDate);
+            }
             const previewUrl = URL.createObjectURL(file);
             cb({ file, previewUrl, lat, lng, dateVisited });
           });
@@ -105,6 +114,66 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
   const handleRemovePhoto = (idx) => {
     setAllPhotos((prev) => prev.filter((_, i) => i !== idx));
   };
+
+  const toastFunction = () => {
+    // Custom caution-style toast that requires explicit dismissal
+    // Dismiss any previous mobile toast instance so we don't get duplicates
+    if (mobileToastId) {
+      try {
+        toast.dismiss(mobileToastId);
+      } catch (e) {}
+      mobileToastId = null;
+    }
+
+    mobileToastId = toast(
+      (t) => (
+        <div className="max-w-md w-full border-l-4 border-warning p-4 rounded-md flex items-start justify-between shadow-md bg-amber-50">
+          <div className="flex items-start gap-3">
+            <div>
+              <div className="flex justify-left items-center gap-2">
+                <MessageCircleWarning className="text-warning text-2xl mt-0.5" />
+                <div className="font-semibold text-warning">Heads up</div>
+                {/* <div className="text-yellow-700 text-lg mt-0.5">⚠️</div> */}
+              </div>
+              <div className="text-sm text-warning">
+                Unfortunately, on mobile devices photos won't have GPS info. You
+                can manually add location info or upload from a desktop for
+                automatic GPS extraction.
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            aria-label="Dismiss"
+            className="ml-4 text-warning text-xl"
+          >
+            ✕
+          </button>
+        </div>
+      ),
+      {
+        duration: Infinity,
+        position: "top-center",
+        // make the outer wrapper transparent and remove default shadow/padding
+        style: {
+          background: "transparent",
+          border: "none",
+          padding: 0,
+          boxShadow: "none",
+        },
+      }
+    );
+  };
+
+  // Show mobile-only toast once when component mounts on narrow screens
+  useEffect(() => {
+    const isMobile = typeof window !== "undefined" && window.innerWidth <= 768;
+    if (!isMobile) return;
+    toastFunction();
+    return () => {
+      // do not auto-dismiss the toast here (we want user to dismiss), but keep id for future dismiss
+    };
+  }, []);
 
   return (
     <div className="w-full max-w-xl mx-auto px-4 md:px-2">

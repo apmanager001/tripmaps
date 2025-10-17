@@ -3,7 +3,9 @@ import Upload from './comp/uploadWizard'
 
 const Page = () => {
   return (
-    <div><Upload /></div>
+    <div>
+      <Upload />
+    </div>
   )
 }
 
