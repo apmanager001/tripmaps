@@ -77,9 +77,40 @@ export const authApi = {
   },
 
   logout: async (): Promise<ApiResponse> => {
-    return apiRequest<ApiResponse>("/logout", {
+    // Some backends return plain text for logout (e.g. "User logged out").
+    // Use fetch directly and handle both JSON and plain text responses.
+    const res = await fetch(`${API_BASE_URL}/logout`, {
       method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
     });
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!res.ok) {
+      // Try to get error message from JSON or text
+      try {
+        const data = contentType.includes("application/json")
+          ? await res.json()
+          : { message: await res.text() };
+        throw new ApiError(res.status, data.message || "Logout failed");
+      } catch (err) {
+        const message =
+          err && typeof err === "object" && "message" in err
+            ? (err as any).message
+            : String(err);
+        throw new ApiError(res.status, message || "Logout failed");
+      }
+    }
+
+    // Successful response: parse JSON when possible, otherwise return a simple ApiResponse
+    if (contentType.includes("application/json")) {
+      return res.json();
+    }
+
+    const text = await res.text();
+    return { success: true, message: text } as ApiResponse;
   },
 
   verifyUser: async (): Promise<AuthResponse> => {

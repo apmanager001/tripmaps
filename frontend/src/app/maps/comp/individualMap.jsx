@@ -367,7 +367,6 @@ export default function IndividualMaps({ id }) {
       }
     }
   };
-
   const handleSortChange = (newSortBy, newSortOrder) => {
     setSortBy(newSortBy);
     setSortOrder(newSortOrder);
@@ -670,7 +669,8 @@ export default function IndividualMaps({ id }) {
               {/* Bookmark Button */}
               {isAuthenticated &&
                 currentUser &&
-                mapUser._id !== currentUser._id && (
+                mapUser?._id !== currentUser?._id && 
+                (
                   <button
                     onClick={handleBookmark}
                     disabled={bookmarkMutation.isPending || !isAuthenticated}

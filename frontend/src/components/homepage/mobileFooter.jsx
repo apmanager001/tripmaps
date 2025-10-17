@@ -25,6 +25,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useVerifyUser } from "../utility/tanstack/verifyUser";
+import { performLogout } from "@/lib/performLogout";
 
 const MobileFooter = () => {
   const [active, setActive] = useState("home"); // 'home' | 'alerts' | 'menu'
@@ -66,38 +67,7 @@ const MobileFooter = () => {
     // { name: "Home", href: "/", icon: <House size={16} /> },
   ];
 
-  // Logout mutation
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      try {
-        await authApi.logout();
-        return true;
-      } catch (error) {
-        console.error("Logout error:", error);
-        return false;
-      }
-    },
-    onSuccess: () => {
-      // Clear all cached queries to prevent stale data
-      queryClient.clear();
-      clearUser();
-      toast.success("Logged out successfully");
-      // Add small delay to allow state cleanup before redirect
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 100);
-    },
-    onError: (error) => {
-      console.error("Logout mutation error:", error);
-      queryClient.clear();
-      clearUser();
-      toast.success("Logged out successfully");
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 100);
-    },
-  });
-
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const handleOpenDrawer = () => {
     setDrawerOpen(true);
     setActive("menu");
@@ -107,8 +77,13 @@ const MobileFooter = () => {
     setDrawerOpen(false);
   };
 
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const handleLogout = async () => {
+    await performLogout({
+      clearUser,
+      queryClient,
+      router,
+      setIsLoggingOut,
+    });
   };
 
   return (
@@ -310,16 +285,16 @@ const MobileFooter = () => {
                   <div className="absolute bottom-4 w-full pr-7">
                     <button
                       onClick={handleLogout}
-                      disabled={logoutMutation.isPending}
+                      disabled={isLoggingOut}
                       className={`btn btn-error btn-soft w-full rounded-xl ${
-                        logoutMutation.isPending
+                        isLoggingOut
                           ? "opacity-50 cursor-not-allowed bg-base-200"
                           : "hover:bg-error/10 hover:text-error hover:shadow-md"
                       }`}
                       title="Logout"
                     >
                       <span className="mr-3">
-                        {logoutMutation.isPending ? (
+                        {isLoggingOut ? (
                           <div className="loading loading-spinner loading-xs"></div>
                         ) : (
                           <LogOut

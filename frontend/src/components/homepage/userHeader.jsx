@@ -20,7 +20,7 @@ export default function UserStatus() {
           <span className="text-md">{user.username}</span>
         </Link>
       ) : (
-        <Link href="/login">Login / Register</Link>
+        <Link href="/login" className="btn btn-accent rounded-xl">Login / Register</Link>
       )}
     </div>
   );

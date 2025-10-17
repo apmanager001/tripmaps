@@ -19,6 +19,7 @@ const MAX_PHOTOS_PER_POI = 3;
 
 export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
   const fileInputRef = useRef(null);
+  const [agreedBackup, setAgreedBackup] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [poiArray, setPoiArray] = useState([]);
 
@@ -265,11 +266,40 @@ export default function UploadStepPhotos({ allPhotos, setAllPhotos, onNext }) {
           </div>
         </div>
       )}
-      <div className="flex justify-end mt-6">
+
+      <div className="mt-4 flex justify-center">
+        <label className="label cursor-pointer">
+          <input
+            type="checkbox"
+            className="checkbox checkbox-sm checkbox-info mr-3"
+            checked={agreedBackup}
+            onChange={(e) => setAgreedBackup(e.target.checked)}
+          />
+          <div className="flex flex-col label-text text-sm w-72 text-wrap">
+          <span>
+            I understand uploading photos is not photo storage.
+          </span>
+          <span className="font-bold">
+            I am responsible for backing up my photos.
+          </span>
+          </div>
+        </label>
+      </div>
+
+      <div className="flex justify-end mt-4">
         <button
           className="btn btn-primary"
-          onClick={onNext}
-          disabled={allPhotos.length === 0}
+          onClick={() => {
+            if (allPhotos.length === 0) return;
+            if (!agreedBackup) {
+              toast.error(
+                "Please confirm you have backed up your photos before continuing."
+              );
+              return;
+            }
+            onNext();
+          }}
+          disabled={allPhotos.length === 0 || !agreedBackup}
         >
           Next: Organize POIs
         </button>

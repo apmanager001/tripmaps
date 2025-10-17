@@ -286,7 +286,7 @@ const NavigationMenu = () => {
                 <div className="p-2">
                   <Link
                     href="/login"
-                    className="block w-full px-2 py-2 text-left hover:bg-base-200 rounded transition-colors"
+                    className="btn btn-accent w-full"
                   >
                     Login / Register
                   </Link>
@@ -307,7 +307,7 @@ const NavigationMenu = () => {
           fullMenu
         ) : (
           <div className="flex items-center gap-4">
-            <Link href="/login" className="btn btn-primary">
+            <Link href="/login" className="btn btn-primary rounded-xl">
               Login / Register
             </Link>
           </div>

@@ -24,12 +24,16 @@ import {
 import { SocialIcon } from "react-social-icons";
 import { toast } from "react-hot-toast";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useRouter } from "next/navigation";
 import { userApi, authApi, stripeApi, alertApi } from "@/lib/api";
+import { performLogout } from "@/lib/performLogout";
 import Country from "./settingsComp/country";
 
 export default function Settings() {
   const { user: currentUser, clearUser } = useAuthStore();
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const subAbility= process.env.STRIPE_SUBSCRIPTON_ON;
 
   // Form states
@@ -113,37 +117,6 @@ export default function Settings() {
   });
 
   // Logout mutation
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      try {
-        await authApi.logout();
-        return true;
-      } catch (error) {
-        console.error("Logout error:", error);
-        return false;
-      }
-    },
-    onSuccess: () => {
-      // Clear all cached queries to prevent stale data
-      queryClient.clear();
-      clearUser();
-      toast.success("Logged out successfully");
-      // Add small delay to allow state cleanup before redirect
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 100);
-    },
-    onError: (error) => {
-      console.error("Logout mutation error:", error);
-      queryClient.clear();
-      clearUser();
-      toast.success("Logged out successfully");
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 100);
-    },
-  });
-
   // Initialize form data when user data loads
   useEffect(() => {
     if (userData?.data?.user) {
@@ -251,7 +224,7 @@ export default function Settings() {
   };
 
   const handleLogout = () => {
-    logoutMutation.mutate();
+    performLogout({ clearUser, queryClient, router, setIsLoggingOut });
   };
 
   // Resend verification email mutation
@@ -889,10 +862,10 @@ export default function Settings() {
               </p>
               <button
                 onClick={handleLogout}
-                disabled={logoutMutation.isPending}
+                disabled={isLoggingOut}
                 className="btn btn-error btn-lg w-full flex gap-2"
               >
-                {logoutMutation.isPending ? (
+                {isLoggingOut ? (
                   <div className="loading loading-spinner loading-sm"></div>
                 ) : (
                   <LogOut className="w-5 h-5" />

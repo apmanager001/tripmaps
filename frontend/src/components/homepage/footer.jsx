@@ -27,6 +27,7 @@ const Footer = () => {
                   width="40"
                   height="40"
                   className="rounded-lg"
+                  priority='true'
                 />
                 <div>
                   <h3 className="text-xl font-bold text-primary">
@@ -42,13 +43,20 @@ const Footer = () => {
                 your journey with the world.
               </p>
               <div className="flex gap-3">
-                <a href="#" className="btn btn-circle btn-sm btn-ghost">
+                <a
+                  href="https://x.com/boringsquirrels"
+                  className="btn btn-circle btn-sm btn-ghost"
+                >
                   <Twitter className="w-4 h-4" />
                 </a>
-                <a href="#" className="btn btn-circle btn-sm btn-ghost">
+                {/* <a href="#" className="btn btn-circle btn-sm btn-ghost">
                   <Github className="w-4 h-4" />
-                </a>
-                <a href="#" className="btn btn-circle btn-sm btn-ghost">
+                </a> */}
+                <a
+                  href="mailto:contact@mytripmaps.com"
+                  className="btn btn-circle btn-sm btn-ghost"
+                  aria-label="Email Us"
+                >
                   <Mail className="w-4 h-4" />
                 </a>
               </div>

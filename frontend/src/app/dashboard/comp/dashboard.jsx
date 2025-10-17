@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Users,
   User,
@@ -28,6 +28,7 @@ import { toast } from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import AddMapPOIS from "./addMapPOIS";
 import LimitAlert from "./comps/limitAlert";
+import { performLogout } from "@/lib/performLogout";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("My Profile");
@@ -67,45 +68,25 @@ const Dashboard = () => {
     }
   }, [searchParams]);
 
-  // Logout mutation
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      try {
-        await authApi.logout();
-        return true;
-      } catch (error) {
-        console.error("Logout error:", error);
-        return false;
-      }
-    },
-    onSuccess: () => {
-      // Clear all cached queries to prevent stale data
-      queryClient.clear();
-      clearUser();
-      toast.success("Logged out successfully");
-      // Add small delay to allow state cleanup before redirect
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 100);
-    },
-    onError: (error) => {
-      console.error("Logout mutation error:", error);
-      queryClient.clear();
-      clearUser();
-      toast.success("Logged out successfully");
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 100);
-    },
-  });
+  const [loggingOut, setLoggingOut] = useState(false);
+  // short-lived guard to prevent the "please log in" toast immediately after a logout
+  const justLoggedOutRef = useRef(false);
 
   // Check authentication on component mount and when user changes
+  // Only show the "please log in" toast after the verifyUser query has settled
   useEffect(() => {
+    // If we're in the middle of logging out, or we just logged out, don't show the "please log in" toast
+    if (loggingOut || justLoggedOutRef.current) return;
+
+    // Do not show the toast while the verification request is still running
+    // isVerifying corresponds to the query's isLoading; we also avoid firing
+    // while the query is fetching or not yet fetched to prevent races.
     if (!user && !isVerifying) {
+      // verifyUser finished and there's no user -> prompt login
       toast.error("Please log in to access the dashboard");
       router.push("/login");
     }
-  }, [user, isVerifying, router]);
+  }, [user, isVerifying, router, loggingOut]);
 
   // Handle sidebar labels visibility
   useEffect(() => {
@@ -150,8 +131,20 @@ const Dashboard = () => {
     };
   }, []);
 
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  const handleLogout = async () => {
+    if (loggingOut) return;
+    // mark that we just logged out so other effects don't react to the cleared user
+    justLoggedOutRef.current = true;
+    await performLogout({
+      clearUser,
+      queryClient,
+      router,
+      setIsLoggingOut: setLoggingOut,
+    });
+    // reset the guard after a short delay so normal behaviour resumes
+    setTimeout(() => {
+      justLoggedOutRef.current = false;
+    }, 1500);
   };
 
   const handleTabClick = (tabName) => {
@@ -276,16 +269,16 @@ const Dashboard = () => {
         <div className="w-full px-3">
           <button
             onClick={handleLogout}
-            disabled={logoutMutation.isPending}
+            disabled={loggingOut}
             className={`flex items-center w-full px-4 py-3 text-left rounded-xl transition-all duration-200 cursor-pointer group ${
-              logoutMutation.isPending
+              loggingOut
                 ? "opacity-50 cursor-not-allowed bg-base-200"
                 : "hover:bg-error/10 hover:text-error hover:shadow-md"
             }`}
             title="Logout"
           >
             <span className="mr-3">
-              {logoutMutation.isPending ? (
+              {loggingOut ? (
                 <div className="loading loading-spinner loading-xs"></div>
               ) : (
                 <LogOut
