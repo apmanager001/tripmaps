@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
@@ -87,9 +88,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
-  },
+  // verification: {
+  //   google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
+  // },
   other: {
     "theme-color": "#3B82F6",
     "color-scheme": "light dark",
@@ -104,6 +105,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        {/* Google tag (gtag.js) */}
+        <Script async src="https://www.googletagmanager.com/gtag/js?id=G-85N88R6TMT"></Script>
+        <Script id="google-analytics">
+          {`window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'G-85N88R6TMT');`}
+        </Script>
         {/* Structured Data for Organization */}
         <script
           type="application/ld+json"
@@ -117,11 +127,11 @@ export default function RootLayout({
                 process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
               }/tripmap.webp`,
               description: "Transform photos into interactive travel maps",
-              sameAs: [
-                "https://twitter.com/mytripmaps",
-                "https://facebook.com/mytripmaps",
-                "https://instagram.com/mytripmaps",
-              ],
+              // sameAs: [
+              //   "https://twitter.com/mytripmaps",
+              //   "https://facebook.com/mytripmaps",
+              //   "https://instagram.com/mytripmaps",
+              // ],
               contactPoint: {
                 "@type": "ContactPoint",
                 contactType: "customer service",
