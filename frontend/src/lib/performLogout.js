@@ -29,7 +29,8 @@ export async function performLogout({
   } finally {
     try {
       if (typeof clearUser === "function") clearUser();
-      if (queryClient && typeof queryClient.clear === "function") queryClient.clear();
+      if (queryClient && typeof queryClient.clear === "function")
+        queryClient.clear();
     } catch (e) {
       console.error("Error during client cleanup:", e);
     }

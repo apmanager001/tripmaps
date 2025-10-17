@@ -16,7 +16,7 @@ import {
   BookOpen,
   FileText,
   Mail,
-  LogOut
+  LogOut,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -121,8 +121,7 @@ const MobileFooter = () => {
               <button
                 href="/dashboard?tab=alerts"
                 onClick={() => {
-                  setActive("alerts"),
-                  router.push("/dashboard?tab=Alerts")
+                  setActive("alerts"), router.push("/dashboard?tab=Alerts");
                 }}
                 className={active === "Alerts" ? "dock-active" : ""}
                 aria-label="Alerts"

@@ -34,7 +34,7 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const subAbility= process.env.STRIPE_SUBSCRIPTON_ON;
+  const subAbility = process.env.STRIPE_SUBSCRIPTON_ON;
 
   // Form states
   const [email, setEmail] = useState("");
