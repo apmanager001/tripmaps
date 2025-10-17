@@ -51,8 +51,8 @@ export default function VerifyEmailPage() {
 
   if (isVerifying) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-base-100 to-base-300 p-4">
+        <div className="max-w-md w-full rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
           <div className="loading loading-spinner loading-lg text-primary mb-4"></div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             Verifying Email
@@ -66,8 +66,8 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-base-100 to-base-300 p-4">
+      <div className="max-w-md w-full bg-base-300 rounded-2xl shadow-xl border border-gray-200 p-8 text-center">
         {isSuccess ? (
           <>
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -85,16 +85,16 @@ export default function VerifyEmailPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-base-content mb-2">
               Email Verified!
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-base-content/80 mb-6">
               Your email has been successfully verified. You can now log in to
               your account.
             </p>
             <button
               onClick={handleRedirect}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="btn btn-primary"
             >
               Continue to Login
             </button>
@@ -116,15 +116,15 @@ export default function VerifyEmailPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-base-content mb-2">
               Verification Failed
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-base-content/80 mb-6">
               {error || "The verification link is invalid or has expired."}
             </p>
             <button
               onClick={handleRedirect}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="btn btn-primary w-full rounded-xl"
             >
               Go to Login
             </button>

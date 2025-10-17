@@ -170,7 +170,7 @@ const NavigationMenu = () => {
                         className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                           alert.isRead
                             ? "bg-base-100 border-base-300"
-                            : "bg-blue-50 border-blue-200"
+                            : "bg-base-content/10 border-info"
                         }`}
                         onClick={() =>
                           !alert.isRead && handleMarkAsRead(alert._id)
