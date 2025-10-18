@@ -27,8 +27,15 @@ export default function ExploreMapsBrowser() {
   // Debounce search query
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-      setPage(1); // Reset to first page when searching
+      const q = searchQuery.trim();
+      // only start performing text searches when the user has typed 2+ chars
+      if (q.length >= 2) {
+        setDebouncedQuery(q);
+        setPage(1); // Reset to first page when searching
+      } else {
+        // treat 0 or 1 char as no query (show popular/recent default)
+        setDebouncedQuery("");
+      }
     }, 300);
 
     return () => clearTimeout(timer);
@@ -142,7 +149,7 @@ export default function ExploreMapsBrowser() {
             {/* Search Bar */}
             <form onSubmit={handleSearch} className="flex-1 max-w-xl">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-50" />
                 <input
                   type="text"
                   placeholder="Search maps by name, location, or description..."

@@ -602,7 +602,7 @@ const searchMaps = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .sort({ createdAt: -1 });
-
+      
     // Check bookmark status for current user
     let mapsWithBookmarks = maps;
     if (currentUserId) {

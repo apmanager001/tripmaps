@@ -200,16 +200,14 @@ const NavigationMenu = () => {
                 )}
 
                 {(alertsData?.data?.alerts || []).length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-base-300/20">
                     <button
                       onClick={() => {
                         router.push("/dashboard?tab=Alerts");
                       }}
-                      className="btn btn-sm btn-primary w-full"
+                      className="btn btn-sm btn-primary w-full mt-3 rounded-lg"
                     >
                       View All Alerts
                     </button>
-                  </div>
                 )}
               </div>
             </div>
