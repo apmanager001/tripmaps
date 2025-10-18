@@ -207,7 +207,7 @@ const ProfilePictureUpload = ({
                 <div className="flex gap-2">
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-1 bg-primary text-white rounded-full hover:bg-primary-focus transition-colors cursor-pointer"
+                    className="btn btn-xs btn-primary btn-circle cursor-pointer"
                     title="Change photo"
                   >
                     <Camera size={compact ? 12 : 16} />
@@ -215,7 +215,7 @@ const ProfilePictureUpload = ({
                   <button
                     onClick={handleDelete}
                     disabled={isDeleting}
-                    className="p-1 bg-error text-white rounded-full hover:bg-error-focus transition-colors cursor-pointer"
+                    className="btn btn-xs btn-error btn-circle cursor-pointer"
                     title="Delete photo"
                   >
                     <X size={compact ? 12 : 16} />
@@ -236,7 +236,7 @@ const ProfilePictureUpload = ({
               <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-1 bg-primary text-white rounded-full hover:bg-primary-focus transition-colors"
+                  className="btn btn-xs btn-primary btn-circle cursor-pointer"
                   title="Upload photo"
                 >
                   <Camera size={16} />

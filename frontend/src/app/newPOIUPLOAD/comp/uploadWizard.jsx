@@ -24,6 +24,46 @@ const UploadWizard = () => {
   return (
     <div className="flex flex-col items-center my-4">
       <ProgressBar step={step} total={3} />
+      {/* Tutorial button using DaisyUI modal toggle */}
+      <div className="flex justify-end items-end mb-2 w-full mr-2">
+        <label
+          htmlFor="tutorial-modal"
+          className="btn btn-ghost btn-sm"
+          role="button"
+          aria-label="Watch upload tutorial"
+        >
+          Watch tutorial
+        </label>
+      </div>
+
+      {/* DaisyUI modal toggle (no local state) */}
+      <input type="checkbox" id="tutorial-modal" className="modal-toggle" />
+      <div className="modal">
+        <div className="modal-box max-w-3xl">
+          <div className="flex justify-end">
+            <label
+              htmlFor="tutorial-modal"
+              className="btn btn-ghost btn-sm"
+              aria-label="Close tutorial"
+            >
+              Close
+            </label>
+          </div>
+          <div className="mt-2">
+            <video
+              src="/tutorial.mp4"
+              controls
+              className="w-full h-auto max-h-[700px] rounded"
+            />
+          </div>
+          <div className="modal-action">
+            <label htmlFor="tutorial-modal" className="btn">
+              Done
+            </label>
+          </div>
+        </div>
+      </div>
+
       {step === 1 && (
         <UploadStepPhotos
           allPhotos={allPhotos}
