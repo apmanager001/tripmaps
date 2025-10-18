@@ -31,8 +31,8 @@ export async function performLogout({
       if (typeof clearUser === "function") clearUser();
       if (queryClient && typeof queryClient.clear === "function")
         queryClient.clear();
-    } catch (e) {
-      console.error("Error during client cleanup:", e);
+    } catch {
+      console.error("Error during client cleanup");
     }
 
     try {
@@ -41,10 +41,10 @@ export async function performLogout({
       } else if (typeof window !== "undefined") {
         window.location.href = "/";
       }
-    } catch (e) {
+    } catch {
       try {
         window.location.href = "/";
-      } catch (_) {
+      } catch {
         /* ignore */
       }
     }

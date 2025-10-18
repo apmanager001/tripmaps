@@ -96,10 +96,21 @@ export const authApi = {
           : { message: await res.text() };
         throw new ApiError(res.status, data.message || "Logout failed");
       } catch (err) {
-        const message =
-          err && typeof err === "object" && "message" in err
-            ? (err as any).message
-            : String(err);
+        // err is unknown here — coerce safely to a string message without using `any`
+        let message = "Logout failed";
+        if (err instanceof Error) {
+          message = err.message;
+        } else if (err && typeof err === "object" && "message" in err) {
+          // message property may be unknown — stringify it safely
+          try {
+            const m = (err as { message?: unknown }).message;
+            message = typeof m === "string" ? m : String(m);
+          } catch {
+            message = String(err);
+          }
+        } else {
+          message = String(err);
+        }
         throw new ApiError(res.status, message || "Logout failed");
       }
     }
