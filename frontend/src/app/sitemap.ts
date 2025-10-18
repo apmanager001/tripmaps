@@ -258,65 +258,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       console.warn(`Failed to fetch POIs for sitemap: ${poisRes.status}`);
     }
 
-    // Try to fetch recent maps for better coverage
-    const recentMapsRes = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND}/maps/search?sort=recent&limit=100`,
-      {
-        next: { revalidate: 1800 }, // Cache for 30 minutes
-        headers: {
-          Accept: "application/json",
-          "User-Agent": "MyTripMaps-Sitemap-Generator",
-        },
-      }
-    );
-
-    if (recentMapsRes.ok) {
-      const recentMapsData = await recentMapsRes.json();
-      if (recentMapsData.success && recentMapsData.data?.maps) {
-        const recentMapPages = recentMapsData.data.maps
-          .filter((map: MapData) => map._id) // Ensure we have valid map IDs
-          .map((map: MapData) => {
-            const dateString = map.updatedAt || map.createdAt;
-            const lastModified = dateString ? new Date(dateString) : new Date();
-
-            return {
-              url: `${baseUrl}/maps/${map._id}`,
-              lastModified: isNaN(lastModified.getTime())
-                ? new Date()
-                : lastModified,
-              changeFrequency: "weekly" as const,
-              priority: 0.7,
-            };
-          });
-
-        // Add only unique maps that aren't already in the popular maps
-        const existingMapIds = new Set(
-          dynamicPages
-            .filter((page: MetadataRoute.Sitemap[0]) =>
-              page.url.includes("/maps/")
-            )
-            .map(
-              (page: MetadataRoute.Sitemap[0]) => page.url.split("/maps/")[1]
-            )
-        );
-
-        const uniqueRecentMaps = recentMapPages.filter(
-          (page: MetadataRoute.Sitemap[0]) =>
-            !existingMapIds.has(page.url.split("/maps/")[1])
-        );
-
-        if (uniqueRecentMaps.length > 0) {
-          dynamicPages.push(...uniqueRecentMaps);
-          console.log(
-            `Added ${uniqueRecentMaps.length} additional recent map pages to sitemap`
-          );
-        }
-      }
-    } else {
-      console.warn(
-        `Failed to fetch recent maps for sitemap: ${recentMapsRes.status}`
-      );
-    }
+    // NOTE: The previous implementation attempted to call
+    // `/maps/search?sort=recent&limit=100` which requires a `q` query
+    // parameter (search term) and will return HTTP 400 when called
+    // without it. That produced noisy build logs and doesn't provide
+    // reliable results during static sitemap generation. We rely on the
+    // `/maps/popular` call above (with an increased limit) instead to
+    // provide good coverage for sitemap pages. If you need recent maps
+    // specifically, add a dedicated backend endpoint that returns recent
+    // public maps without requiring a search query.
   } catch (error) {
     console.error("Error generating dynamic sitemap entries:", error);
     console.error("Falling back to static pages only");
