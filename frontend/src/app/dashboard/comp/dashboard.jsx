@@ -156,16 +156,16 @@ const Dashboard = () => {
   };
 
   const tabs = [
-    { name: "My Profile", icon: <User size={20} /> },
-    { name: "Create Map", icon: <LocateFixed size={20} /> },
+    { name: "My Profile", icon: <User size={20} />, hover: 'View your Dashboard' },
+    { name: "Create Map", icon: <LocateFixed size={20} />, hover: 'Create a new Map' },
     // { name: "POIs", icon: <LocateFixed size={20} /> },
     // { name: "Add Map", icon: <MapPinned size={20} /> },
-    { name: "Search", icon: <Searched size={20} /> },
-    { name: "Alerts", icon: <Bell size={20} /> },
-    { name: "Settings", icon: <Settings size={20} /> },
+    { name: "Search", icon: <Searched size={20} />, hover: 'Search for Maps' },
+    { name: "Alerts", icon: <Bell size={20} />, hover: 'View your Alerts' },
+    { name: "Settings", icon: <Settings size={20} />, hover: 'Manage your Settings' },
     // Admin tab - only show if user has admin role
     ...(user?.role === "admin"
-      ? [{ name: "Admin", icon: <Shield size={20} /> }]
+      ? [{ name: "Admin", icon: <Shield size={20} />, hover: 'Admin Dashboard' }]
       : []),
   ];
 
@@ -277,7 +277,7 @@ const Dashboard = () => {
             }`}
             title="Logout"
           >
-            <span className="mr-3">
+            <span className="mr-3 ">
               {loggingOut ? (
                 <div className="loading loading-spinner loading-xs"></div>
               ) : (

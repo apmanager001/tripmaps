@@ -69,9 +69,9 @@ export default function TopUsers() {
                 <p className="font-semibold text-lg">{user.username}</p>
                 <div className="flex flex-col gap-1 text-sm text-neutral-600">
                   <span>
-                    {user.mapCount || user.mapsCount || 0} maps shared
+                    {user.mapCount || user.mapsCount || 0} maps
                   </span>
-                  <span>{user.totalViews || 0} total views</span>
+                  <span>{user.totalViews || 0} views</span>
                 </div>
               </div>
             </div>

@@ -17,7 +17,7 @@ export default function Home() {
       <PopularMaps />
       <PopularLocations />
       <TopUsers />
-      <Statistics />
+      {/* <Statistics /> */}
     </>
   );
 }

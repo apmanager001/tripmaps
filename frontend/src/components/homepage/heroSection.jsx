@@ -166,7 +166,7 @@ export default function HeroSection() {
               ></div>
 
               {/* Main penguin image */}
-              <div className="relative">
+              <div className="relative -z-10">
                 <Image
                   src="/penguin.webp"
                   alt="Penguin reading a map"

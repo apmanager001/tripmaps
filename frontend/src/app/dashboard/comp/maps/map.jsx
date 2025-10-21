@@ -429,7 +429,7 @@ const Maps = ({
         </div>
 
         {/* Expand Button */}
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-40">
           <button
             onClick={toggleExpanded}
             aria-label="Expand map"

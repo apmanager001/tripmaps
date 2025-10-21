@@ -5,11 +5,8 @@ import toast from "react-hot-toast";
 
 const InstagramShare = ({ mapName, mapId, pois = [] }) => {
   const shareToInstagram = () => {
-    const mapUrl = `${
-      process.env.NEXT_PUBLIC_SITE_URL || "https://mytripmaps.com"
-    }/maps/${mapId}`;
+    const mapUrl = `https://mytripmaps.com/maps/${mapId}`;
     const caption = `🗺️ Check out my travel map "${mapName}" on TripMaps!\n\n${mapUrl}\n\n#travel #maps #tripmaps #travelmap #adventure #explore #wanderlust`;
-
     // Copy caption to clipboard
     navigator.clipboard
       .writeText(caption)
@@ -41,6 +38,7 @@ const InstagramShare = ({ mapName, mapId, pois = [] }) => {
 
   const createMapImage = async () => {
     try {
+      const mapUrl = `https://mytripmaps.com/maps/${mapId}`;
       // Create a custom map image with Instagram post dimensions (1:1 aspect ratio)
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -76,7 +74,8 @@ const InstagramShare = ({ mapName, mapId, pois = [] }) => {
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           resolve();
         };
-        mapBackground.src = `/maps/map${randomMapNumber}.webp`;
+        // mapBackground.src = `/maps/map${randomMapNumber}.webp`;
+        mapBackground.src = `/maps/paris.webp`;
       });
 
       // Add a semi-transparent overlay for better text readability

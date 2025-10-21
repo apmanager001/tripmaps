@@ -204,7 +204,7 @@ const ProfilePictureUpload = ({
             {/* Overlay with upload/delete options - only show for own profile */}
             {isOwnProfile && (
               <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="btn btn-xs btn-primary btn-circle cursor-pointer"
