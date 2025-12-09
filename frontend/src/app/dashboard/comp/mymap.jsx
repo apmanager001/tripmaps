@@ -426,7 +426,7 @@ export default function Dashsection3() {
         ) : maps.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-neutral-500 mb-4">No maps created yet.</p>
-            <Link href="/dashboard?tab=Create%20Map" className="btn btn-primary">
+            <Link href="/dashboard?tab=Create+Map" className="btn btn-primary">
               Create Your First Map
             </Link>
           </div>
